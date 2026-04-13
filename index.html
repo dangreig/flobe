@@ -288,77 +288,6 @@
 #fps-dot.amber { background: #ff9f0a; }
 #fps-dot.red   { background: #e63b2e; }
 
-/* ---- PRESETS ---- */
-#preset-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 1rem;
-  margin-top: 0.8rem;
-}
-#preset-row label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.4);
-  white-space: nowrap;
-}
-.preset-slot {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex: 1;
-  min-width: 0;
-}
-.preset-load {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.63rem;
-  letter-spacing: 0.05em;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-right: none;
-  color: rgba(255,255,255,0.55);
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px 0 0 999px;
-  cursor: pointer;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  text-align: left;
-}
-.preset-load:hover  { background: rgba(255,255,255,0.12); color: #fff; }
-.preset-load.filled { border-color: rgba(230,59,46,0.4); color: rgba(255,255,255,0.85); }
-.preset-save {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.63rem;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-left: 1px solid rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.35);
-  padding: 0.35rem 0.55rem;
-  border-radius: 0 999px 999px 0;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.preset-save:hover { background: rgba(230,59,46,0.2); color: #e63b2e; }
-.preset-save.has-data { color: rgba(255,100,80,0.6); }
-.preset-save.has-data:hover { background: rgba(230,59,46,0.25); color: #e63b2e; }
-
-/* saved flash */
-@keyframes presetSaved {
-  0%   { background: rgba(230,59,46,0.35); }
-  100% { background: rgba(255,255,255,0.06); }
-}
-.preset-load.flash { animation: presetSaved 0.6s ease-out forwards; }
-
   /* â”€â”€â”€â”€ TIMER â”€â”€â”€â”€ */
   #timer-row {
     display: flex;
@@ -509,20 +438,6 @@
 
 <div id="hint">PRESS H TO HIDE - F FOR FULLSCREEN - SPACE TO PAUSE</div>
 
-<div id="preset-row">
-  <label>PRESETS</label>
-  <div class="preset-slot" data-slot="0">
-    <button class="preset-load" data-slot="0">empty</button>
-    <button class="preset-save" data-slot="0" title="Save current settings">save</button>
-  </div>
-  <div class="preset-slot" data-slot="1">
-    <button class="preset-load" data-slot="1">empty</button>
-    <button class="preset-save" data-slot="1" title="Save current settings">save</button>
-  </div>
-  <div class="preset-slot" data-slot="2">
-    <button class="preset-load" data-slot="2">empty</button>
-    <button class="preset-save" data-slot="2" title="Save current settings">save</button>
-  </div>
 </div>
 
 <script>
@@ -1391,132 +1306,502 @@ const SceneFactories = {
 
   // LIVE CODING
   fireworks() {
-    const streamCount = densityCount(14, 52);
-    const snippets = [
+  const streamCount = densityCount(14, 52);
+
+  const fileSnippets = {
+    'index.js': [
       'const state = renderFrame();',
-      'git status --short',
-      'npm run dev',
-      'SELECT * FROM sessions;',
-      'function loop() {',
-      'await saveDraft();',
-      'cursor: blinking;',
-      'if (focus) commit();',
-      'ssh terminal@flobe',
+      'export default function App() {',
+      'import { useEffect } from "react";',
+      'const [data, setData] = useState([]);',
+      'return <Main wrapped={true} />;',
+      'router.get("/api/health", ping);',
       'startTransition(() => sync());',
       'while (true) refine();',
-      'tail -f logs/app.log',
-    ];
-    const streams = Array.from({ length: streamCount }, (_, i) => ({
-      x: lerp(W * 0.08, W * 0.78, i / Math.max(1, streamCount - 1)) + rnd(-22, 22),
-      y: rnd(-H, H),
-      speed: rnd(0.5, 1.6),
-      alpha: rnd(0.14, 0.42),
-      color: currentPalette[i % currentPalette.length],
-      text: snippets[rndInt(0, snippets.length - 1)],
-    }));
-    const windows = Array.from({ length: 3 }, (_, i) => ({
-      x: W * (0.08 + i * 0.28),
-      y: H * (0.12 + (i % 2) * 0.07),
-      w: W * (i === 2 ? 0.22 : 0.3),
-      h: H * (i === 1 ? 0.56 : 0.48),
-    }));
-    const particles = Array.from({ length: densityCount(18, 60) }, () => ({
-      x: rnd(0, W),
-      y: rnd(0, H),
-      r: rnd(0.8, 2.2),
-      speed: rnd(0.2, 0.8),
-      alpha: rnd(0.05, 0.2),
-    }));
-    let commandFlash = 0;
-    let activeCommand = 'booting workspace...';
-    let tick = 0;
-    return {
-      draw() {
-        tick += 0.01 * (0.7 + speed * 0.16);
-        const bg = ctx.createLinearGradient(0, 0, W, H);
-        bg.addColorStop(0, '#071018');
-        bg.addColorStop(0.45, '#0b0f16');
-        bg.addColorStop(1, '#05070c');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
+    ],
+    'api.ts': [
+      'async function fetchUser(id: string) {',
+      'const res = await fetch(`/users/${id}`);',
+      'interface Session { token: string; }',
+      'export const handler = async (req, res) => {',
+      'await saveDraft();',
+      'return NextResponse.json({ ok: true });',
+      'type Config = Partial<AppConfig>;',
+      'const schema = z.object({ id: z.string() });',
+    ],
+    'styles.css': [
+      '.container { display: flex; gap: 1rem; }',
+      'cursor: blinking;',
+      '@keyframes fadeIn { from { opacity:0 } }',
+      ':root { --accent: #e63b2e; }',
+      'backdrop-filter: blur(20px);',
+      'transition: all 0.3s ease-in-out;',
+      '.panel { border-radius: 1.2rem; }',
+      'grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));',
+    ],
+  };
 
-        const sideGlow = ctx.createLinearGradient(0, 0, W, 0);
-        sideGlow.addColorStop(0, 'rgba(0,255,180,0.03)');
-        sideGlow.addColorStop(0.5, 'rgba(0,0,0,0)');
-        sideGlow.addColorStop(1, 'rgba(140,80,255,0.03)');
-        ctx.fillStyle = sideGlow;
-        ctx.fillRect(0, 0, W, H);
+  const fileNames = Object.keys(fileSnippets);
 
-        windows.forEach((panel, index) => {
-          const bob = Math.sin(tick * 1.4 + index) * 6;
-          const px = panel.x;
-          const py = panel.y + bob;
-          ctx.fillStyle = index === 1 ? 'rgba(18,22,30,0.72)' : 'rgba(12,16,22,0.62)';
-          ctx.strokeStyle = 'rgba(120,180,255,0.08)';
-          ctx.lineWidth = 1;
-          ctx.fillRect(px, py, panel.w, panel.h);
-          ctx.strokeRect(px, py, panel.w, panel.h);
-          ctx.fillStyle = 'rgba(255,255,255,0.04)';
-          ctx.fillRect(px, py, panel.w, 28);
-          ['#ff5f56','#ffbd2e','#27c93f'].forEach((col, i) => {
-            ctx.fillStyle = col;
-            ctx.beginPath();
-            ctx.arc(px + 16 + i * 14, py + 14, 4, 0, Math.PI * 2);
-            ctx.fill();
-          });
-        });
+  const windows = [
+    { fx: 0.04, fy: 0.10, fw: 0.30, fh: 0.50, file: 'index.js' },
+    { fx: 0.36, fy: 0.06, fw: 0.34, fh: 0.58, file: 'api.ts'   },
+    { fx: 0.72, fy: 0.12, fw: 0.24, fh: 0.46, file: 'styles.css'},
+  ].map(p => ({
+    x: W * p.fx, y: W * p.fy,
+    w: W * p.fw, h: W * p.fh,
+    file: p.file,
+    scrollY: 0,
+    active: false,
+  }));
 
-        ctx.font = '13px DM Mono, monospace';
-        streams.forEach((stream, index) => {
-          stream.y += stream.speed * (0.45 + speed * 0.08);
-          if(stream.y > H + 24) {
-            stream.y = -24;
-            stream.text = snippets[rndInt(0, snippets.length - 1)];
-            stream.x = lerp(W * 0.08, W * 0.78, index / Math.max(1, streamCount - 1)) + rnd(-22, 22);
-          }
-          const gutter = String((index % 220) + 1).padStart(3, '0');
-          ctx.fillStyle = `rgba(140,160,180,${stream.alpha * 0.6})`;
-          ctx.fillText(gutter, stream.x - 34, stream.y);
-          ctx.fillStyle = `${stream.color}${Math.round(stream.alpha * 255).toString(16).padStart(2, '0')}`;
-          ctx.fillText(stream.text, stream.x, stream.y);
-        });
+  // focus cycles between windows
+  let focusedWindow = 1;
+  let focusTimer = 0;
 
-        if(Math.floor(tick * 12) % 10 === 0) {
-          activeCommand = snippets[rndInt(0, snippets.length - 1)];
-          commandFlash = 1;
-        }
-        commandFlash *= 0.92;
+  const TITLE_H = 32;
+  const LINE_H  = 18;
+  const GUTTER  = 36;
 
-        particles.forEach(dot => {
-          dot.y += dot.speed + speed * 0.02;
-          if(dot.y > H + 4) dot.y = -4;
-          ctx.beginPath();
-          ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(120,200,255,${dot.alpha})`;
-          ctx.fill();
-        });
+  // syntax highlight tokens
+  const KEYWORDS = ['const','let','var','function','async','await','return',
+    'export','default','import','from','if','else','type','interface','class'];
+  const TYPES    = ['string','number','boolean','void','any','Promise','React'];
 
-        ctx.fillStyle = `rgba(80,250,123,${0.18 + commandFlash * 0.35})`;
-        ctx.fillRect(W * 0.09, H * 0.74, W * 0.56, 28);
-        ctx.fillStyle = '#50fa7b';
-        ctx.font = '14px DM Mono, monospace';
-        ctx.fillText(`> ${activeCommand}`, W * 0.1, H * 0.76 + 18);
+  function highlightLine(text, baseColor) {
+    // Returns array of {text, color} spans
+    const tokens = [];
+    const words  = text.split(/(\s+|[{}()[\];,:<>=+\-*/!.`"'])/);
+    words.forEach(w => {
+      if(KEYWORDS.includes(w))      tokens.push({ text: w, color: '#ff79c6' });
+      else if(TYPES.includes(w))    tokens.push({ text: w, color: '#8be9fd' });
+      else if(/^["'`]/.test(w))     tokens.push({ text: w, color: '#f1fa8c' });
+      else if(/^\/\//.test(w))      tokens.push({ text: w, color: '#6272a4' });
+      else if(/^\d+$/.test(w))      tokens.push({ text: w, color: '#bd93f9' });
+      else                          tokens.push({ text: w, color: baseColor  });
+    });
+    return tokens;
+  }
 
-        for(let i = 0; i < 4; i++) {
-          const y = H * (0.18 + i * 0.17) + Math.sin(tick * 2 + i) * 6;
-          ctx.fillStyle = `rgba(255,255,255,${0.02 + i * 0.008})`;
-          ctx.fillRect(0, y, W, 1);
-        }
+  function drawWindow(panel, bob) {
+    const { x, y, w, h, file, active } = panel;
+    const py = y + bob;
+    const isFocused = active;
 
-        const caretVisible = Math.floor(tick * 24) % 2 === 0;
-        ctx.fillStyle = caretVisible ? 'rgba(80,250,123,0.9)' : 'rgba(80,250,123,0.16)';
-        ctx.fillRect(W * 0.39, H * 0.28, 3, 16);
+    // shadow
+    ctx.shadowColor = isFocused
+      ? (currentPalette[0] + '55')
+      : 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur  = isFocused ? 28 : 12;
 
-        ctx.fillStyle = 'rgba(0,0,0,0.08)';
-        for(let sy = 0; sy < H; sy += 4) ctx.fillRect(0, sy, W, 2);
+    // body
+    ctx.fillStyle   = isFocused ? 'rgba(22,26,36,0.88)' : 'rgba(12,16,22,0.72)';
+    ctx.strokeStyle = isFocused
+      ? (currentPalette[0] + '55')
+      : 'rgba(120,180,255,0.09)';
+    ctx.lineWidth   = isFocused ? 1.5 : 1;
+    ctx.fillRect(x, py, w, h);
+    ctx.strokeRect(x, py, w, h);
+    ctx.shadowBlur  = 0;
+
+    // title bar
+    ctx.fillStyle   = isFocused ? 'rgba(40,44,56,0.95)' : 'rgba(20,24,32,0.8)';
+    ctx.fillRect(x, py, w, TITLE_H);
+
+    // traffic lights
+    ['#ff5f56','#ffbd2e','#27c93f'].forEach((col, i) => {
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(x + 14 + i * 18, py + TITLE_H / 2, 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // filename tab
+    ctx.fillStyle   = isFocused ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)';
+    const tabW      = ctx.measureText(file).width + 28;
+    ctx.fillRect(x + 62, py, tabW, TITLE_H);
+    ctx.fillStyle   = isFocused ? '#fff' : 'rgba(255,255,255,0.45)';
+    ctx.font        = `12px DM Mono, monospace`;
+    ctx.textAlign   = 'left';
+    ctx.fillText(file, x + 76, py + TITLE_H / 2 + 4);
+
+    // clip content area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, py + TITLE_H, w, h - TITLE_H);
+    ctx.clip();
+
+    const snippets  = fileSnippets[file];
+    const lineCount = Math.ceil((h - TITLE_H) / LINE_H) + 4;
+    const startLine = Math.floor(panel.scrollY);
+    const baseColor = file === 'styles.css' ? '#a8ff78'
+                    : file === 'api.ts'     ? '#8be9fd'
+                    : '#f8f8f2';
+
+    for(let li = 0; li < lineCount; li++) {
+      const lineIdx  = (startLine + li) % snippets.length;
+      const lineText = snippets[lineIdx];
+      const lx       = x + GUTTER;
+      const ly       = py + TITLE_H + (li - (panel.scrollY % 1)) * LINE_H + LINE_H;
+
+      // line number
+      ctx.fillStyle  = 'rgba(255,255,255,0.18)';
+      ctx.font       = '11px DM Mono, monospace';
+      ctx.textAlign  = 'right';
+      ctx.fillText(String((startLine + li + 1) % 999 + 1), x + GUTTER - 6, ly);
+
+      // syntax highlighted code
+      const tokens   = highlightLine(lineText, baseColor);
+      let tx         = lx + 4;
+      ctx.font       = '12px DM Mono, monospace';
+      ctx.textAlign  = 'left';
+      tokens.forEach(tok => {
+        ctx.fillStyle = tok.color;
+        ctx.fillText(tok.text, tx, ly);
+        tx += ctx.measureText(tok.text).width;
+      });
+    }
+
+    // scrollbar
+    const barH     = Math.max(24, (h - TITLE_H) / snippets.length * (h - TITLE_H) / LINE_H * 4);
+    const barY     = py + TITLE_H + ((panel.scrollY / snippets.length) % 1) * (h - TITLE_H - barH);
+    ctx.fillStyle  = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x + w - 6, py + TITLE_H, 4, h - TITLE_H);
+    ctx.fillStyle  = isFocused ? currentPalette[0] + 'aa' : 'rgba(255,255,255,0.25)';
+    ctx.fillRect(x + w - 6, barY, 4, barH);
+
+    ctx.restore();
+
+    // active glow pulse around focused window
+    if(isFocused) {
+      const pulse   = 0.5 + 0.5 * Math.sin(Date.now() * 0.003);
+      ctx.strokeStyle = currentPalette[0] + Math.round(pulse * 80 + 20).toString(16).padStart(2,'0');
+      ctx.lineWidth   = 1.5;
+      ctx.shadowColor = currentPalette[0];
+      ctx.shadowBlur  = 12 + pulse * 10;
+      ctx.strokeRect(x + 1, py + 1, w - 2, h - 2);
+      ctx.shadowBlur  = 0;
+    }
+  }
+
+  // ---- errors ----
+  const errorMessages = [
+    "TypeError: Cannot read properties of undefined",
+    "ReferenceError: state is not defined",
+    "SyntaxError: Unexpected token '}'",
+    "Error: ENOENT: no such file or directory",
+    "UnhandledPromiseRejection: fetch failed",
+  ];
+  let activeError = null;
+  let errorTimer  = 0;
+
+  // ---- git diff ----
+  const diffLines = [
+    { t: '+', text: '+ const session = await getSession(req);' },
+    { t: '+', text: '+ if (!session) return res.status(401);'  },
+    { t: '-', text: '- return res.status(200).json(data);'     },
+    { t: '+', text: '+ return res.json({ session, data });'     },
+    { t: ' ', text: '  router.use(cors({ origin: "*" }));'      },
+    { t: '-', text: '- console.log("debug", state);'           },
+    { t: '+', text: '+ logger.info("state", { state });'        },
+    { t: ' ', text: '  export default router;'                  },
+  ];
+  let diffScrollY  = 0;
+
+  // ---- notifications ----
+  const notifMessages = [
+    { icon: '✓', text: 'Build succeeded',        color: '#27c93f' },
+    { icon: '✓', text: 'Tests passing (48/48)',  color: '#27c93f' },
+    { icon: '⬆', text: 'Deployed to staging',   color: '#8be9fd' },
+    { icon: '!', text: '2 warnings in api.ts',   color: '#ffbd2e' },
+    { icon: '✓', text: 'Lint passed',            color: '#27c93f' },
+    { icon: '⬆', text: 'PR #42 merged',         color: '#bd93f9' },
+  ];
+  let activeNotif   = null;
+  let notifTimer    = 0;
+  let notifAlpha    = 0;
+  const NOTIF_W     = 220;
+  const NOTIF_H     = 44;
+
+  // ---- terminal sequences ----
+  const termSequences = [
+    ['npm install', '⠸ Installing packages...', 'added 847 packages in 3.2s'],
+    ['npm run build', '⠼ Building...', '✓ Built in 1.04s'],
+    ['git push origin main', 'Enumerating objects...', '✓ Branch pushed'],
+    ['npx tsc --noEmit', 'Type checking...', '✓ No errors found'],
+    ['npm test', 'Running test suite...', '✓ 48 tests passed'],
+  ];
+  let termSeqIdx    = 0;
+  let termStep      = 0; // 0=command, 1=output1, 2=output2
+  let termTimer     = 0;
+  let termLine1     = '';
+  let termLine2     = '';
+  let termLine3     = '';
+  let termProgress  = 0;
+  const SHOW_PROGRESS = [0, 0, 1]; // which step shows progress bar
+
+  // ---- second cursor ----
+  let cursor2X      = W * 0.55;
+  let cursor2Y      = H * 0.32;
+  let cursor2Timer  = 0;
+
+  // ---- status bar ----
+  let statusBranch  = 'main';
+  let statusErrors  = 0;
+  let statusLine    = 42;
+  let statusCol     = 18;
+  let statusLang    = 'JavaScript';
+  let statusTimer   = 0;
+
+  const particles   = Array.from({ length: densityCount(18, 60) }, () => ({
+    x: rnd(0, W), y: rnd(0, H),
+    r: rnd(0.8, 2.2), speed: rnd(0.2, 0.8), alpha: rnd(0.05, 0.2),
+  }));
+
+  let tick = 0;
+
+  return {
+    draw() {
+      tick += 0.01 * (0.7 + speed * 0.16);
+      const now = Date.now();
+
+      // ---- background ----
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0,    '#071018');
+      bg.addColorStop(0.45, '#0b0f16');
+      bg.addColorStop(1,    '#05070c');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      const sideGlow = ctx.createLinearGradient(0, 0, W, 0);
+      sideGlow.addColorStop(0,   'rgba(0,255,180,0.03)');
+      sideGlow.addColorStop(0.5, 'rgba(0,0,0,0)');
+      sideGlow.addColorStop(1,   'rgba(140,80,255,0.03)');
+      ctx.fillStyle = sideGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      // ---- focus cycling ----
+      focusTimer += speed * 0.012;
+      if(focusTimer > 1) {
+        focusTimer    = 0;
+        focusedWindow = (focusedWindow + 1) % windows.length;
       }
-    };
-  },
+      windows.forEach((p, i) => {
+        p.active    = i === focusedWindow;
+        p.scrollY  += speed * (p.active ? 0.025 : 0.012);
+      });
+
+      // ---- draw windows ----
+      windows.forEach((panel, index) => {
+        const bob = Math.sin(tick * 1.4 + index) * 4;
+        drawWindow(panel, bob);
+      });
+
+      // ---- git diff panel ----
+      const diffX = W * 0.04;
+      const diffY = H * 0.64;
+      const diffW = W * 0.30;
+      const diffH = H * 0.22;
+      diffScrollY += speed * 0.008;
+      ctx.fillStyle   = 'rgba(10,14,20,0.82)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth   = 1;
+      ctx.fillRect(diffX, diffY, diffW, diffH);
+      ctx.strokeRect(diffX, diffY, diffW, diffH);
+      ctx.fillStyle   = 'rgba(20,24,32,0.9)';
+      ctx.fillRect(diffX, diffY, diffW, TITLE_H);
+      ctx.fillStyle   = 'rgba(255,255,255,0.3)';
+      ctx.font        = '11px DM Mono, monospace';
+      ctx.textAlign   = 'left';
+      ctx.fillText('git diff  HEAD~1', diffX + 10, diffY + TITLE_H / 2 + 4);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(diffX, diffY + TITLE_H, diffW, diffH - TITLE_H);
+      ctx.clip();
+      const diffStart = Math.floor(diffScrollY);
+      const diffLineCount = Math.ceil((diffH - TITLE_H) / LINE_H) + 2;
+      for(let li = 0; li < diffLineCount; li++) {
+        const dl  = diffLines[(diffStart + li) % diffLines.length];
+        const lx  = diffX + 8;
+        const ly  = diffY + TITLE_H + (li - (diffScrollY % 1)) * LINE_H + LINE_H;
+        ctx.fillStyle = dl.t === '+' ? 'rgba(39,201,63,0.15)'
+                      : dl.t === '-' ? 'rgba(255,95,86,0.15)'
+                      : 'transparent';
+        ctx.fillRect(diffX, ly - LINE_H + 3, diffW, LINE_H);
+        ctx.fillStyle = dl.t === '+' ? '#27c93f'
+                      : dl.t === '-' ? '#ff5f56'
+                      : 'rgba(255,255,255,0.3)';
+        ctx.font      = '11px DM Mono, monospace';
+        ctx.fillText(dl.text, lx, ly);
+      }
+      ctx.restore();
+
+      // ---- floating particles ----
+      particles.forEach(dot => {
+        dot.y += dot.speed + speed * 0.02;
+        if(dot.y > H + 4) dot.y = -4;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(120,200,255,${dot.alpha})`;
+        ctx.fill();
+      });
+
+      // ---- error messages ----
+      errorTimer += speed * 0.008;
+      if(!activeError && errorTimer > 1) {
+        activeError = errorMessages[rndInt(0, errorMessages.length - 1)];
+        errorTimer  = 0;
+      }
+      if(activeError) {
+        const errAlpha = errorTimer < 0.15 ? errorTimer / 0.15
+                       : errorTimer > 0.7  ? 1 - (errorTimer - 0.7) / 0.3
+                       : 1;
+        const errX = windows[focusedWindow].x + 8;
+        const errY = windows[focusedWindow].y + windows[focusedWindow].h - 28
+                   + Math.sin(tick * 1.4 + focusedWindow) * 4;
+        ctx.fillStyle   = `rgba(255,95,86,${errAlpha * 0.18})`;
+        ctx.fillRect(errX - 4, errY - 14, ctx.measureText(activeError).width + 24, 20);
+        ctx.fillStyle   = `rgba(255,95,86,${errAlpha * 0.9})`;
+        ctx.font        = '11px DM Mono, monospace';
+        ctx.textAlign   = 'left';
+        ctx.fillText('⚠ ' + activeError, errX, errY);
+        if(errorTimer >= 1) activeError = null;
+      }
+
+      // ---- terminal sequence ----
+      termTimer += speed * 0.008;
+      if(termStep === 0 && termTimer > 0.3) {
+        const seq  = termSequences[termSeqIdx % termSequences.length];
+        termLine1  = `> ${seq[0]}`;
+        termLine2  = '';
+        termLine3  = '';
+        termProgress = 0;
+        if(termTimer > 0.6) { termLine2 = seq[1]; termProgress = Math.min(1,(termTimer-0.6)/0.4); }
+        if(termTimer > 1.2) { termLine3 = seq[2]; }
+        if(termTimer > 1.8) { termStep = 0; termTimer = 0; termSeqIdx++; }
+      }
+
+      const tY = H * 0.89;
+      const tX = W * 0.04;
+      const tW = W * 0.56;
+
+      ctx.fillStyle   = `rgba(30,34,44,0.88)`;
+      ctx.fillRect(tX - 8, tY - 20, tW + 16, termLine2 ? 72 : 36);
+      ctx.strokeStyle = 'rgba(80,250,123,0.2)';
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(tX - 8, tY - 20, tW + 16, termLine2 ? 72 : 36);
+
+      ctx.fillStyle   = '#50fa7b';
+      ctx.font        = '13px DM Mono, monospace';
+      ctx.textAlign   = 'left';
+      ctx.fillText(termLine1, tX, tY);
+
+      if(termLine2) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font      = '12px DM Mono, monospace';
+        ctx.fillText(termLine2, tX, tY + 18);
+
+        // progress bar
+        if(termProgress < 1 && termProgress > 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.1)';
+          ctx.fillRect(tX, tY + 26, tW * 0.5, 4);
+          ctx.fillStyle = currentPalette[0];
+          ctx.fillRect(tX, tY + 26, tW * 0.5 * termProgress, 4);
+        }
+      }
+
+      if(termLine3) {
+        ctx.fillStyle = '#27c93f';
+        ctx.font      = '12px DM Mono, monospace';
+        ctx.fillText(termLine3, tX, tY + 36);
+      }
+
+      // ---- second cursor ----
+      cursor2Timer += speed * 0.006;
+      if(cursor2Timer > 1) {
+        cursor2Timer = 0;
+        const fw     = windows[focusedWindow];
+        cursor2X     = fw.x + GUTTER + rnd(0, fw.w - GUTTER - 40);
+        cursor2Y     = fw.y + TITLE_H + rnd(LINE_H, fw.h - TITLE_H - LINE_H)
+                     + Math.sin(tick * 1.4 + focusedWindow) * 4;
+      }
+      const c2vis  = Math.floor(tick * 20) % 2 === 0;
+      ctx.fillStyle = c2vis ? 'rgba(189,147,249,0.85)' : 'rgba(189,147,249,0.12)';
+      ctx.fillRect(cursor2X, cursor2Y, 2, 14);
+
+      // primary caret
+      const caretVis = Math.floor(tick * 24) % 2 === 0;
+      ctx.fillStyle   = caretVis ? 'rgba(80,250,123,0.9)' : 'rgba(80,250,123,0.16)';
+      ctx.fillRect(W * 0.39, H * 0.28, 3, 16);
+
+      // ---- notification ----
+      notifTimer += speed * 0.006;
+      if(!activeNotif && notifTimer > 1) {
+        activeNotif = notifMessages[rndInt(0, notifMessages.length - 1)];
+        notifTimer  = 0;
+        notifAlpha  = 0;
+      }
+      if(activeNotif) {
+        notifAlpha  = notifTimer < 0.15 ? notifTimer / 0.15
+                    : notifTimer > 0.75 ? 1 - (notifTimer - 0.75) / 0.25
+                    : 1;
+        const nx    = W - NOTIF_W - 16;
+        const ny    = 56 + (1 - notifAlpha) * -20;
+        ctx.fillStyle   = `rgba(18,22,30,${notifAlpha * 0.95})`;
+        ctx.strokeStyle = `${activeNotif.color}${Math.round(notifAlpha * 120).toString(16).padStart(2,'0')}`;
+        ctx.lineWidth   = 1;
+        ctx.fillRect(nx, ny, NOTIF_W, NOTIF_H);
+        ctx.strokeRect(nx, ny, NOTIF_W, NOTIF_H);
+        ctx.fillStyle   = `${activeNotif.color}${Math.round(notifAlpha * 255).toString(16).padStart(2,'0')}`;
+        ctx.font        = '13px DM Mono, monospace';
+        ctx.textAlign   = 'left';
+        ctx.fillText(`${activeNotif.icon}  ${activeNotif.text}`, nx + 12, ny + NOTIF_H / 2 + 5);
+        if(notifTimer >= 1) activeNotif = null;
+      }
+
+      // ---- status bar ----
+      statusTimer += speed * 0.004;
+      if(statusTimer > 1) {
+        statusTimer  = 0;
+        statusLine   = rndInt(1, 200);
+        statusCol    = rndInt(1, 80);
+        statusErrors = Math.random() > 0.85 ? rndInt(1, 3) : 0;
+        statusLang   = ['JavaScript','TypeScript','CSS','JSON'][rndInt(0,3)];
+        statusBranch = ['main','dev','feat/ui','fix/api','chore/deps'][rndInt(0,4)];
+      }
+      const sbY = H - 22;
+      ctx.fillStyle = currentPalette[0] + 'dd';
+      ctx.fillRect(0, sbY, W, 22);
+
+      ctx.font      = '11px DM Mono, monospace';
+      ctx.textAlign = 'left';
+      const sbItems = [
+        { text: ` ⎇  ${statusBranch}`, color: '#fff' },
+        { text: `  Ln ${statusLine}, Col ${statusCol}`, color: 'rgba(255,255,255,0.75)' },
+        { text: `  ${statusLang}`, color: 'rgba(255,255,255,0.75)' },
+        { text: statusErrors ? `  ⚠ ${statusErrors} errors` : '  ✓ no errors',
+          color: statusErrors ? '#ffbd2e' : 'rgba(255,255,255,0.75)' },
+      ];
+      let sbX = 8;
+      sbItems.forEach(item => {
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, sbX, sbY + 15);
+        sbX += ctx.measureText(item.text).width;
+      });
+
+      // right side of status bar
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText('UTF-8  spaces: 2  Flobe', W - 10, sbY + 15);
+
+      // ---- scanlines (react to speed) ----
+      const scanAlpha = 0.02 + speed * 0.006;
+      ctx.fillStyle   = `rgba(0,0,0,${scanAlpha})`;
+      for(let sy = 0; sy < H; sy += 4) ctx.fillRect(0, sy, W, 2);
+    }
+  };
+},
 
   // â”€â”€ CLOUD INK â”€â”€
   inkcloud() {
@@ -1814,14 +2099,6 @@ document.querySelectorAll('.preset-save').forEach(btn => {
     void loadBtn.offsetWidth; // reflow to restart animation
     loadBtn.classList.add('flash');
     setTimeout(() => loadBtn.classList.remove('flash'), 650);
-  });
-});
-
-document.querySelectorAll('.preset-load').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const i = +btn.dataset.slot;
-    const presets = getPresets();
-    if(presets[i]) applyState(presets[i]);
   });
 });
 
