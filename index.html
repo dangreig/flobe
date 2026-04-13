@@ -1943,12 +1943,6 @@ function activateScene(id) {
   loop();
 }
 
-function loop() {
-  if(paused) return;
-  currentScene?.draw();
-  rafId = requestAnimationFrame(loop);
-}
-
 // ----------------------------------------
 // FPS COUNTER
 // ----------------------------------------
@@ -1985,7 +1979,6 @@ function toggleFps() {
 fpsBtn.addEventListener('click', toggleFps);
 
 // Patch the loop to tick FPS
-const _origLoop = loop;
 function loop() {
   if(paused) return;
   const now = performance.now();
@@ -1994,116 +1987,7 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 
-// ----------------------------------------
-// PRESETS
-// ----------------------------------------
-const PRESET_KEY = 'flobe_presets';
 
-function getPresets() {
-  try { return JSON.parse(localStorage.getItem(PRESET_KEY)) || [null, null, null]; }
-  catch { return [null, null, null]; }
-}
-
-function savePresets(presets) {
-  localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
-}
-
-function captureState() {
-  return {
-    scene:   activeSceneId,
-    speed:   speed,
-    density: density,
-    palette: activePaletteKey,
-    timer:   timerSelectedSecs,
-    fps:     fpsVisible,
-    label:   SCENES.find(s => s.id === activeSceneId)?.label || activeSceneId,
-    savedAt: Date.now(),
-  };
-}
-
-function applyState(state) {
-  // palette
-  const palKey = state.palette || 'cosmic';
-  currentPalette = PALETTES[palKey] || PALETTES.cosmic;
-  activePaletteKey = palKey;
-  document.querySelectorAll('.pal-swatch').forEach(sw => {
-    sw.classList.toggle('active', sw.title === palKey);
-  });
-
-  // speed
-  speed = state.speed ?? 5;
-  document.getElementById('speed-slider').value = speed;
-
-  // density
-  density = state.density ?? 5;
-  document.getElementById('density-slider').value = density;
-
-  // timer
-  resetTimer();
-  if(state.timer) {
-    timerSelectedSecs = state.timer;
-    timerSecsLeft = state.timer;
-    timerDisplay.textContent = formatTime(state.timer);
-    timerBegin.disabled = false;
-    document.querySelectorAll('.timer-preset').forEach(b => {
-      const secs = b.dataset.secs ? +b.dataset.secs : +b.dataset.mins * 60;
-      b.classList.toggle('active', secs === state.timer);
-    });
-  }
-
-  // fps
-  if(!!state.fps !== fpsVisible) toggleFps();
-
-  // scene last so it picks up new speed/density/palette
-  activateScene(state.scene || 'block');
-}
-
-function renderPresetButtons() {
-  const presets = getPresets();
-  document.querySelectorAll('.preset-slot').forEach(slot => {
-    const i      = +slot.dataset.slot;
-    const preset = presets[i];
-    const loadBtn = slot.querySelector('.preset-load');
-    const saveBtn = slot.querySelector('.preset-save');
-
-    if(preset) {
-      const d = new Date(preset.savedAt);
-      const timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      loadBtn.textContent = `${preset.label}`;
-      loadBtn.title = `Saved ${timeStr} — ${preset.palette}, speed ${preset.speed}, density ${preset.density}`;
-      loadBtn.classList.add('filled');
-      saveBtn.textContent = '↺';
-      saveBtn.classList.add('has-data');
-      saveBtn.title = 'Overwrite with current settings';
-    } else {
-      loadBtn.textContent = `slot ${i+1}`;
-      loadBtn.classList.remove('filled');
-      loadBtn.title = '';
-      saveBtn.textContent = 'save';
-      saveBtn.classList.remove('has-data');
-      saveBtn.title = 'Save current settings';
-    }
-  });
-}
-
-document.querySelectorAll('.preset-save').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const i = +btn.dataset.slot;
-    const presets = getPresets();
-    presets[i] = captureState();
-    savePresets(presets);
-    renderPresetButtons();
-    // flash the load button to confirm
-    const loadBtn = document.querySelector(`.preset-load[data-slot="${i}"]`);
-    loadBtn.classList.remove('flash');
-    void loadBtn.offsetWidth; // reflow to restart animation
-    loadBtn.classList.add('flash');
-    setTimeout(() => loadBtn.classList.remove('flash'), 650);
-  });
-});
-
-// init preset buttons on load
-renderPresetButtons();
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
