@@ -17,6 +17,25 @@
     --panel-border: rgba(0,0,0,0.12);
   }
 
+.pal-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+.pal-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.pal-wrap:hover .pal-label { color: rgba(255,255,255,0.7); }
+.pal-swatch.active + .pal-label { color: rgba(255,255,255,0.9); }
+
   body {
     font-family: 'Syne', sans-serif;
     background: #0f0f0f;
@@ -59,7 +78,7 @@
     align-items: center;
     justify-content: space-between;
     pointer-events: all;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
   }
 
   .logo {
@@ -136,15 +155,27 @@
 #fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 #fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
   
-  /* â”€â”€â”€â”€ PANEL â”€â”€â”€â”€ */
+  /* Panel */
   #panel {
     pointer-events: all;
-    background: rgba(10,10,10,0.75);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.07) 0%,
+      rgba(255,255,255,0.03) 50%,
+      rgba(255,255,255,0.06) 100%
+    );
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-bottom-color: rgba(255,255,255,0.06);
+    border-right-color: rgba(255,255,255,0.06);
     border-radius: 1.2rem;
     padding: 1.4rem 1.6rem;
     width: min(96vw, 780px);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.4),
+      0 1px 0 rgba(255,255,255,0.08) inset,
+      0 -1px 0 rgba(0,0,0,0.2) inset;
   }
 
   #panel h2 {
@@ -513,18 +544,29 @@ SCENES.forEach(s => {
 
 const palRow = document.getElementById('palette-row');
 Object.keys(PALETTES).forEach(key => {
+  const wrap = document.createElement('div');
+  wrap.className = 'pal-wrap';
+
   const sw = document.createElement('div');
   sw.className = 'pal-swatch' + (key === activePaletteKey ? ' active' : '');
   sw.style.background = `linear-gradient(135deg, ${PALETTES[key][0]}, ${PALETTES[key][2]})`;
   sw.title = key;
-  sw.addEventListener('click', () => {
+
+  const lbl = document.createElement('span');
+  lbl.className = 'pal-label';
+  lbl.textContent = key;
+
+  wrap.appendChild(sw);
+  wrap.appendChild(lbl);
+
+  wrap.addEventListener('click', () => {
     document.querySelectorAll('.pal-swatch').forEach(s=>s.classList.remove('active'));
     sw.classList.add('active');
     currentPalette = PALETTES[key];
     activePaletteKey = key;
     activateScene(activeSceneId);
   });
-  palRow.appendChild(sw);
+  palRow.appendChild(wrap);
 });
 
 document.getElementById('speed-slider').addEventListener('input', e => {
