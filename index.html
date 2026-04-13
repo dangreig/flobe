@@ -218,23 +218,27 @@
   .scene-btn .icon { font-size: 1.4rem; line-height: 1; }
   .scene-btn .label { font-size: 0.65rem; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
 
-  /* â”€â”€â”€â”€ CONTROLS â”€â”€â”€â”€ */
+  /*  CONTROLS  */
   #controls {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    flex-wrap: wrap;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    padding-top: 1rem;
-  }
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 1rem;
+}
 
   .ctrl {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex: 1;
-    min-width: 140px;
-  }
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 140px;
+}
+.ctrl:last-child {
+  flex-basis: 100%;
+  flex-grow: 0;
+}
 
   .ctrl label {
     font-family: 'DM Mono', monospace;
@@ -261,10 +265,11 @@
   }
 
   .palette-row {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-  }
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
   .pal-swatch {
     width: 22px; height: 22px;
     border-radius: 50%;
