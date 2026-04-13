@@ -120,6 +120,22 @@
   #hide-btn:hover,
   #fullscreen-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 
+#fps-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: background 0.2s, color 0.2s;
+}
+#fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+#fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
+  
   /* â”€â”€â”€â”€ PANEL â”€â”€â”€â”€ */
   #panel {
     pointer-events: all;
@@ -241,6 +257,108 @@
     z-index: 11;
   }
 
+/* ---- FPS COUNTER ---- */
+#fps-counter {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 0.28rem 0.85rem;
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+  gap: 0.5rem;
+  align-items: center;
+}
+#fps-counter.visible { display: flex; }
+#fps-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #30d158;
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+#fps-dot.amber { background: #ff9f0a; }
+#fps-dot.red   { background: #e63b2e; }
+
+/* ---- PRESETS ---- */
+#preset-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 1rem;
+  margin-top: 0.8rem;
+}
+#preset-row label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+.preset-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+.preset-load {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.63rem;
+  letter-spacing: 0.05em;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-right: none;
+  color: rgba(255,255,255,0.55);
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px 0 0 999px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-align: left;
+}
+.preset-load:hover  { background: rgba(255,255,255,0.12); color: #fff; }
+.preset-load.filled { border-color: rgba(230,59,46,0.4); color: rgba(255,255,255,0.85); }
+.preset-save {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.63rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-left: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.35);
+  padding: 0.35rem 0.55rem;
+  border-radius: 0 999px 999px 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.preset-save:hover { background: rgba(230,59,46,0.2); color: #e63b2e; }
+.preset-save.has-data { color: rgba(255,100,80,0.6); }
+.preset-save.has-data:hover { background: rgba(230,59,46,0.25); color: #e63b2e; }
+
+/* saved flash */
+@keyframes presetSaved {
+  0%   { background: rgba(230,59,46,0.35); }
+  100% { background: rgba(255,255,255,0.06); }
+}
+.preset-load.flash { animation: presetSaved 0.6s ease-out forwards; }
+
   /* â”€â”€â”€â”€ TIMER â”€â”€â”€â”€ */
   #timer-row {
     display: flex;
@@ -300,7 +418,7 @@
     opacity: 0.4;
     cursor: default;
   }
-
+  
   /* ALERT OVERLAY */
   #timer-alert {
     position: fixed;
@@ -343,6 +461,7 @@
     <div id="top-actions">
       <button id="fullscreen-btn">FULLSCREEN</button>
       <button id="hide-btn">HIDE UI</button>
+      <button id="fps-btn">FPS</button>
     </div>
   </div>
 
@@ -383,7 +502,28 @@
   <div id="timer-alert-box">TIME'S UP</div>
 </div>
 
+<div id="fps-counter">
+  <div id="fps-dot"></div>
+  <span id="fps-text">-- fps</span>
+</div>
+
 <div id="hint">PRESS H TO HIDE - F FOR FULLSCREEN - SPACE TO PAUSE</div>
+
+<div id="preset-row">
+  <label>PRESETS</label>
+  <div class="preset-slot" data-slot="0">
+    <button class="preset-load" data-slot="0">empty</button>
+    <button class="preset-save" data-slot="0" title="Save current settings">save</button>
+  </div>
+  <div class="preset-slot" data-slot="1">
+    <button class="preset-load" data-slot="1">empty</button>
+    <button class="preset-save" data-slot="1" title="Save current settings">save</button>
+  </div>
+  <div class="preset-slot" data-slot="2">
+    <button class="preset-load" data-slot="2">empty</button>
+    <button class="preset-save" data-slot="2" title="Save current settings">save</button>
+  </div>
+</div>
 
 <script>
 // ----------------------------------------
@@ -657,7 +797,7 @@ const SceneFactories = {
       const rb = Math.round(lerp(ab, bb, t));
       return `rgb(${rr},${rg},${rb})`;
     }
-    const trails = Array.from({ length: densityCount(10, 28) }, () => ({ x, y, w: BW, h: BH, a: 0 }));
+    const trails = [];
     let frameN = 0;
     function roundedRect(px, py, pw, ph, pr) {
       ctx.beginPath();
@@ -724,8 +864,9 @@ const SceneFactories = {
         const drawH = BH - Math.abs(dentY) * 0.36 + cornerKick * 4;
         const radius = 28 + cornerKick * 4;
 
+        const maxTrails = densityCount(10, 28);
         trails.unshift({ x: drawX, y: drawY, w: drawW, h: drawH, a: 0.18 });
-        trails.length = densityCount(10, 28);
+        if (trails.length > maxTrails) trails.length = maxTrails;
         trails.forEach((trail, i) => {
           const alpha = trail.a * (1 - i / trails.length);
           if(alpha <= 0.005) return;
@@ -1523,6 +1664,169 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 
+// ----------------------------------------
+// FPS COUNTER
+// ----------------------------------------
+let fpsVisible = false;
+const fpsCounter = document.getElementById('fps-counter');
+const fpsDot     = document.getElementById('fps-dot');
+const fpsText    = document.getElementById('fps-text');
+const fpsBtn     = document.getElementById('fps-btn');
+
+let fpsFrameTimes = [];
+let fpsLastTime = null;
+
+function tickFps(now) {
+  if(!fpsVisible) return;
+  if(fpsLastTime !== null) {
+    const delta = now - fpsLastTime;
+    fpsFrameTimes.push(delta);
+    if(fpsFrameTimes.length > 60) fpsFrameTimes.shift();
+    const avg = fpsFrameTimes.reduce((a,b)=>a+b,0) / fpsFrameTimes.length;
+    const fps = Math.round(1000 / avg);
+    fpsText.textContent = `${fps} fps`;
+    fpsDot.className = fps >= 50 ? '' : fps >= 35 ? 'amber' : 'red';
+  }
+  fpsLastTime = now;
+}
+
+function toggleFps() {
+  fpsVisible = !fpsVisible;
+  fpsCounter.classList.toggle('visible', fpsVisible);
+  fpsBtn.classList.toggle('active', fpsVisible);
+  if(!fpsVisible) { fpsFrameTimes = []; fpsLastTime = null; }
+}
+
+fpsBtn.addEventListener('click', toggleFps);
+
+// Patch the loop to tick FPS
+const _origLoop = loop;
+function loop() {
+  if(paused) return;
+  const now = performance.now();
+  tickFps(now);
+  currentScene?.draw();
+  rafId = requestAnimationFrame(loop);
+}
+
+// ----------------------------------------
+// PRESETS
+// ----------------------------------------
+const PRESET_KEY = 'flobe_presets';
+
+function getPresets() {
+  try { return JSON.parse(localStorage.getItem(PRESET_KEY)) || [null, null, null]; }
+  catch { return [null, null, null]; }
+}
+
+function savePresets(presets) {
+  localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+}
+
+function captureState() {
+  return {
+    scene:   activeSceneId,
+    speed:   speed,
+    density: density,
+    palette: activePaletteKey,
+    timer:   timerSelectedSecs,
+    fps:     fpsVisible,
+    label:   SCENES.find(s => s.id === activeSceneId)?.label || activeSceneId,
+    savedAt: Date.now(),
+  };
+}
+
+function applyState(state) {
+  // palette
+  const palKey = state.palette || 'cosmic';
+  currentPalette = PALETTES[palKey] || PALETTES.cosmic;
+  activePaletteKey = palKey;
+  document.querySelectorAll('.pal-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.title === palKey);
+  });
+
+  // speed
+  speed = state.speed ?? 5;
+  document.getElementById('speed-slider').value = speed;
+
+  // density
+  density = state.density ?? 5;
+  document.getElementById('density-slider').value = density;
+
+  // timer
+  resetTimer();
+  if(state.timer) {
+    timerSelectedSecs = state.timer;
+    timerSecsLeft = state.timer;
+    timerDisplay.textContent = formatTime(state.timer);
+    timerBegin.disabled = false;
+    document.querySelectorAll('.timer-preset').forEach(b => {
+      const secs = b.dataset.secs ? +b.dataset.secs : +b.dataset.mins * 60;
+      b.classList.toggle('active', secs === state.timer);
+    });
+  }
+
+  // fps
+  if(!!state.fps !== fpsVisible) toggleFps();
+
+  // scene last so it picks up new speed/density/palette
+  activateScene(state.scene || 'block');
+}
+
+function renderPresetButtons() {
+  const presets = getPresets();
+  document.querySelectorAll('.preset-slot').forEach(slot => {
+    const i      = +slot.dataset.slot;
+    const preset = presets[i];
+    const loadBtn = slot.querySelector('.preset-load');
+    const saveBtn = slot.querySelector('.preset-save');
+
+    if(preset) {
+      const d = new Date(preset.savedAt);
+      const timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      loadBtn.textContent = `${preset.label}`;
+      loadBtn.title = `Saved ${timeStr} — ${preset.palette}, speed ${preset.speed}, density ${preset.density}`;
+      loadBtn.classList.add('filled');
+      saveBtn.textContent = '↺';
+      saveBtn.classList.add('has-data');
+      saveBtn.title = 'Overwrite with current settings';
+    } else {
+      loadBtn.textContent = `slot ${i+1}`;
+      loadBtn.classList.remove('filled');
+      loadBtn.title = '';
+      saveBtn.textContent = 'save';
+      saveBtn.classList.remove('has-data');
+      saveBtn.title = 'Save current settings';
+    }
+  });
+}
+
+document.querySelectorAll('.preset-save').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const i = +btn.dataset.slot;
+    const presets = getPresets();
+    presets[i] = captureState();
+    savePresets(presets);
+    renderPresetButtons();
+    // flash the load button to confirm
+    const loadBtn = document.querySelector(`.preset-load[data-slot="${i}"]`);
+    loadBtn.classList.remove('flash');
+    void loadBtn.offsetWidth; // reflow to restart animation
+    loadBtn.classList.add('flash');
+    setTimeout(() => loadBtn.classList.remove('flash'), 650);
+  });
+});
+
+document.querySelectorAll('.preset-load').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const i = +btn.dataset.slot;
+    const presets = getPresets();
+    if(presets[i]) applyState(presets[i]);
+  });
+});
+
+// init preset buttons on load
+renderPresetButtons();
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
