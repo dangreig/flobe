@@ -640,6 +640,7 @@ const SceneFactories = {
     let dentX = 0;
     let dentY = 0;
     let cornerKick = 0;
+    let colorIdx = 0;
     let impactTint = 'rgba(0,200,255,0.12)';
     let bodyTint = '#080c14';
     let edgeTint = 'rgba(0,220,255,0.18)';
@@ -681,14 +682,14 @@ const SceneFactories = {
         x += vx; y += vy;
         let hitX = false;
         let hitY = false;
-        if(x + BW >= W) { x = W - BW; vx = -Math.abs(vx); hitX = true; dentX = -14; }
-        if(x <= 0)       { x = 0;      vx =  Math.abs(vx); hitX = true; dentX = 14; }
-        if(y + BH >= H)  { y = H - BH; vy = -Math.abs(vy); hitY = true; dentY = -10; }
-        if(y <= 0)       { y = 0;      vy =  Math.abs(vy); hitY = true; dentY = 10; }
-        const primary = currentPalette[0] || '#5ac8fa';
-        const secondary = currentPalette[1] || '#ff2d55';
-        const tertiary = currentPalette[2] || '#30d158';
-        const quaternary = currentPalette[3] || secondary;
+        if(x + BW >= W) { x = W - BW; vx = -Math.abs(vx); hitX = true; dentX = -14; colorIdx = (colorIdx + 1) % currentPalette.length; }
+        if(x <= 0)       { x = 0;      vx =  Math.abs(vx); hitX = true; dentX = 14;  colorIdx = (colorIdx + 1) % currentPalette.length; }
+        if(y + BH >= H)  { y = H - BH; vy = -Math.abs(vy); hitY = true; dentY = -10; colorIdx = (colorIdx + 1) % currentPalette.length; }
+        if(y <= 0)       { y = 0;      vy =  Math.abs(vy); hitY = true; dentY = 10;  colorIdx = (colorIdx + 1) % currentPalette.length; }
+        const primary    = currentPalette[colorIdx % currentPalette.length] || '#5ac8fa';
+        const secondary  = currentPalette[(colorIdx + 1) % currentPalette.length] || '#ff2d55';
+        const tertiary   = currentPalette[(colorIdx + 2) % currentPalette.length] || '#30d158';
+        const quaternary = currentPalette[(colorIdx + 3) % currentPalette.length] || secondary;
         if(hitX && hitY) {
           cornerKick = 1;
           impactTint = rgba(secondary, 0.16);
