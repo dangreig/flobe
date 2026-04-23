@@ -6,3 +6,6 @@ It runs as a single-page canvas app with a collection of animated scenes, adjust
 
 
 #Vibe-coding test
+
+
+23/4/26 - added presets & improved overall quality. Adjusted buttons on UI. Improved transitions between backgrounds. 
