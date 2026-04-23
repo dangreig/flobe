@@ -123,7 +123,8 @@
   }
 
   #hide-btn,
-  #fullscreen-btn {
+  #fullscreen-btn,
+  #auto-quality-btn {
     font-family: 'DM Mono', monospace;
     font-size: 0.7rem;
     letter-spacing: 0.08em;
@@ -137,7 +138,13 @@
     transition: background 0.2s, color 0.2s;
   }
   #hide-btn:hover,
-  #fullscreen-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  #fullscreen-btn:hover,
+  #auto-quality-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  #auto-quality-btn.active {
+    background: rgba(48,209,88,0.22);
+    border-color: rgba(48,209,88,0.45);
+    color: #9df0b3;
+  }
 
 #fps-btn {
   font-family: 'DM Mono', monospace;
@@ -240,6 +247,11 @@
   flex-grow: 0;
 }
 
+.ctrl.presets {
+  flex-basis: 100%;
+  flex-grow: 0;
+}
+
   .ctrl label {
     font-family: 'DM Mono', monospace;
     font-size: 0.65rem;
@@ -270,6 +282,48 @@
   align-items: flex-start;
   flex-wrap: wrap;
 }
+
+  .preset-row {
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .preset-slot {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .preset-btn,
+  .preset-edit {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.68);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .preset-btn {
+    padding: 0.35rem 0.8rem;
+    min-width: 92px;
+  }
+  .preset-edit {
+    padding: 0.35rem 0.5rem;
+    min-width: 34px;
+  }
+  .preset-btn:hover,
+  .preset-edit:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+  .preset-btn.active {
+    border-color: #e63b2e;
+    background: rgba(230,59,46,0.18);
+    color: #fff;
+  }
   .pal-swatch {
     width: 22px; height: 22px;
     border-radius: 50%;
@@ -426,6 +480,7 @@
     <div id="top-actions">
       <button id="fullscreen-btn">FULLSCREEN</button>
       <button id="hide-btn">HIDE UI</button>
+      <button id="auto-quality-btn">AUTO</button>
       <button id="fps-btn">FPS</button>
     </div>
   </div>
@@ -445,6 +500,10 @@
       <div class="ctrl">
         <label>PALETTE</label>
         <div class="palette-row" id="palette-row"></div>
+      </div>
+      <div class="ctrl presets">
+        <label>PRESETS</label>
+        <div class="preset-row" id="preset-row"></div>
       </div>
     </div>
 
@@ -493,6 +552,13 @@ const PALETTES = {
 
 let currentPalette = PALETTES.cosmic;
 let activePaletteKey = 'cosmic';
+const PRESET_STORAGE_KEY = 'flobe-presets-v1';
+const DEFAULT_PRESETS = [
+  { name:'Focus', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
+  { name:'Ambient', sceneId:'aurora', paletteKey:'ocean', speed:5, density:6 },
+];
+let presets = [];
+let activePresetIndex = -1;
 
 // ----------------------------------------
 // ----------------------------------------
@@ -518,6 +584,12 @@ const SCENES = [
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let W, H;
+const transitionCanvas = document.createElement('canvas');
+const transitionCtx = transitionCanvas.getContext('2d');
+const speedSlider = document.getElementById('speed-slider');
+const densitySlider = document.getElementById('density-slider');
+const presetRow = document.getElementById('preset-row');
+const autoQualityBtn = document.getElementById('auto-quality-btn');
 
 // ----------------------------------------
 // ----------------------------------------
@@ -527,14 +599,73 @@ let paused = false;
 let rafId = null;
 let currentScene = null;
 let activeSceneId = null;
+let renderScale = 1;
+let autoQualityEnabled = true;
+let transitionStart = 0;
+let transitionActive = false;
+const TRANSITION_DURATION = 360;
+const MIN_RENDER_SCALE = 0.7;
+const MAX_RENDER_SCALE = 1;
+let fpsCurrent = 0;
+let fpsAdjustCooldownUntil = 0;
 
 function resize() {
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+  W = canvas.width  = Math.max(1, Math.round(window.innerWidth * renderScale));
+  H = canvas.height = Math.max(1, Math.round(window.innerHeight * renderScale));
   if(currentScene) currentScene.reset?.();
 }
 window.addEventListener('resize', resize);
 resize();
+
+function captureTransitionFrame() {
+  if(!W || !H || !currentScene) return;
+  transitionCanvas.width = W;
+  transitionCanvas.height = H;
+  transitionCtx.clearRect(0, 0, W, H);
+  transitionCtx.drawImage(canvas, 0, 0, W, H);
+  transitionStart = performance.now();
+  transitionActive = true;
+}
+
+function drawTransition(now) {
+  if(!transitionActive) return;
+  const progress = Math.min(1, (now - transitionStart) / TRANSITION_DURATION);
+  if(progress >= 1) {
+    transitionActive = false;
+    return;
+  }
+  ctx.save();
+  ctx.globalAlpha = 1 - progress;
+  ctx.drawImage(transitionCanvas, 0, 0, W, H);
+  ctx.restore();
+}
+
+function rebuildCurrentScene() {
+  if(!activeSceneId) return;
+  currentScene = SceneFactories[activeSceneId]?.();
+}
+
+function applyRenderScale(nextScale) {
+  const clamped = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, Math.round(nextScale * 100) / 100));
+  if(Math.abs(clamped - renderScale) < 0.01) return;
+  renderScale = clamped;
+  resize();
+  rebuildCurrentScene();
+  fpsFrameTimes = [];
+  fpsLastTime = null;
+  fpsAdjustCooldownUntil = performance.now() + 2600;
+  updateAutoQualityButton();
+}
+
+function updateAutoQualityButton() {
+  autoQualityBtn.classList.toggle('active', autoQualityEnabled);
+  autoQualityBtn.textContent = 'AUTO';
+  autoQualityBtn.title = autoQualityEnabled
+    ? `Auto quality on (${Math.round(renderScale * 100)}%)`
+    : 'Auto quality off';
+}
 
 // ----------------------------------------
 // ----------------------------------------
@@ -545,7 +676,10 @@ SCENES.forEach(s => {
   btn.className = 'scene-btn';
   btn.dataset.id = s.id;
   btn.innerHTML = `<span class="icon">${s.icon}</span><span class="label">${s.label}</span>`;
-  btn.addEventListener('click', () => activateScene(s.id));
+  btn.addEventListener('click', () => {
+    activateScene(s.id);
+    syncActivePreset();
+  });
   grid.appendChild(btn);
 });
 
@@ -567,23 +701,142 @@ Object.keys(PALETTES).forEach(key => {
   wrap.appendChild(lbl);
 
   wrap.addEventListener('click', () => {
-    document.querySelectorAll('.pal-swatch').forEach(s=>s.classList.remove('active'));
-    sw.classList.add('active');
-    currentPalette = PALETTES[key];
-    activePaletteKey = key;
+    setPalette(key);
     activateScene(activeSceneId);
+    syncActivePreset();
   });
   palRow.appendChild(wrap);
 });
 
-document.getElementById('speed-slider').addEventListener('input', e => {
+function setPalette(key) {
+  if(!PALETTES[key]) return;
+  document.querySelectorAll('.pal-swatch').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.pal-wrap').forEach((wrap, i) => {
+    const match = Object.keys(PALETTES)[i] === key;
+    const swatch = wrap.querySelector('.pal-swatch');
+    if(match && swatch) swatch.classList.add('active');
+  });
+  currentPalette = PALETTES[key];
+  activePaletteKey = key;
+}
+
+function loadPresets() {
+  try {
+    const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+    if(!raw) return DEFAULT_PRESETS.map(p => ({ ...p }));
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed) || parsed.length !== 2) throw new Error('bad preset data');
+    return parsed.map((preset, i) => ({
+      name: typeof preset?.name === 'string' && preset.name.trim() ? preset.name.trim() : DEFAULT_PRESETS[i].name,
+      sceneId: SCENES.some(scene => scene.id === preset?.sceneId) ? preset.sceneId : DEFAULT_PRESETS[i].sceneId,
+      paletteKey: PALETTES[preset?.paletteKey] ? preset.paletteKey : DEFAULT_PRESETS[i].paletteKey,
+      speed: Math.max(1, Math.min(10, Number(preset?.speed) || DEFAULT_PRESETS[i].speed)),
+      density: Math.max(1, Math.min(10, Number(preset?.density) || DEFAULT_PRESETS[i].density)),
+    }));
+  } catch {
+    return DEFAULT_PRESETS.map(p => ({ ...p }));
+  }
+}
+
+function savePresets() {
+  try {
+    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+  } catch {}
+}
+
+function currentSettings() {
+  return {
+    sceneId: activeSceneId,
+    paletteKey: activePaletteKey,
+    speed,
+    density,
+  };
+}
+
+function presetMatchesCurrent(preset) {
+  const current = currentSettings();
+  return preset.sceneId === current.sceneId
+    && preset.paletteKey === current.paletteKey
+    && preset.speed === current.speed
+    && preset.density === current.density;
+}
+
+function syncActivePreset() {
+  activePresetIndex = presets.findIndex(presetMatchesCurrent);
+  document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === activePresetIndex);
+  });
+}
+
+function renderPresetButtons() {
+  presetRow.innerHTML = '';
+  presets.forEach((preset, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'preset-slot';
+
+    const applyBtn = document.createElement('button');
+    applyBtn.className = 'preset-btn';
+    applyBtn.textContent = preset.name;
+    applyBtn.title = `Apply ${preset.name}`;
+    applyBtn.addEventListener('click', () => applyPreset(i));
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'preset-edit';
+    editBtn.textContent = 'EDIT';
+    editBtn.title = `Save current settings to ${preset.name}`;
+    editBtn.addEventListener('click', () => editPreset(i));
+
+    slot.appendChild(applyBtn);
+    slot.appendChild(editBtn);
+    presetRow.appendChild(slot);
+  });
+  syncActivePreset();
+}
+
+function applyPreset(index) {
+  const preset = presets[index];
+  if(!preset) return;
+  speed = preset.speed;
+  density = preset.density;
+  speedSlider.value = speed;
+  densitySlider.value = density;
+  setPalette(preset.paletteKey);
+  activateScene(preset.sceneId);
+  syncActivePreset();
+}
+
+function editPreset(index) {
+  const preset = presets[index];
+  if(!preset) return;
+  const nextName = window.prompt('Preset name', preset.name);
+  if(nextName === null) return;
+  presets[index] = {
+    ...currentSettings(),
+    name: nextName.trim() || preset.name,
+  };
+  savePresets();
+  renderPresetButtons();
+}
+
+presets = loadPresets();
+renderPresetButtons();
+speedSlider.addEventListener('input', e => {
   speed = +e.target.value;
-  activateScene(activeSceneId);
+  activateScene(activeSceneId, { transition:false });
+  syncActivePreset();
 });
-document.getElementById('density-slider').addEventListener('input', e => {
+densitySlider.addEventListener('input', e => {
   density = +e.target.value;
-  activateScene(activeSceneId);
+  activateScene(activeSceneId, { transition:false });
+  syncActivePreset();
 });
+
+autoQualityBtn.addEventListener('click', () => {
+  autoQualityEnabled = !autoQualityEnabled;
+  if(!autoQualityEnabled) applyRenderScale(1);
+  updateAutoQualityButton();
+});
+updateAutoQualityButton();
 
 // ----------------------------------------
 let uiHidden = false;
@@ -1220,7 +1473,8 @@ const SceneFactories = {
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.font = `12px DM Mono, monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText(timerInterval ? 'FOCUS RUNNING' : (timerSelectedSecs ? 'READY TO BEGIN' : 'POMODORO READY'), cx, cy - 34);
+        const pomodoroLabel = timerInterval ? 'FOCUS RUNNING' : (timerSelectedSecs ? 'READY TO BEGIN' : 'POMODORO READY');
+        ctx.fillText(pomodoroLabel, cx, cy - 34);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = `700 ${Math.max(34, Math.min(W, H) * 0.08)}px Syne, sans-serif`;
@@ -2454,8 +2708,10 @@ function hexToRgb(hex) {
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
-function activateScene(id) {
+function activateScene(id, options = {}) {
   if(!id) return;
+  const shouldTransition = options.transition !== false;
+  if(shouldTransition && currentScene) captureTransitionFrame();
   cancelAnimationFrame(rafId);
   ctx.clearRect(0,0,W,H);
   ctx.shadowBlur=0;
@@ -2465,6 +2721,7 @@ function activateScene(id) {
   currentScene = SceneFactories[id]?.();
   paused = false;
   loop();
+  syncActivePreset();
 }
 
 // ----------------------------------------
@@ -2480,15 +2737,21 @@ let fpsFrameTimes = [];
 let fpsLastTime = null;
 
 function tickFps(now) {
-  if(!fpsVisible) return;
   if(fpsLastTime !== null) {
     const delta = now - fpsLastTime;
     fpsFrameTimes.push(delta);
     if(fpsFrameTimes.length > 60) fpsFrameTimes.shift();
     const avg = fpsFrameTimes.reduce((a,b)=>a+b,0) / fpsFrameTimes.length;
     const fps = Math.round(1000 / avg);
-    fpsText.textContent = `${fps} fps`;
-    fpsDot.className = fps >= 50 ? '' : fps >= 35 ? 'amber' : 'red';
+    fpsCurrent = fps;
+    if(autoQualityEnabled && fpsFrameTimes.length >= 24 && now > fpsAdjustCooldownUntil) {
+      if(fps < 42 && renderScale > MIN_RENDER_SCALE) applyRenderScale(renderScale - 0.08);
+      else if(fps > 57 && renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.04);
+    }
+    if(fpsVisible) {
+      fpsText.textContent = autoQualityEnabled ? `${fps} fps · ${Math.round(renderScale * 100)}%` : `${fps} fps`;
+      fpsDot.className = fps >= 50 ? '' : fps >= 35 ? 'amber' : 'red';
+    }
   }
   fpsLastTime = now;
 }
@@ -2497,7 +2760,7 @@ function toggleFps() {
   fpsVisible = !fpsVisible;
   fpsCounter.classList.toggle('visible', fpsVisible);
   fpsBtn.classList.toggle('active', fpsVisible);
-  if(!fpsVisible) { fpsFrameTimes = []; fpsLastTime = null; }
+  if(!fpsVisible) { fpsText.textContent = '-- fps'; }
 }
 
 fpsBtn.addEventListener('click', toggleFps);
@@ -2508,6 +2771,7 @@ function loop() {
   const now = performance.now();
   tickFps(now);
   currentScene?.draw();
+  drawTransition(now);
   rafId = requestAnimationFrame(loop);
 }
 
@@ -2515,7 +2779,7 @@ function loop() {
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
-activateScene('block');
+activateScene('block', { transition:false });
 </script>
 </body>
 </html>
