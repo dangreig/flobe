@@ -197,9 +197,9 @@
   /* SCENE GRID */
   #scene-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
     gap: 0.6rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
   }
 
   .scene-btn {
@@ -250,6 +250,7 @@
 .ctrl.presets {
   flex-basis: 100%;
   flex-grow: 0;
+  align-items: flex-start;
 }
 
   .ctrl label {
@@ -289,13 +290,22 @@
     align-items: center;
     flex-wrap: wrap;
   }
+  .preset-row.shell {
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.75rem;
+  }
+  .preset-row.slots {
+    gap: 0.5rem;
+  }
   .preset-slot {
     display: flex;
     gap: 0.35rem;
     align-items: center;
   }
   .preset-btn,
-  .preset-edit {
+  .preset-edit,
+  .preset-share {
     font-family: 'DM Mono', monospace;
     font-size: 0.65rem;
     letter-spacing: 0.06em;
@@ -310,12 +320,14 @@
     padding: 0.35rem 0.8rem;
     min-width: 92px;
   }
-  .preset-edit {
+  .preset-edit,
+  .preset-share {
     padding: 0.35rem 0.5rem;
     min-width: 34px;
   }
   .preset-btn:hover,
-  .preset-edit:hover {
+  .preset-edit:hover,
+  .preset-share:hover {
     background: rgba(255,255,255,0.14);
     color: #fff;
   }
@@ -386,7 +398,7 @@
     flex-wrap: wrap;
     border-top: 1px solid rgba(255,255,255,0.08);
     padding-top: 1rem;
-    margin-top: 0.8rem;
+    margin-top: 0.65rem;
   }
   #timer-row label {
     font-family: 'DM Mono', monospace;
@@ -417,6 +429,25 @@
     margin-left: auto;
     min-width: 52px;
     text-align: right;
+  }
+  #timer-custom-mins {
+    width: 68px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.86);
+    padding: 0.36rem 0.55rem;
+    border-radius: 999px;
+    outline: none;
+    text-align: center;
+  }
+  #timer-custom-mins::placeholder {
+    color: rgba(255,255,255,0.35);
+  }
+  #timer-custom-mins:focus {
+    border-color: rgba(230,59,46,0.5);
   }
   #timer-display.running { color: #e63b2e; }
   #timer-begin,
@@ -503,7 +534,10 @@
       </div>
       <div class="ctrl presets">
         <label>PRESETS</label>
-        <div class="preset-row" id="preset-row"></div>
+        <div class="preset-row shell">
+          <div class="preset-row slots" id="preset-row"></div>
+          <button class="preset-share" id="preset-share-btn">SHARE</button>
+        </div>
       </div>
     </div>
 
@@ -515,6 +549,7 @@
       <button class="timer-preset" data-mins="30">30m</button>
       <button class="timer-preset" data-mins="45">45m</button>
       <button class="timer-preset" data-mins="60">60m</button>
+      <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
       <button id="timer-begin" disabled>begin</button>
       <button id="timer-reset">reset</button>
       <div id="timer-display">--:--</div>
@@ -553,9 +588,10 @@ const PALETTES = {
 let currentPalette = PALETTES.cosmic;
 let activePaletteKey = 'cosmic';
 const PRESET_STORAGE_KEY = 'flobe-presets-v1';
+const SESSION_STORAGE_KEY = 'flobe-session-v1';
 const DEFAULT_PRESETS = [
   { name:'Focus', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
-  { name:'Ambient', sceneId:'aurora', paletteKey:'ocean', speed:5, density:6 },
+  { name:'Ambient', sceneId:'ribbons', paletteKey:'ocean', speed:5, density:6 },
 ];
 let presets = [];
 let activePresetIndex = -1;
@@ -570,8 +606,8 @@ const SCENES = [
   { id:'warp',      label:'Warp Speed',    icon:'➜' },
   { id:'plasma',    label:'Plasma',        icon:'◈' },
   { id:'rain',      label:'Matrix Rain',   icon:'▌' },
-  { id:'lissajous', label:'Lissajous',     icon:'∞' },
-  { id:'aurora',    label:'Aurora',        icon:'≋' },
+  { id:'ribbons',   label:'Ribbon Flow',   icon:'≈' },
+  { id:'topography', label:'Topo Drift',   icon:'▱' },
   { id:'confetti',  label:'Confetti',      icon:'▲' },
   { id:'grid3d',    label:'3D Grid',       icon:'▦' },
   { id:'livecoding', label:'Live Coding', icon:'⌘' },
@@ -590,6 +626,8 @@ const speedSlider = document.getElementById('speed-slider');
 const densitySlider = document.getElementById('density-slider');
 const presetRow = document.getElementById('preset-row');
 const autoQualityBtn = document.getElementById('auto-quality-btn');
+const presetShareBtn = document.getElementById('preset-share-btn');
+const timerCustomMinsInput = document.getElementById('timer-custom-mins');
 
 // ----------------------------------------
 // ----------------------------------------
@@ -667,6 +705,109 @@ function updateAutoQualityButton() {
     : 'Auto quality off';
 }
 
+function normalizedSpeedValue(value) {
+  return Math.max(1, Math.min(10, Number(value) || 5));
+}
+
+function normalizedDensityValue(value) {
+  return Math.max(1, Math.min(10, Number(value) || 5));
+}
+
+function buildShareUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('scene', activeSceneId || 'block');
+  url.searchParams.set('palette', activePaletteKey);
+  url.searchParams.set('speed', String(speed));
+  url.searchParams.set('density', String(density));
+  if(timerSelectedSecs > 0) url.searchParams.set('timer', String(Math.max(1, Math.round(timerSelectedSecs / 60))));
+  else url.searchParams.delete('timer');
+  url.searchParams.set('auto', autoQualityEnabled ? '1' : '0');
+  return url;
+}
+
+function syncShareUrl() {
+  if(!window.history?.replaceState) return;
+  const next = buildShareUrl();
+  history.replaceState(null, '', next);
+}
+
+function getSessionState() {
+  return {
+    sceneId: activeSceneId || 'block',
+    paletteKey: activePaletteKey,
+    speed,
+    density,
+    timerSecs: timerSelectedSecs,
+    customTimerMins: Math.max(0, Number(timerCustomMinsInput.value) || 0),
+    autoQualityEnabled,
+  };
+}
+
+function saveSessionState() {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(getSessionState()));
+  } catch {}
+}
+
+function sanitizeState(raw = {}) {
+  const fallbackSceneId = SCENES.some(scene => scene.id === raw.sceneId) ? raw.sceneId : 'block';
+  const fallbackPaletteKey = PALETTES[raw.paletteKey] ? raw.paletteKey : activePaletteKey;
+  const timerSecs = Math.max(0, Math.min(180 * 60, Math.round(Number(raw.timerSecs || 0))));
+  const customTimerMins = Math.max(0, Math.min(180, Math.round(Number(raw.customTimerMins || 0))));
+  return {
+    sceneId: fallbackSceneId,
+    paletteKey: fallbackPaletteKey,
+    speed: normalizedSpeedValue(raw.speed),
+    density: normalizedDensityValue(raw.density),
+    timerSecs,
+    customTimerMins,
+    autoQualityEnabled: raw.autoQualityEnabled !== false,
+  };
+}
+
+function loadSavedSessionState() {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if(!raw) return null;
+    return sanitizeState(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function loadStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if(!params.toString()) return null;
+  return sanitizeState({
+    sceneId: params.get('scene'),
+    paletteKey: params.get('palette'),
+    speed: params.get('speed'),
+    density: params.get('density'),
+    timerSecs: (Number(params.get('timer')) || 0) * 60,
+    customTimerMins: Number(params.get('timer')) || 0,
+    autoQualityEnabled: params.get('auto') !== '0',
+  });
+}
+
+function applyBootState(state) {
+  const next = sanitizeState(state || {});
+  speed = next.speed;
+  density = next.density;
+  speedSlider.value = speed;
+  densitySlider.value = density;
+  setPalette(next.paletteKey);
+  autoQualityEnabled = next.autoQualityEnabled;
+  if(!autoQualityEnabled) renderScale = 1;
+  updateAutoQualityButton();
+  if(next.timerSecs > 0) {
+    selectTimer(next.timerSecs);
+    timerCustomMinsInput.value = next.customTimerMins || Math.round(next.timerSecs / 60);
+  } else if(next.customTimerMins > 0) {
+    timerCustomMinsInput.value = next.customTimerMins;
+  }
+  return next.sceneId;
+}
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -679,6 +820,7 @@ SCENES.forEach(s => {
   btn.addEventListener('click', () => {
     activateScene(s.id);
     syncActivePreset();
+    persistAppState();
   });
   grid.appendChild(btn);
 });
@@ -704,6 +846,7 @@ Object.keys(PALETTES).forEach(key => {
     setPalette(key);
     activateScene(activeSceneId);
     syncActivePreset();
+    persistAppState();
   });
   palRow.appendChild(wrap);
 });
@@ -718,6 +861,11 @@ function setPalette(key) {
   });
   currentPalette = PALETTES[key];
   activePaletteKey = key;
+}
+
+function persistAppState() {
+  saveSessionState();
+  syncShareUrl();
 }
 
 function loadPresets() {
@@ -803,6 +951,7 @@ function applyPreset(index) {
   setPalette(preset.paletteKey);
   activateScene(preset.sceneId);
   syncActivePreset();
+  persistAppState();
 }
 
 function editPreset(index) {
@@ -816,25 +965,40 @@ function editPreset(index) {
   };
   savePresets();
   renderPresetButtons();
+  persistAppState();
 }
 
 presets = loadPresets();
 renderPresetButtons();
 speedSlider.addEventListener('input', e => {
-  speed = +e.target.value;
+  speed = normalizedSpeedValue(e.target.value);
   activateScene(activeSceneId, { transition:false });
   syncActivePreset();
+  persistAppState();
 });
 densitySlider.addEventListener('input', e => {
-  density = +e.target.value;
+  density = normalizedDensityValue(e.target.value);
   activateScene(activeSceneId, { transition:false });
   syncActivePreset();
+  persistAppState();
 });
 
 autoQualityBtn.addEventListener('click', () => {
   autoQualityEnabled = !autoQualityEnabled;
   if(!autoQualityEnabled) applyRenderScale(1);
   updateAutoQualityButton();
+  persistAppState();
+});
+presetShareBtn.addEventListener('click', async () => {
+  const url = buildShareUrl().toString();
+  try {
+    await navigator.clipboard.writeText(url);
+    const prev = presetShareBtn.textContent;
+    presetShareBtn.textContent = 'COPIED';
+    setTimeout(() => { presetShareBtn.textContent = prev; }, 1200);
+  } catch {
+    window.prompt('Copy this link', url);
+  }
 });
 updateAutoQualityButton();
 
@@ -885,6 +1049,10 @@ const timerDisplay = document.getElementById('timer-display');
 const timerBegin   = document.getElementById('timer-begin');
 const timerReset   = document.getElementById('timer-reset');
 const timerAlert   = document.getElementById('timer-alert');
+
+function clearTimerPresetHighlights() {
+  document.querySelectorAll('.timer-preset').forEach(b=>b.classList.remove('active'));
+}
 
 function playAlertSound() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -940,10 +1108,12 @@ function resetTimer() {
   timerInterval = null;
   timerSecsLeft = 0;
   timerSelectedSecs = 0;
+  timerCustomMinsInput.value = '';
   timerDisplay.textContent = '--:--';
   timerDisplay.classList.remove('running');
   timerBegin.disabled = true;
-  document.querySelectorAll('.timer-preset').forEach(b=>b.classList.remove('active'));
+  clearTimerPresetHighlights();
+  persistAppState();
 }
 
 function selectTimer(totalSecs) {
@@ -954,13 +1124,15 @@ function selectTimer(totalSecs) {
   timerDisplay.textContent = formatTime(totalSecs);
   timerDisplay.classList.remove('running');
   timerBegin.disabled = false;
+  persistAppState();
 }
 
 document.querySelectorAll('.timer-preset').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.timer-preset').forEach(b=>b.classList.remove('active'));
+    clearTimerPresetHighlights();
     btn.classList.add('active');
     const secs = btn.dataset.secs ? +btn.dataset.secs : +btn.dataset.mins * 60;
+    timerCustomMinsInput.value = btn.dataset.mins || Math.round(secs / 60);
     selectTimer(secs);
   });
 });
@@ -970,6 +1142,16 @@ timerBegin.addEventListener('click', () => {
 });
 timerReset.addEventListener('click', resetTimer);
 timerAlert.addEventListener('click', () => timerAlert.classList.remove('show'));
+timerCustomMinsInput.addEventListener('change', () => {
+  const mins = Math.max(0, Math.min(180, Math.round(Number(timerCustomMinsInput.value) || 0)));
+  timerCustomMinsInput.value = mins ? mins : '';
+  clearTimerPresetHighlights();
+  if(!mins) {
+    resetTimer();
+    return;
+  }
+  selectTimer(mins * 60);
+});
 
 // ----------------------------------------
 // ----------------------------------------
@@ -1581,363 +1763,181 @@ const SceneFactories = {
     };
   },
 
-  // â”€â”€ LISSAJOUS â”€â”€
-  lissajous() {
+  // RIBBON FLOW
+  ribbons() {
     let t = 0;
-    const curveCount = densityCount(3, 6);
-    const maxTrail = densityCount(260, 760);
-    const curves = Array.from({length: curveCount}, (_, i) => ({
-      a: 2 + (i % 3),
-      b: 3 + ((i + 1) % 4),
-      phase: (Math.PI * 2 * i) / curveCount,
-      scale: lerp(0.62, 0.94, i / Math.max(1, curveCount - 1)),
-      drift: rnd(0.85, 1.25),
-      trail: [],
-    }));
-    const nodes = [];
-    let frameN = 0;
-    let pulseT = 0;
-    const impressionistBase = [
-      [207, 186, 142],
-      [178, 197, 184],
-      [160, 181, 204],
-      [211, 166, 154],
-      [189, 172, 203],
-      [221, 205, 164],
-    ];
-    function soften(hex, alpha = 1, variant = 0) {
-      const [r, g, b] = hexToRgb(hex);
-      const gray = Math.round((r + g + b) / 3);
-      const base = impressionistBase[Math.abs(variant) % impressionistBase.length];
-      const pigmentR = lerp(r, gray, 0.44);
-      const pigmentG = lerp(g, gray, 0.44);
-      const pigmentB = lerp(b, gray, 0.44);
-      const warmth = 0.08 + 0.07 * Math.sin(t * 0.35 + variant);
-      const dr = Math.round(lerp(pigmentR, base[0], 0.32 + warmth));
-      const dg = Math.round(lerp(pigmentG, base[1], 0.32 + warmth));
-      const db = Math.round(lerp(pigmentB, base[2], 0.32 + warmth));
-      const da = alpha * 0.84;
-      return `rgba(${dr},${dg},${db},${da})`;
-    }
-    function lissPoint(curve, time, cx, cy, r) {
-      const a = curve.a + Math.sin(time * 0.11 * curve.drift + curve.phase) * 0.38;
-      const b = curve.b + Math.cos(time * 0.09 * curve.drift + curve.phase) * 0.38;
-      return {
-        x: cx + r.x * curve.scale * Math.sin(a * time + curve.phase + Math.PI / 4),
-        y: cy + r.y * curve.scale * Math.sin(b * time + curve.phase * 0.7),
-      };
-    }
-    function drawTrail(trail, col, mirrorX, mirrorY, rot, alphaScale, pulse = 0) {
-      if(trail.length < 2) return;
-      const cx = W / 2;
-      const cy = H / 2;
-      const glowPulse = 0.72 + pulse * 0.58;
-      const passes = [
-        { width: 18 + pulse * 10, alpha: 0.022 + pulse * 0.018 },
-        { width: 7 + pulse * 4,   alpha: 0.068 + pulse * 0.046 },
-        { width: 1.35 + pulse,    alpha: 0.5 + pulse * 0.2 },
-      ];
-      passes.forEach(pass => {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(rot);
-        ctx.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
-        ctx.translate(-cx, -cy);
-        ctx.beginPath();
-        trail.forEach((p, i) => {
-          if(i === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
-        });
-        ctx.strokeStyle = col;
-        ctx.globalAlpha = pass.alpha * alphaScale * glowPulse;
-        ctx.lineWidth = pass.width;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.shadowColor = col;
-        ctx.shadowBlur = pass.width * (1.6 + pulse * 1.7);
-        ctx.stroke();
-        ctx.restore();
-      });
-      const head = trail[trail.length - 1];
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rot);
-      ctx.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
-      ctx.translate(-cx, -cy);
-      ctx.beginPath();
-      ctx.arc(head.x, head.y, 3.5 + pulse * 7, 0, Math.PI * 2);
-      ctx.fillStyle = col;
-      ctx.globalAlpha = alphaScale * (0.24 + pulse * 0.5);
-      ctx.shadowColor = col;
-      ctx.shadowBlur = 18 + pulse * 34;
-      ctx.fill();
-      ctx.restore();
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-    }
-    function drawPaletteField() {
-      ctx.fillStyle = '#070706';
-      ctx.fillRect(0, 0, W, H);
-
-      const fields = [
-        { x: 0.18, y: 0.22, r: 0.55, col: currentPalette[0], alpha: 0.22, variant: 0 },
-        { x: 0.82, y: 0.18, r: 0.5,  col: currentPalette[1], alpha: 0.18, variant: 1 },
-        { x: 0.72, y: 0.78, r: 0.58, col: currentPalette[2 % currentPalette.length], alpha: 0.2, variant: 2 },
-        { x: 0.25, y: 0.82, r: 0.48, col: currentPalette[3 % currentPalette.length], alpha: 0.16, variant: 3 },
-      ];
-
-      fields.forEach((field, i) => {
-        const px = W * field.x + Math.sin(t * (0.18 + i * 0.04) + i) * W * 0.045;
-        const py = H * field.y + Math.cos(t * (0.16 + i * 0.035) + i * 1.7) * H * 0.045;
-        const radius = Math.max(W, H) * field.r;
-        const grd = ctx.createRadialGradient(px, py, 0, px, py, radius);
-        grd.addColorStop(0, soften(field.col, field.alpha, field.variant));
-        grd.addColorStop(0.42, soften(field.col, field.alpha * 0.32, field.variant + 1));
-        grd.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, W, H);
-      });
-
-      ctx.fillStyle = 'rgba(0,0,0,0.34)';
-      ctx.fillRect(0, 0, W, H);
-    }
-    return {
-      draw() {
-        frameN++;
-        t += speed * 0.0045;
-        pulseT += speed * 0.006;
-        const cx = W / 2 + Math.sin(t * 0.27) * W * 0.08;
-        const cy = H / 2 + Math.cos(t * 0.23) * H * 0.07;
-        const r = {
-          x: Math.max(80, W * 0.52),
-          y: Math.max(80, H * 0.46),
-        };
-        drawPaletteField();
-
-        const pulsePhase = pulseT % 1;
-        const pulseActive = pulsePhase < 0.22;
-        const pulseAlpha = pulseActive ? Math.sin((pulsePhase / 0.22) * Math.PI) : 0;
-        curves.forEach((curve, i) => {
-          const p = lissPoint(curve, t, cx, cy, r);
-          const col = soften(currentPalette[i % currentPalette.length], 1, i);
-          curve.trail.push({ x: p.x, y: p.y });
-          if(curve.trail.length > maxTrail) curve.trail.shift();
-
-          const curvePulse = 0.5 + 0.5 * Math.sin(t * (2.2 + i * 0.18) + curve.phase);
-          const motionPulse = Math.pow(curvePulse, 1.7);
-          drawTrail(curve.trail, col, false, false, 0, 1, motionPulse);
-          if(pulseAlpha > 0) {
-            drawTrail(curve.trail, soften(currentPalette[(i + 2) % currentPalette.length], 1, i + 2), true, false, 0, pulseAlpha * 0.2, motionPulse);
-            drawTrail(curve.trail, soften(currentPalette[(i + 3) % currentPalette.length], 1, i + 3), false, true, Math.PI / 2, pulseAlpha * 0.16, motionPulse);
-          }
-
-          if(frameN % Math.max(2, Math.round(8 - densityT() * 5)) === 0) {
-            nodes.push({
-              x: p.x,
-              y: p.y,
-              life: 1,
-              col,
-              r: rnd(1.5, 4.5),
-              pulse: rnd(0, Math.PI * 2),
-            });
-          }
-        });
-        if(nodes.length > densityCount(90, 240)) {
-          nodes.splice(0, nodes.length - densityCount(90, 240));
-        }
-
-        nodes.forEach((n, i) => {
-          n.life -= 0.018 + speed * 0.0015;
-          if(n.life <= 0) { nodes.splice(i, 1); return; }
-          const nr = n.r + Math.sin(t * 6 + n.pulse) * 1.4 + (1 - n.life) * 5;
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, Math.max(0.5, nr), 0, Math.PI * 2);
-          ctx.fillStyle = n.col;
-          ctx.globalAlpha = n.life * 0.58;
-          ctx.shadowColor = n.col;
-          ctx.shadowBlur = 13;
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.shadowBlur = 0;
-        });
-
-        if(pulseAlpha > 0) {
-          ctx.beginPath();
-          ctx.arc(cx, cy, Math.min(r.x, r.y) * (0.9 + pulseAlpha * 0.18), 0, Math.PI * 2);
-          ctx.strokeStyle = soften(currentPalette[0], 1, 0);
-          ctx.globalAlpha = pulseAlpha * 0.09;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          ctx.globalAlpha = 1;
-        }
-      }
-    };
-  },
-  // â”€â”€ AURORA â”€â”€
-  aurora() {
-    let t = 0;
-    const layerCount = densityCount(3, 5);
-    const starCount = densityCount(70, 160);
-    const stars = Array.from({length: starCount}, () => ({
-      x: rnd(0, W),
-      y: rnd(0, H * 0.72),
-      r: rnd(0.35, 1.35),
-      a: rnd(0.18, 0.72),
-      tw: rnd(0.4, 1.8),
-    }));
-    const layers = Array.from({length: layerCount}, (_, i) => ({
-      y: H * lerp(0.2, 0.58, i / Math.max(1, layerCount - 1)),
-      amp: H * rnd(0.055, 0.14),
-      spread: H * rnd(0.18, 0.34),
-      speedMul: rnd(0.55, 1.3),
+    const ribbonCount = densityCount(4, 9);
+    const sparkCount = densityCount(18, 42);
+    const ribbons = Array.from({length: ribbonCount}, (_, i) => ({
+      y: H * lerp(0.14, 0.86, (i + 1) / (ribbonCount + 1)),
+      amp: H * rnd(0.04, 0.12),
+      amp2: H * rnd(0.015, 0.045),
       phase: rnd(0, Math.PI * 2),
-      strandCount: densityCount(26, 68),
-      alpha: lerp(0.16, 0.44, 1 - i / Math.max(1, layerCount)),
-    })).map(layer => ({
-      ...layer,
-      strands: Array.from({length: layer.strandCount}, () => ({
-        alpha: rnd(0.32, 0.78),
-        width: rnd(0.7, 2.2),
-        offset: rnd(-0.35, 0.35),
-      })),
+      drift: rnd(0.3, 0.95),
+      freq: rnd(0.7, 1.45),
+      width: rnd(14, 34),
+      alpha: rnd(0.24, 0.55),
+      colorOffset: i * 0.9,
     }));
-    const staticBg = document.createElement('canvas');
-    staticBg.width = W;
-    staticBg.height = H;
-    const bgc = staticBg.getContext('2d');
-    function softCol(hex, alpha) {
-      const [r, g, b] = hexToRgb(hex);
-      return `rgba(${Math.round(lerp(r, 220, 0.16))},${Math.round(lerp(g, 236, 0.14))},${Math.round(lerp(b, 245, 0.12))},${alpha})`;
-    }
-    function paletteAt(n, alpha) {
-      const pos = ((n % currentPalette.length) + currentPalette.length) % currentPalette.length;
+    const sparks = Array.from({length: sparkCount}, () => ({
+      x: rnd(0, W),
+      y: rnd(0, H),
+      r: rnd(1, 2.6),
+      phase: rnd(0, Math.PI * 2),
+      drift: rnd(0.2, 0.8),
+      alpha: rnd(0.08, 0.18),
+    }));
+    function colorAt(offset, alpha) {
+      const pos = ((offset % currentPalette.length) + currentPalette.length) % currentPalette.length;
       const i = Math.floor(pos);
       const f = pos - i;
       const c1 = hexToRgb(currentPalette[i]);
       const c2 = hexToRgb(currentPalette[(i + 1) % currentPalette.length]);
-      const mixed = [
-        Math.round(lerp(c1[0], c2[0], f)),
-        Math.round(lerp(c1[1], c2[1], f)),
-        Math.round(lerp(c1[2], c2[2], f)),
-      ];
-      return softCol(`#${mixed.map(v => v.toString(16).padStart(2, '0')).join('')}`, alpha);
+      const r = Math.round(lerp(c1[0], c2[0], f));
+      const g = Math.round(lerp(c1[1], c2[1], f));
+      const b = Math.round(lerp(c1[2], c2[2], f));
+      return `rgba(${r},${g},${b},${alpha})`;
     }
-    function curtainY(layer, x, offset = 0) {
-      return layer.y
-        + Math.sin(x * 0.004 + t * layer.speedMul + layer.phase + offset) * layer.amp
-        + Math.sin(x * 0.011 + t * 1.7 * layer.speedMul + layer.phase) * layer.amp * 0.38;
+    function ribbonY(ribbon, x) {
+      return ribbon.y
+        + Math.sin(x * 0.0065 * ribbon.freq + t * ribbon.drift + ribbon.phase) * ribbon.amp
+        + Math.cos(x * 0.013 + t * ribbon.drift * 1.6 + ribbon.phase * 0.7) * ribbon.amp2;
     }
-    function drawStaticBackground() {
-      const sky = bgc.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, '#030712');
-      sky.addColorStop(0.55, '#07101a');
-      sky.addColorStop(1, '#020304');
-      bgc.fillStyle = sky;
-      bgc.fillRect(0, 0, W, H);
-
-      stars.forEach(s => {
-        bgc.beginPath();
-        bgc.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        bgc.fillStyle = `rgba(230,240,255,${s.a * 0.72})`;
-        bgc.fill();
-      });
-
-      const horizonY = H * 0.78;
-      const haze = bgc.createLinearGradient(0, horizonY - H * 0.18, 0, H);
-      haze.addColorStop(0, 'rgba(0,0,0,0)');
-      haze.addColorStop(0.4, 'rgba(4,10,12,0.38)');
-      haze.addColorStop(1, 'rgba(0,0,0,0.92)');
-      bgc.fillStyle = haze;
-      bgc.fillRect(0, horizonY - H * 0.18, W, H * 0.4);
-
-      bgc.beginPath();
-      bgc.moveTo(0, H);
-      for(let x = 0; x <= W; x += 28) {
-        const ridge = horizonY + Math.sin(x * 0.012) * H * 0.025 + Math.sin(x * 0.027 + 2) * H * 0.018;
-        bgc.lineTo(x, ridge);
-      }
-      bgc.lineTo(W, H);
-      bgc.closePath();
-      bgc.fillStyle = 'rgba(0,0,0,0.82)';
-      bgc.fill();
-    }
-    drawStaticBackground();
     return {
       draw() {
-        t += speed * 0.004;
-        ctx.drawImage(staticBg, 0, 0);
+        t += speed * 0.0045;
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, 'rgba(4,6,12,0.94)');
+        bg.addColorStop(0.5, 'rgba(5,8,15,0.98)');
+        bg.addColorStop(1, 'rgba(2,2,6,1)');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
 
-        for(let i = 0; i < stars.length; i += 5) {
-          const s = stars[i];
-          const twinkle = 0.35 + 0.55 * Math.sin(t * s.tw + s.x * 0.02);
+        const wash = ctx.createRadialGradient(W * 0.5, H * 0.48, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.65);
+        wash.addColorStop(0, colorAt(t * 0.4, 0.11));
+        wash.addColorStop(0.48, colorAt(t * 0.35 + 1.4, 0.06));
+        wash.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = wash;
+        ctx.fillRect(0, 0, W, H);
+
+        sparks.forEach((spark, i) => {
+          spark.x += Math.cos(t * spark.drift + spark.phase) * 0.18;
+          spark.y += Math.sin(t * spark.drift * 0.8 + spark.phase) * 0.12;
+          if(spark.x < -8) spark.x = W + 8;
+          if(spark.x > W + 8) spark.x = -8;
+          if(spark.y < -8) spark.y = H + 8;
+          if(spark.y > H + 8) spark.y = -8;
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r * 1.25, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(230,240,255,${Math.max(0, s.a * twinkle * 0.34)})`;
+          ctx.arc(spark.x, spark.y, spark.r, 0, Math.PI * 2);
+          ctx.fillStyle = colorAt(i * 0.3 + t * 0.2, spark.alpha);
           ctx.fill();
-        }
+        });
 
-        layers.forEach((layer, li) => {
-          const drift = t * layer.speedMul;
-          const glowCol = paletteAt(li + drift * 0.18, layer.alpha * 0.32);
-          const bodyCol = paletteAt(li + drift * 0.24 + 0.6, layer.alpha);
-
-          ctx.save();
-          ctx.globalCompositeOperation = 'lighter';
-
-          for(let pass = 0; pass < 2; pass++) {
-            const width = pass === 0 ? 30 : 4;
-            const alphaScale = pass === 0 ? 0.2 : 0.78;
+        ribbons.forEach((ribbon, i) => {
+          const step = Math.max(14, Math.round(W / 70));
+          const bodyColor = colorAt(ribbon.colorOffset + t * 0.22, ribbon.alpha);
+          const glowColor = colorAt(ribbon.colorOffset + 0.6 + t * 0.18, ribbon.alpha * 0.42);
+          for(let pass = 0; pass < 3; pass++) {
             ctx.beginPath();
-            for(let x = -20; x <= W + 20; x += 14) {
-              const y = curtainY(layer, x, pass * 0.7);
-              if(x === -20) ctx.moveTo(x, y);
+            for(let x = -step; x <= W + step; x += step) {
+              const y = ribbonY(ribbon, x);
+              if(x === -step) ctx.moveTo(x, y);
               else ctx.lineTo(x, y);
             }
-            ctx.strokeStyle = pass === 0 ? glowCol : bodyCol;
-            ctx.globalAlpha = alphaScale;
-            ctx.lineWidth = width;
+            ctx.strokeStyle = pass === 0 ? glowColor : bodyColor;
+            ctx.globalAlpha = pass === 0 ? 0.7 : pass === 1 ? 0.84 : 1;
+            ctx.lineWidth = pass === 0 ? ribbon.width * 1.9 : pass === 1 ? ribbon.width : Math.max(1.4, ribbon.width * 0.18);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.shadowColor = bodyCol;
-            ctx.shadowBlur = pass === 0 ? 18 : 8;
+            ctx.shadowColor = pass === 2 ? colorAt(ribbon.colorOffset + 1.2, 1) : glowColor;
+            ctx.shadowBlur = pass === 0 ? 34 : pass === 1 ? 14 : 8;
             ctx.stroke();
           }
-
-          for(let si = 0; si < layer.strandCount; si++) {
-            const strand = layer.strands[si];
-            const frac = Math.max(0, Math.min(1, si / Math.max(1, layer.strandCount - 1) + strand.offset / layer.strandCount));
-            const sx = frac * W;
-            const wave = Math.sin(frac * Math.PI * 4 + drift + layer.phase);
-            const top = curtainY(layer, sx, wave * 0.7);
-            const len = layer.spread * (0.45 + 0.55 * Math.sin(frac * Math.PI + drift * 0.7 + li));
-            const sway = Math.sin(t * 1.5 + frac * 8 + li) * 24;
-            const col = paletteAt(li + frac * 2.5 + drift * 0.18, layer.alpha * strand.alpha);
-            ctx.save();
-            ctx.globalAlpha = layer.alpha * strand.alpha * 0.18;
-            ctx.strokeStyle = col;
-            ctx.lineWidth = strand.width * 7;
-            ctx.shadowColor = col;
-            ctx.shadowBlur = 20;
-            ctx.beginPath();
-            ctx.moveTo(sx, top);
-            ctx.bezierCurveTo(sx + sway * 0.25, top + len * 0.28, sx + sway, top + len * 0.64, sx + sway * 0.55, top + len);
-            ctx.stroke();
-            ctx.restore();
-
-            ctx.beginPath();
-            ctx.moveTo(sx, top);
-            ctx.bezierCurveTo(sx + sway * 0.25, top + len * 0.28, sx + sway, top + len * 0.64, sx + sway * 0.55, top + len);
-            ctx.strokeStyle = col;
-            ctx.globalAlpha = layer.alpha * 0.95;
-            ctx.lineWidth = strand.width;
-            ctx.shadowColor = col;
-            ctx.shadowBlur = si % 2 === 0 ? 10 : 4;
-            ctx.stroke();
-          }
-          ctx.restore();
-          ctx.globalAlpha = 1;
           ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
         });
+
+        const vignette = ctx.createRadialGradient(W/2, H/2, Math.min(W, H) * 0.22, W/2, H/2, Math.max(W, H) * 0.74);
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.44)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, W, H);
+      }
+    };
+  },
+
+  // TOPO DRIFT
+  topography() {
+    let t = 0;
+    const lineCount = densityCount(18, 42);
+    const step = Math.max(10, Math.round(W / 80));
+    function topoY(x, yBase, idx) {
+      return yBase
+        + Math.sin(x * 0.008 + t * 1.35 + idx * 0.22) * (10 + idx * 0.16)
+        + Math.cos(x * 0.015 - t * 1.1 + idx * 0.37) * (6 + idx * 0.08)
+        + Math.sin((x + yBase) * 0.004 + t * 0.7) * 12;
+    }
+    function colorAt(offset, alpha) {
+      const pos = ((offset % currentPalette.length) + currentPalette.length) % currentPalette.length;
+      const i = Math.floor(pos);
+      const f = pos - i;
+      const c1 = hexToRgb(currentPalette[i]);
+      const c2 = hexToRgb(currentPalette[(i + 1) % currentPalette.length]);
+      const r = Math.round(lerp(c1[0], c2[0], f));
+      const g = Math.round(lerp(c1[1], c2[1], f));
+      const b = Math.round(lerp(c1[2], c2[2], f));
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+    return {
+      draw() {
+        t += speed * 0.0034;
+        ctx.fillStyle = '#05070b';
+        ctx.fillRect(0, 0, W, H);
+
+        const field = ctx.createRadialGradient(W * 0.5, H * 0.42, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.7);
+        field.addColorStop(0, colorAt(t * 0.35, 0.16));
+        field.addColorStop(0.46, colorAt(t * 0.26 + 1.2, 0.09));
+        field.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = field;
+        ctx.fillRect(0, 0, W, H);
+
+        for(let i = 0; i < lineCount; i++) {
+          const yBase = lerp(-H * 0.08, H * 1.05, i / Math.max(1, lineCount - 1));
+          const alpha = lerp(0.14, 0.5, 1 - i / Math.max(1, lineCount - 1));
+          const col = colorAt(i * 0.22 + t * 0.18, alpha);
+
+          ctx.beginPath();
+          for(let x = -step; x <= W + step; x += step) {
+            const y = topoY(x, yBase, i);
+            if(x === -step) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1;
+          ctx.shadowColor = colorAt(i * 0.22 + 0.7, 1);
+          ctx.shadowBlur = 8;
+          ctx.stroke();
+
+          if(i % 6 === 0) {
+            ctx.beginPath();
+            for(let x = -step; x <= W + step; x += step) {
+              const y = topoY(x, yBase, i) - 12;
+              if(x === -step) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = colorAt(i * 0.22 + 1.4, alpha * 0.35);
+            ctx.lineWidth = 3.6;
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+          }
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        for(let i = 0; i < 3; i++) {
+          const py = H * (0.22 + i * 0.28) + Math.sin(t * 1.3 + i) * 18;
+          ctx.fillRect(0, py, W, 1);
+        }
       }
     };
   },
@@ -1976,85 +1976,199 @@ const SceneFactories = {
   // â”€â”€ 3D GRID â”€â”€
   grid3d() {
     let t = 0;
+    const dust = Array.from({ length: densityCount(26, 80) }, () => ({
+      x: rnd(0, W),
+      y: rnd(0, H),
+      z: rnd(0.2, 1),
+      r: rnd(0.8, 2.4),
+      drift: rnd(0.2, 1.1),
+      alpha: rnd(0.08, 0.24),
+      colorOffset: rnd(0, currentPalette.length),
+    }));
+    function mixPalette(offset, alpha = 1) {
+      const pos = ((offset % currentPalette.length) + currentPalette.length) % currentPalette.length;
+      const i = Math.floor(pos);
+      const f = pos - i;
+      const c1 = hexToRgb(currentPalette[i]);
+      const c2 = hexToRgb(currentPalette[(i + 1) % currentPalette.length]);
+      const r = Math.round(lerp(c1[0], c2[0], f));
+      const g = Math.round(lerp(c1[1], c2[1], f));
+      const b = Math.round(lerp(c1[2], c2[2], f));
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+    function ridgeWave(x, band, depth) {
+      return Math.sin(x * 0.0065 + t * 1.2 + band * 0.45) * (18 + depth * 26)
+        + Math.cos(x * 0.015 - t * 0.85 + band * 0.7) * (8 + depth * 15);
+    }
     return {
       draw() {
-        ctx.fillStyle = '#000008';
-        ctx.fillRect(0, 0, W, H);
-        t += speed * 0.018;
+        t += speed * 0.014;
 
+        const horizonBase = H * 0.5;
+        const bob = Math.sin(t * 0.55) * H * 0.012;
+        const sway = Math.cos(t * 0.38) * W * 0.018;
+        const cx = W / 2 + sway;
+        const horizon = horizonBase + bob;
+        const horizonGlow = 0.62 + 0.38 * Math.sin(t * 0.9);
         const col0 = currentPalette[0] || '#00aaff';
         const col1 = currentPalette[1] || '#ff00ff';
         const col2 = currentPalette[2] || '#ffffff';
 
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#03040b');
+        bg.addColorStop(0.52, 'rgba(6,8,18,1)');
+        bg.addColorStop(1, '#010204');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        const skyWash = ctx.createRadialGradient(cx, horizon - H * 0.06, 0, cx, horizon - H * 0.02, Math.max(W, H) * 0.62);
+        skyWash.addColorStop(0, mixPalette(1.1 + t * 0.12, 0.18));
+        skyWash.addColorStop(0.45, mixPalette(2.8 + t * 0.1, 0.08));
+        skyWash.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = skyWash;
+        ctx.fillRect(0, 0, W, H);
+
         const numRows = densityCount(18, 36);
         const numCols = densityCount(24, 56);
-        const cx = W / 2;
-        const horizon = H * 0.5;
-        const scrollOffset = (t * 0.5) % (1 / numRows);
+        const scrollOffset = (t * 0.42) % (1 / numRows);
 
         ctx.save();
+
+        dust.forEach((p, i) => {
+          p.y += (0.15 + speed * 0.05) * p.z;
+          p.x += Math.sin(t * p.drift + i) * 0.16;
+          if(p.y > H + 6) {
+            p.y = -6;
+            p.x = rnd(0, W);
+          }
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * (0.7 + p.z * 0.8), 0, Math.PI * 2);
+          ctx.fillStyle = mixPalette(p.colorOffset + t * 0.08, p.alpha * (0.5 + p.z * 0.6));
+          ctx.fill();
+        });
 
         // â”€â”€ FLOOR PLANE (bottom half) â”€â”€
         for (let i = 0; i <= numRows; i++) {
           const frac = ((i / numRows) + scrollOffset) % 1;
-          const y = horizon + (H - horizon) * frac;
+          const depth = Math.pow(frac, 1.25);
+          const y = horizon + (H - horizon) * depth;
           const spread = frac;
-          const x0 = cx - W * spread, x1 = cx + W * spread;
-          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y);
-          ctx.strokeStyle = col0;
-          ctx.lineWidth = frac < 0.05 ? 0.3 : 0.9;
-          ctx.globalAlpha = frac * 0.85;
+          const x0 = cx - W * spread;
+          const x1 = cx + W * spread;
+          const segments = Math.max(18, Math.round(24 + spread * 28));
+          ctx.beginPath();
+          for(let s = 0; s <= segments; s++) {
+            const lineFrac = s / segments;
+            const x = lerp(x0, x1, lineFrac);
+            const wave = ridgeWave(x, i, depth) * (0.08 + depth * 0.28);
+            const py = y + wave;
+            if(s === 0) ctx.moveTo(x, py);
+            else ctx.lineTo(x, py);
+          }
+          ctx.strokeStyle = mixPalette(depth * 1.4 + t * 0.14, 1);
+          ctx.lineWidth = depth < 0.05 ? 0.4 : 0.8 + depth * 0.75;
+          ctx.globalAlpha = 0.12 + depth * 0.9;
+          ctx.shadowColor = col0;
+          ctx.shadowBlur = 4 + depth * 10;
           ctx.stroke();
         }
         for (let j = -numCols / 2; j <= numCols / 2; j++) {
           const frac = j / numCols;
           const xBottom = cx + frac * W;
-          ctx.beginPath(); ctx.moveTo(cx, horizon); ctx.lineTo(xBottom, H);
-          ctx.strokeStyle = col0;
-          ctx.lineWidth = 0.8;
-          ctx.globalAlpha = (1 - Math.abs(frac)) * 0.5 + 0.05;
+          const band = (j + numCols / 2) / Math.max(1, numCols);
+          ctx.beginPath();
+          ctx.moveTo(cx, horizon);
+          for(let s = 1; s <= 18; s++) {
+            const depth = s / 18;
+            const x = lerp(cx, xBottom, depth);
+            const y = lerp(horizon, H, Math.pow(depth, 1.15));
+            const wave = ridgeWave(x, band * 12, depth) * (0.04 + depth * 0.12);
+            ctx.lineTo(x, y + wave);
+          }
+          ctx.strokeStyle = mixPalette(0.4 + band * 2 + t * 0.08, 1);
+          ctx.lineWidth = 0.55 + (1 - Math.abs(frac)) * 0.5;
+          ctx.globalAlpha = 0.08 + (1 - Math.abs(frac)) * 0.54;
+          ctx.shadowBlur = 2;
           ctx.stroke();
         }
 
         // â”€â”€ CEILING PLANE (top half, mirrored) â”€â”€
         for (let i = 0; i <= numRows; i++) {
           const frac = ((i / numRows) + scrollOffset) % 1;
-          const y = horizon - (horizon) * frac;
+          const depth = Math.pow(frac, 1.18);
+          const y = horizon - horizon * depth;
           const spread = frac;
-          const x0 = cx - W * spread, x1 = cx + W * spread;
-          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y);
-          ctx.strokeStyle = col2;
-          ctx.lineWidth = frac < 0.05 ? 0.3 : 0.9;
-          ctx.globalAlpha = frac * 0.45;
+          const x0 = cx - W * spread;
+          const x1 = cx + W * spread;
+          ctx.beginPath();
+          for(let s = 0; s <= 18; s++) {
+            const lineFrac = s / 18;
+            const x = lerp(x0, x1, lineFrac);
+            const wave = ridgeWave(x, i + 18, depth) * (0.03 + depth * 0.12);
+            const py = y - wave * 0.35;
+            if(s === 0) ctx.moveTo(x, py);
+            else ctx.lineTo(x, py);
+          }
+          ctx.strokeStyle = mixPalette(2.1 + depth * 1.6 + t * 0.12, 1);
+          ctx.lineWidth = depth < 0.05 ? 0.3 : 0.7 + depth * 0.35;
+          ctx.globalAlpha = 0.05 + depth * 0.34;
+          ctx.shadowColor = col2;
+          ctx.shadowBlur = 3 + depth * 4;
           ctx.stroke();
         }
         for (let j = -numCols / 2; j <= numCols / 2; j++) {
           const frac = j / numCols;
           const xTop = cx + frac * W;
-          ctx.beginPath(); ctx.moveTo(cx, horizon); ctx.lineTo(xTop, 0);
-          ctx.strokeStyle = col2;
-          ctx.lineWidth = 0.8;
-          ctx.globalAlpha = (1 - Math.abs(frac)) * 0.25 + 0.03;
+          ctx.beginPath();
+          ctx.moveTo(cx, horizon);
+          ctx.lineTo(xTop, 0);
+          ctx.strokeStyle = mixPalette(3 + frac * 1.8 + t * 0.06, 1);
+          ctx.lineWidth = 0.55;
+          ctx.globalAlpha = (1 - Math.abs(frac)) * 0.18 + 0.02;
+          ctx.shadowBlur = 0;
           ctx.stroke();
         }
 
+        const fogTop = ctx.createLinearGradient(0, 0, 0, horizon);
+        fogTop.addColorStop(0, 'rgba(0,0,0,0.22)');
+        fogTop.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = fogTop;
+        ctx.fillRect(0, 0, W, horizon + 1);
+
+        const fogFloor = ctx.createLinearGradient(0, horizon - 4, 0, H);
+        fogFloor.addColorStop(0, 'rgba(255,255,255,0)');
+        fogFloor.addColorStop(0.28, mixPalette(0.9 + t * 0.08, 0.05));
+        fogFloor.addColorStop(1, 'rgba(0,0,0,0.42)');
+        ctx.fillStyle = fogFloor;
+        ctx.fillRect(0, horizon - 4, W, H - horizon + 4);
+
         // â”€â”€ HORIZON GLOW â”€â”€
         ctx.globalAlpha = 1;
-        // soft glow band
-        const glowGrad = ctx.createLinearGradient(0, horizon - 40, 0, horizon + 40);
+        const glowGrad = ctx.createLinearGradient(0, horizon - 72, 0, horizon + 72);
         glowGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        glowGrad.addColorStop(0.5, col1 + '55');
+        glowGrad.addColorStop(0.42, mixPalette(1.4 + t * 0.08, 0.16 + horizonGlow * 0.14));
+        glowGrad.addColorStop(0.5, mixPalette(0.8 + t * 0.12, 0.34 + horizonGlow * 0.22));
+        glowGrad.addColorStop(0.58, mixPalette(2.2 + t * 0.1, 0.14));
         glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = glowGrad;
-        ctx.fillRect(0, horizon - 40, W, 80);
+        ctx.fillRect(0, horizon - 72, W, 144);
+
+        const bloom = ctx.createRadialGradient(cx, horizon, 0, cx, horizon, Math.min(W, H) * 0.28);
+        bloom.addColorStop(0, mixPalette(1.1 + t * 0.1, 0.42 + horizonGlow * 0.18));
+        bloom.addColorStop(0.4, mixPalette(0.2 + t * 0.06, 0.12));
+        bloom.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = bloom;
+        ctx.beginPath();
+        ctx.arc(cx, horizon, Math.min(W, H) * 0.28, 0, Math.PI * 2);
+        ctx.fill();
 
         // sharp horizon line
         ctx.beginPath();
         ctx.moveTo(0, horizon); ctx.lineTo(W, horizon);
-        ctx.strokeStyle = col1;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = mixPalette(1.6 + t * 0.08, 1);
+        ctx.lineWidth = 1.6;
         ctx.shadowColor = col1;
-        ctx.shadowBlur = 24;
+        ctx.shadowBlur = 34;
         ctx.globalAlpha = 1;
         ctx.stroke();
 
@@ -2069,13 +2183,26 @@ const SceneFactories = {
         // â”€â”€ SUN / orb on horizon â”€â”€
         const sunR = Math.min(W, H) * 0.09;
         const sunGrd = ctx.createRadialGradient(cx, horizon, 0, cx, horizon, sunR);
-        sunGrd.addColorStop(0, col1 + 'ff');
-        sunGrd.addColorStop(0.4, col1 + '99');
-        sunGrd.addColorStop(1, col1 + '00');
+        sunGrd.addColorStop(0, mixPalette(1 + t * 0.1, 1));
+        sunGrd.addColorStop(0.35, mixPalette(0.35 + t * 0.08, 0.68));
+        sunGrd.addColorStop(0.7, mixPalette(2.6 + t * 0.12, 0.14));
+        sunGrd.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = sunGrd;
         ctx.beginPath(); ctx.arc(cx, horizon, sunR, 0, Math.PI * 2);
         ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx, horizon, sunR * 1.7, 0, Math.PI * 2);
+        ctx.strokeStyle = mixPalette(3.1 + t * 0.12, 0.2);
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        const vignette = ctx.createRadialGradient(W/2, H/2, Math.min(W, H) * 0.22, W/2, H/2, Math.max(W, H) * 0.8);
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, W, H);
 
         ctx.restore();
       }
@@ -2771,7 +2898,7 @@ function loop() {
   const now = performance.now();
   tickFps(now);
   currentScene?.draw();
-  drawTransition(now);
+  if(transitionActive) drawTransition(now);
   rafId = requestAnimationFrame(loop);
 }
 
@@ -2779,7 +2906,19 @@ function loop() {
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
-activateScene('block', { transition:false });
+const savedSessionState = loadSavedSessionState();
+const urlState = loadStateFromUrl();
+const bootSceneId = applyBootState(urlState || savedSessionState || {
+  sceneId: 'block',
+  paletteKey: activePaletteKey,
+  speed,
+  density,
+  timerSecs: 0,
+  customTimerMins: 0,
+  autoQualityEnabled,
+});
+syncShareUrl();
+activateScene(bootSceneId, { transition:false });
 </script>
 </body>
 </html>
