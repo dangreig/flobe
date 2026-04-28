@@ -124,7 +124,8 @@
 
   #hide-btn,
   #fullscreen-btn,
-  #auto-quality-btn {
+  #auto-quality-btn,
+  #help-btn {
     font-family: 'DM Mono', monospace;
     font-size: 0.7rem;
     letter-spacing: 0.08em;
@@ -139,7 +140,8 @@
   }
   #hide-btn:hover,
   #fullscreen-btn:hover,
-  #auto-quality-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  #auto-quality-btn:hover,
+  #help-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
   #auto-quality-btn.active {
     background: rgba(48,209,88,0.22);
     border-color: rgba(48,209,88,0.45);
@@ -161,6 +163,13 @@
 }
 #fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 #fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
+
+  #help-btn {
+    width: 34px;
+    min-width: 34px;
+    padding-left: 0;
+    padding-right: 0;
+  }
   
   /* Panel */
   #panel {
@@ -495,6 +504,71 @@
     0%,100% { transform: scale(1); }
     50%      { transform: scale(1.06); }
   }
+
+  #help-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: all;
+  }
+  #help-overlay.show { display: flex; }
+  #help-box {
+    width: min(92vw, 420px);
+    background: rgba(12,14,20,0.9);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    padding: 1.25rem;
+    color: rgba(255,255,255,0.82);
+  }
+  #help-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 0.9rem;
+  }
+  .help-list {
+    display: grid;
+    gap: 0.55rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+  .help-list div {
+    display: grid;
+    grid-template-columns: 82px 1fr;
+    gap: 0.8rem;
+    align-items: baseline;
+  }
+  .help-list span:first-child {
+    color: rgba(255,255,255,0.42);
+    white-space: nowrap;
+  }
+  #help-close {
+    margin-top: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.72);
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  #help-close:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
@@ -513,6 +587,7 @@
       <button id="hide-btn">HIDE UI</button>
       <button id="auto-quality-btn">AUTO</button>
       <button id="fps-btn">FPS</button>
+      <button id="help-btn" title="Help">?</button>
     </div>
   </div>
 
@@ -566,6 +641,21 @@
   <span id="fps-text">-- fps</span>
 </div>
 
+<div id="help-overlay">
+  <div id="help-box">
+    <h3>Flobe</h3>
+    <div class="help-list">
+      <div><span>H</span><span>hide or show the interface</span></div>
+      <div><span>F</span><span>toggle fullscreen</span></div>
+      <div><span>Space</span><span>pause or resume motion</span></div>
+      <div><span>AUTO</span><span>adjusts render quality when frame rate drops</span></div>
+      <div><span>PRESETS</span><span>save two local scene setups in this browser</span></div>
+      <div><span>SHARE</span><span>copies the current scene settings as a link</span></div>
+    </div>
+    <button id="help-close">CLOSE</button>
+  </div>
+</div>
+
 <div id="hint">PRESS H TO HIDE - F FOR FULLSCREEN - SPACE TO PAUSE</div>
 
 </div>
@@ -590,8 +680,8 @@ let activePaletteKey = 'cosmic';
 const PRESET_STORAGE_KEY = 'flobe-presets-v1';
 const SESSION_STORAGE_KEY = 'flobe-session-v1';
 const DEFAULT_PRESETS = [
-  { name:'Focus', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
-  { name:'Ambient', sceneId:'ribbons', paletteKey:'ocean', speed:5, density:6 },
+  { name:'Deep Work', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
+  { name:'Night Drive', sceneId:'grid3d', paletteKey:'ocean', speed:5, density:6 },
 ];
 let presets = [];
 let activePresetIndex = -1;
@@ -600,7 +690,7 @@ let activePresetIndex = -1;
 // ----------------------------------------
 // ----------------------------------------
 const SCENES = [
-  { id:'block',     label:'Block Bounce',  icon:'▭' },
+  { id:'block',     label:'Glass Comet',   icon:'➤' },
   { id:'particles', label:'Particles',     icon:'✦' },
   { id:'pomodoro', label:'Pomodoro Ring', icon:'◔' },
   { id:'warp',      label:'Warp Speed',    icon:'➜' },
@@ -628,6 +718,9 @@ const presetRow = document.getElementById('preset-row');
 const autoQualityBtn = document.getElementById('auto-quality-btn');
 const presetShareBtn = document.getElementById('preset-share-btn');
 const timerCustomMinsInput = document.getElementById('timer-custom-mins');
+const helpBtn = document.getElementById('help-btn');
+const helpOverlay = document.getElementById('help-overlay');
+const helpClose = document.getElementById('help-close');
 
 // ----------------------------------------
 // ----------------------------------------
@@ -674,9 +767,20 @@ function drawTransition(now) {
     transitionActive = false;
     return;
   }
+  const eased = progress * progress * (3 - 2 * progress);
   ctx.save();
-  ctx.globalAlpha = 1 - progress;
+  ctx.globalAlpha = 1 - eased;
+  ctx.filter = `blur(${eased * 10}px)`;
   ctx.drawImage(transitionCanvas, 0, 0, W, H);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const wash = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.72);
+  wash.addColorStop(0, `${currentPalette[0] || '#ffffff'}${Math.round((1 - Math.abs(progress - 0.5) * 2) * 46).toString(16).padStart(2, '0')}`);
+  wash.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 
@@ -711,6 +815,59 @@ function normalizedSpeedValue(value) {
 
 function normalizedDensityValue(value) {
   return Math.max(1, Math.min(10, Number(value) || 5));
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+
+function mixHexColor(a, b, t) {
+  const ar = hexToRgb(a);
+  const br = hexToRgb(b);
+  return rgbToHex(
+    lerp(ar[0], br[0], t),
+    lerp(ar[1], br[1], t),
+    lerp(ar[2], br[2], t)
+  );
+}
+
+function rotatePalette(base, offset) {
+  return base.map((_, i) => base[(i + offset) % base.length]);
+}
+
+function scenePalette(sceneId, paletteKey) {
+  const base = PALETTES[paletteKey] || PALETTES.cosmic;
+  if(sceneId === 'pomodoro') {
+    return [
+      mixHexColor(base[0], '#ffffff', 0.32),
+      mixHexColor(base[1 % base.length], '#ffffff', 0.18),
+      mixHexColor(base[2 % base.length], '#0f0f0f', 0.18),
+      mixHexColor(base[3 % base.length], '#ffffff', 0.12),
+      base[4 % base.length],
+      base[5 % base.length],
+    ];
+  }
+  if(sceneId === 'grid3d') {
+    return [
+      mixHexColor(base[2 % base.length], '#5ac8fa', 0.22),
+      mixHexColor(base[4 % base.length], '#ff9f0a', 0.18),
+      mixHexColor(base[0], '#ffffff', 0.2),
+      mixHexColor(base[1 % base.length], '#0a84ff', 0.16),
+      base[3 % base.length],
+      base[5 % base.length],
+    ];
+  }
+  if(sceneId === 'ribbons') {
+    return rotatePalette(base, 1).map((col, i) => mixHexColor(col, i % 2 ? '#ffffff' : '#05060b', i % 2 ? 0.12 : 0.08));
+  }
+  if(sceneId === 'rain' || sceneId === 'livecoding') {
+    return rotatePalette(base, paletteKey === 'forest' ? 0 : 3);
+  }
+  return base;
+}
+
+function applyScenePalette(sceneId = activeSceneId, paletteKey = activePaletteKey) {
+  currentPalette = scenePalette(sceneId, paletteKey);
 }
 
 function buildShareUrl() {
@@ -750,7 +907,7 @@ function saveSessionState() {
 }
 
 function sanitizeState(raw = {}) {
-  const fallbackSceneId = SCENES.some(scene => scene.id === raw.sceneId) ? raw.sceneId : 'block';
+  const fallbackSceneId = SCENES.some(scene => scene.id === raw.sceneId) ? raw.sceneId : 'grid3d';
   const fallbackPaletteKey = PALETTES[raw.paletteKey] ? raw.paletteKey : activePaletteKey;
   const timerSecs = Math.max(0, Math.min(180 * 60, Math.round(Number(raw.timerSecs || 0))));
   const customTimerMins = Math.max(0, Math.min(180, Math.round(Number(raw.customTimerMins || 0))));
@@ -859,8 +1016,8 @@ function setPalette(key) {
     const swatch = wrap.querySelector('.pal-swatch');
     if(match && swatch) swatch.classList.add('active');
   });
-  currentPalette = PALETTES[key];
   activePaletteKey = key;
+  applyScenePalette(activeSceneId, activePaletteKey);
 }
 
 function persistAppState() {
@@ -874,6 +1031,17 @@ function loadPresets() {
     if(!raw) return DEFAULT_PRESETS.map(p => ({ ...p }));
     const parsed = JSON.parse(raw);
     if(!Array.isArray(parsed) || parsed.length !== 2) throw new Error('bad preset data');
+    if(parsed[0]?.name === 'Focus' && parsed[1]?.name === 'Ambient') {
+      const untouchedOldDefaults = parsed[0]?.sceneId === 'pomodoro'
+        && parsed[0]?.paletteKey === 'mono'
+        && Number(parsed[0]?.speed) === 3
+        && Number(parsed[0]?.density) === 4
+        && parsed[1]?.sceneId === 'ribbons'
+        && parsed[1]?.paletteKey === 'ocean'
+        && Number(parsed[1]?.speed) === 5
+        && Number(parsed[1]?.density) === 6;
+      if(untouchedOldDefaults) return DEFAULT_PRESETS.map(p => ({ ...p }));
+    }
     return parsed.map((preset, i) => ({
       name: typeof preset?.name === 'string' && preset.name.trim() ? preset.name.trim() : DEFAULT_PRESETS[i].name,
       sceneId: SCENES.some(scene => scene.id === preset?.sceneId) ? preset.sceneId : DEFAULT_PRESETS[i].sceneId,
@@ -1018,6 +1186,10 @@ function toggleUI() {
   else { ui.style.pointerEvents = ''; }
 }
 
+function toggleHelp(show = !helpOverlay.classList.contains('show')) {
+  helpOverlay.classList.toggle('show', show);
+}
+
 async function toggleFullscreen() {
   if (!document.fullscreenElement) {
     await document.documentElement.requestFullscreen?.();
@@ -1033,7 +1205,17 @@ function syncFullscreenLabel() {
 document.addEventListener('fullscreenchange', syncFullscreenLabel);
 syncFullscreenLabel();
 
+helpBtn.addEventListener('click', () => toggleHelp(true));
+helpClose.addEventListener('click', () => toggleHelp(false));
+helpOverlay.addEventListener('click', e => {
+  if(e.target === helpOverlay) toggleHelp(false);
+});
+
 document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && helpOverlay.classList.contains('show')) {
+    toggleHelp(false);
+    return;
+  }
   if(e.key.toLowerCase() === 'h') toggleUI();
   if(e.key.toLowerCase() === 'f') toggleFullscreen();
   if(e.key === ' ') { paused = !paused; if(!paused) loop(); e.preventDefault(); }
@@ -1170,35 +1352,31 @@ function densityCount(min,max) { return Math.round(lerp(min, max, densityT())); 
 // ----------------------------------------
 const SceneFactories = {
 
-  // BLOCK BOUNCE
+  // GLASS COMET
   block() {
-    const BW = Math.max(1, Math.min(260, Math.max(110, W * 0.58), Math.max(1, W)));
-    const BH = Math.max(1, Math.min(130, Math.max(64, H * 0.18), Math.max(1, H)));
-    let x = rnd(0, Math.max(0, W - BW));
-    let y = rnd(0, Math.max(0, H - BH));
-    let vx = (1.8 + speed*0.3) * (Math.random()<0.5?1:-1);
-    let vy = (1.2 + speed*0.22) * (Math.random()<0.5?1:-1);
-    let squashX = 1;
-    let squashY = 1;
-    let targetSquashX = 1;
-    let targetSquashY = 1;
-    let angle = rnd(-0.08, 0.08);
-    let angularVel = 0;
-    let impactPower = 0;
+    const size = Math.max(1, Math.min(110, Math.max(24, Math.min(W, H) * 0.12), W * 0.26, H * 0.26));
+    const len = size * 2.2;
+    const radius = len * 0.42;
+    let x = rnd(radius, Math.max(radius, W - radius));
+    let y = rnd(radius, Math.max(radius, H - radius));
+    let vx = (2.1 + speed * 0.32) * (Math.random() < 0.5 ? 1 : -1);
+    let vy = (1.5 + speed * 0.24) * (Math.random() < 0.5 ? 1 : -1);
+    let angle = Math.atan2(vy, vx);
     let colorIdx = 0;
+    let impact = 0;
     let frameN = 0;
-    const trails = [];
-    const ripples = [];
-    const sparks = [];
-    const motes = Array.from({length: densityCount(26, 70)}, () => ({
+    const waves = [];
+    const shards = [];
+    const motes = Array.from({length: densityCount(24, 68)}, () => ({
       x: rnd(0, W),
       y: rnd(0, H),
-      r: rnd(0.6, 1.8),
-      speed: rnd(0.08, 0.34),
+      r: rnd(0.5, 1.8),
       phase: rnd(0, Math.PI * 2),
-      alpha: rnd(0.08, 0.22),
+      drift: rnd(0.05, 0.22),
+      alpha: rnd(0.05, 0.18),
       col: rndCol(),
     }));
+
     function rgba(hex, alpha) {
       const [r, g, b] = hexToRgb(hex);
       return `rgba(${r},${g},${b},${alpha})`;
@@ -1206,268 +1384,213 @@ const SceneFactories = {
     function mixHex(a, b, t) {
       const [ar, ag, ab] = hexToRgb(a);
       const [br, bg, bb] = hexToRgb(b);
-      const rr = Math.round(lerp(ar, br, t));
-      const rg = Math.round(lerp(ag, bg, t));
-      const rb = Math.round(lerp(ab, bb, t));
-      return `rgb(${rr},${rg},${rb})`;
+      return `rgb(${Math.round(lerp(ar, br, t))},${Math.round(lerp(ag, bg, t))},${Math.round(lerp(ab, bb, t))})`;
     }
-    function roundedRect(px, py, pw, ph, pr) {
+    function cometPath(length, height, flare = 0) {
+      const nose = length * 0.52 + flare;
+      const rear = -length * 0.48;
+      const shoulder = length * 0.12;
+      const notch = rear + length * 0.2;
       ctx.beginPath();
-      ctx.moveTo(px + pr, py);
-      ctx.lineTo(px + pw - pr, py);
-      ctx.quadraticCurveTo(px + pw, py, px + pw, py + pr);
-      ctx.lineTo(px + pw, py + ph - pr);
-      ctx.quadraticCurveTo(px + pw, py + ph, px + pw - pr, py + ph);
-      ctx.lineTo(px + pr, py + ph);
-      ctx.quadraticCurveTo(px, py + ph, px, py + ph - pr);
-      ctx.lineTo(px, py + pr);
-      ctx.quadraticCurveTo(px, py, px + pr, py);
+      ctx.moveTo(nose, 0);
+      ctx.lineTo(shoulder, -height * 0.5);
+      ctx.lineTo(notch, -height * 0.3);
+      ctx.lineTo(rear, -height * 0.12);
+      ctx.lineTo(rear + length * 0.12, 0);
+      ctx.lineTo(rear, height * 0.12);
+      ctx.lineTo(notch, height * 0.3);
+      ctx.lineTo(shoulder, height * 0.5);
       ctx.closePath();
     }
-    function drawRoundedBlock(cx, cy, w, h, radius, rot, fill) {
+    function drawComet(px, py, rot, length, height, alpha, paletteOffset, glow = 1) {
+      const primary = currentPalette[paletteOffset % currentPalette.length] || '#5ac8fa';
+      const secondary = currentPalette[(paletteOffset + 1) % currentPalette.length] || '#ff2d55';
+      const tertiary = currentPalette[(paletteOffset + 2) % currentPalette.length] || '#30d158';
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(px, py);
       ctx.rotate(rot);
-      ctx.fillStyle = fill;
-      roundedRect(-w/2, -h/2, w, h, radius);
+
+      ctx.shadowColor = primary;
+      ctx.shadowBlur = 16 * glow;
+      ctx.fillStyle = rgba(primary, alpha * 0.045);
+      cometPath(length + 12 * glow, height + 8 * glow, impact * 5);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      const body = ctx.createLinearGradient(-length * 0.5, -height * 0.5, length * 0.5, height * 0.5);
+      body.addColorStop(0, rgba(secondary, alpha * 0.34));
+      body.addColorStop(0.22, 'rgba(255,255,255,0.2)');
+      body.addColorStop(0.48, mixHex('#080b12', primary, 0.22));
+      body.addColorStop(0.74, rgba(tertiary, alpha * 0.24));
+      body.addColorStop(1, rgba(primary, alpha * 0.42));
+      ctx.fillStyle = body;
+      cometPath(length, height, impact * 4);
+      ctx.fill();
+
+      const inner = ctx.createLinearGradient(-length * 0.35, 0, length * 0.45, 0);
+      inner.addColorStop(0, 'rgba(255,255,255,0)');
+      inner.addColorStop(0.48, rgba(tertiary, alpha * 0.22));
+      inner.addColorStop(0.65, 'rgba(255,255,255,0.28)');
+      inner.addColorStop(1, rgba(primary, alpha * 0.12));
+      ctx.fillStyle = inner;
+      cometPath(length * 0.72, height * 0.48, impact * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.34)';
+      ctx.lineWidth = 1.1;
+      cometPath(length - 4, height - 4, impact * 3);
+      ctx.stroke();
+
+      ctx.strokeStyle = rgba(primary, alpha * 0.68);
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = primary;
+      ctx.shadowBlur = 16 * glow;
+      cometPath(length + 2, height + 2, impact * 4);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.beginPath();
+      ctx.arc(length * 0.28, -height * 0.15, Math.max(3, height * 0.08), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 12;
       ctx.fill();
       ctx.restore();
+      ctx.shadowBlur = 0;
     }
     function spawnImpact(px, py, nx, ny, col, power) {
-      const burstCount = Math.round(lerp(10, 26, densityT()) * power);
-      ripples.push({ x: px, y: py, r: 6, life: 1, col, power });
-      for(let i = 0; i < burstCount; i++) {
-        const spread = rnd(-0.9, 0.9);
-        const tangentX = -ny;
-        const tangentY = nx;
-        const speedOut = rnd(2.2, 6.8) * (0.55 + speed * 0.08) * power;
-        sparks.push({
+      waves.push({ x: px, y: py, nx, ny, r: 8, life: 0.72, col, power });
+      const tangentX = -ny;
+      const tangentY = nx;
+      const count = Math.round(lerp(3, 9, densityT()) * power);
+      for(let i = 0; i < count; i++) {
+        const spread = rnd(-0.5, 0.5);
+        const force = rnd(1.2, 3.8) * power;
+        shards.push({
           x: px,
           y: py,
-          vx: nx * speedOut + tangentX * spread * speedOut,
-          vy: ny * speedOut + tangentY * spread * speedOut,
-          life: rnd(0.35, 0.9),
-          maxLife: 1,
-          r: rnd(1.2, 3.4),
+          vx: nx * force + tangentX * spread * force,
+          vy: ny * force + tangentY * spread * force,
+          rot: rnd(0, Math.PI * 2),
+          spin: rnd(-0.16, 0.16),
+          len: rnd(6, 14),
+          life: rnd(0.3, 0.62),
           col: currentPalette[(colorIdx + i) % currentPalette.length],
         });
       }
     }
-    function drawBackground(primary, secondary, tertiary) {
-      const bg = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.78);
-      bg.addColorStop(0, mixHex('#070912', primary, 0.18));
-      bg.addColorStop(0.58, '#05060b');
+    function drawBackground(primary, secondary) {
+      const bg = ctx.createRadialGradient(W * 0.5, H * 0.44, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.82);
+      bg.addColorStop(0, mixHex('#0c1018', primary, 0.12));
+      bg.addColorStop(0.52, '#040509');
       bg.addColorStop(1, '#000000');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.save();
-      ctx.globalAlpha = 0.22;
-      const grid = Math.max(52, Math.round(90 - density * 4));
-      const offset = (frameN * speed * 0.12) % grid;
-      ctx.strokeStyle = rgba(secondary, 0.16);
-      ctx.lineWidth = 1;
-      for(let gx = -grid + offset; gx < W + grid; gx += grid) {
-        ctx.beginPath();
-        ctx.moveTo(gx, 0);
-        ctx.lineTo(gx + W * 0.08, H);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = rgba(tertiary, 0.1);
-      for(let gy = -grid + offset * 0.6; gy < H + grid; gy += grid) {
-        ctx.beginPath();
-        ctx.moveTo(0, gy);
-        ctx.lineTo(W, gy - H * 0.06);
-        ctx.stroke();
-      }
-      ctx.restore();
+      const wash = ctx.createLinearGradient(0, 0, W, H);
+      wash.addColorStop(0, rgba(secondary, 0.05));
+      wash.addColorStop(0.5, 'rgba(255,255,255,0.012)');
+      wash.addColorStop(1, rgba(primary, 0.04));
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, W, H);
 
       motes.forEach(m => {
-        m.y += m.speed + speed * 0.018;
-        m.x += Math.sin(frameN * 0.012 + m.phase) * 0.16;
-        if(m.y > H + 8) {
-          m.y = -8;
-          m.x = rnd(0, W);
-          m.col = rndCol();
-        }
+        m.x += Math.cos(frameN * 0.01 + m.phase) * m.drift;
+        m.y += Math.sin(frameN * 0.012 + m.phase) * m.drift + speed * 0.012;
+        if(m.y > H + 8) { m.y = -8; m.x = rnd(0, W); }
+        if(m.x < -8) m.x = W + 8;
+        if(m.x > W + 8) m.x = -8;
         ctx.beginPath();
         ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
         ctx.fillStyle = rgba(m.col, m.alpha);
         ctx.fill();
       });
 
-      const vignette = ctx.createRadialGradient(W/2, H/2, Math.min(W,H) * 0.16, W/2, H/2, Math.max(W,H) * 0.7);
+      const vignette = ctx.createRadialGradient(W/2, H/2, Math.min(W,H) * 0.18, W/2, H/2, Math.max(W,H) * 0.72);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.58)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.64)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, W, H);
     }
     return {
       draw() {
         frameN++;
-        const primary    = currentPalette[colorIdx % currentPalette.length] || '#5ac8fa';
-        const secondary  = currentPalette[(colorIdx + 1) % currentPalette.length] || '#ff2d55';
-        const tertiary   = currentPalette[(colorIdx + 2) % currentPalette.length] || '#30d158';
-        const quaternary = currentPalette[(colorIdx + 3) % currentPalette.length] || secondary;
+        const primary = currentPalette[colorIdx % currentPalette.length] || '#5ac8fa';
+        const secondary = currentPalette[(colorIdx + 1) % currentPalette.length] || '#ff2d55';
+        drawBackground(primary, secondary);
 
-        drawBackground(primary, secondary, tertiary);
-
-        // move block
-        x += vx; y += vy;
-        let hitX = false;
-        let hitY = false;
-        let normalX = 0;
-        let normalY = 0;
-        let impactX = x + BW/2;
-        let impactY = y + BH/2;
-        const hitCol = currentPalette[(colorIdx + 2) % currentPalette.length] || primary;
-        if(x + BW >= W) {
-          x = Math.max(0, W - BW); vx = -Math.abs(vx); hitX = true; normalX = -1; impactX = W; impactY = y + BH/2;
-        }
-        if(x <= 0) {
-          x = 0; vx = Math.abs(vx); hitX = true; normalX = 1; impactX = 0; impactY = y + BH/2;
-        }
-        if(y + BH >= H) {
-          y = Math.max(0, H - BH); vy = -Math.abs(vy); hitY = true; normalY = -1; impactX = x + BW/2; impactY = H;
-        }
-        if(y <= 0) {
-          y = 0; vy = Math.abs(vy); hitY = true; normalY = 1; impactX = x + BW/2; impactY = 0;
+        x += vx;
+        y += vy;
+        let hit = false;
+        let nx = 0;
+        let ny = 0;
+        if(x > W - radius) { x = W - radius; vx = -Math.abs(vx); hit = true; nx = -1; }
+        if(x < radius) { x = radius; vx = Math.abs(vx); hit = true; nx = 1; }
+        if(y > H - radius) { y = H - radius; vy = -Math.abs(vy); hit = true; ny = -1; }
+        if(y < radius) { y = radius; vy = Math.abs(vy); hit = true; ny = 1; }
+        if(hit) {
+          colorIdx = (colorIdx + 1 + (nx && ny ? 1 : 0)) % currentPalette.length;
+          impact = Math.max(impact, nx && ny ? 0.58 : 0.42);
+          spawnImpact(x + nx * radius, y + ny * radius, nx, ny, currentPalette[(colorIdx + 2) % currentPalette.length], nx && ny ? 0.72 : 0.52);
         }
 
-        if(hitX && hitY) {
-          colorIdx = (colorIdx + 2) % currentPalette.length;
-          targetSquashX = 0.82;
-          targetSquashY = 1.18;
-          impactPower = 1.25;
-          angularVel += (Math.random() < 0.5 ? -1 : 1) * 0.06;
-          spawnImpact(impactX, impactY, normalX || -Math.sign(vx), normalY || -Math.sign(vy), hitCol, 1.35);
-        } else if(hitX) {
-          colorIdx = (colorIdx + 1) % currentPalette.length;
-          targetSquashX = 0.78;
-          targetSquashY = 1.12;
-          impactPower = 1;
-          angularVel += -normalX * 0.038;
-          spawnImpact(impactX, impactY, normalX, 0, hitCol, 1);
-        } else if(hitY) {
-          colorIdx = (colorIdx + 1) % currentPalette.length;
-          targetSquashX = 1.1;
-          targetSquashY = 0.78;
-          impactPower = 1;
-          angularVel += normalY * 0.032;
-          spawnImpact(impactX, impactY, 0, normalY, hitCol, 1);
-        }
+        const targetAngle = Math.atan2(vy, vx);
+        let diff = targetAngle - angle;
+        while(diff > Math.PI) diff -= Math.PI * 2;
+        while(diff < -Math.PI) diff += Math.PI * 2;
+        angle += diff * 0.14;
+        impact *= 0.88;
 
-        targetSquashX += (1 - targetSquashX) * 0.18;
-        targetSquashY += (1 - targetSquashY) * 0.18;
-        squashX += (targetSquashX - squashX) * 0.36;
-        squashY += (targetSquashY - squashY) * 0.36;
-        impactPower *= 0.86;
-        angle += angularVel;
-        angle += (Math.atan2(vy, vx) * 0.035 - angle) * 0.018;
-        angularVel *= 0.9;
+        const cometLen = len * (1 + impact * 0.035);
+        const cometH = size * (0.78 + impact * 0.035);
 
-        const drawW = BW * squashX + impactPower * 8;
-        const drawH = BH * squashY + impactPower * 6;
-        const cx = x + BW/2;
-        const cy = y + BH/2;
-        const radius = 28 + impactPower * 8;
-
-        const maxTrails = densityCount(16, 42);
-        trails.unshift({ x: cx, y: cy, w: drawW, h: drawH, r: radius, rot: angle, col: primary, a: 0.32 });
-        if (trails.length > maxTrails) trails.length = maxTrails;
-        trails.forEach((trail, i) => {
-          const age = i / trails.length;
-          const alpha = trail.a * Math.pow(1 - age, 1.6);
-          if(alpha <= 0.005) return;
-          drawRoundedBlock(
-            trail.x - vx * age * 8,
-            trail.y - vy * age * 8,
-            trail.w * (1 + age * 0.12),
-            trail.h * (1 + age * 0.12),
-            trail.r,
-            trail.rot,
-            rgba(currentPalette[(colorIdx + i) % currentPalette.length], alpha * 0.38)
-          );
-        });
-
-        ripples.forEach((r, i) => {
-          r.life -= 0.025;
-          r.r += (5.8 + speed * 0.55) * r.power;
-          if(r.life <= 0) { ripples.splice(i, 1); return; }
+        waves.forEach((w, i) => {
+          w.life -= 0.03;
+          w.r += (3.4 + speed * 0.32) * w.power;
+          if(w.life <= 0) { waves.splice(i, 1); return; }
+          const bloom = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.r * 1.9);
+          bloom.addColorStop(0, rgba(w.col, w.life * 0.07));
+          bloom.addColorStop(0.42, rgba(w.col, w.life * 0.022));
+          bloom.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = bloom;
+          ctx.fillRect(0, 0, W, H);
+          ctx.save();
+          ctx.translate(w.x, w.y);
+          ctx.scale(1 + Math.abs(w.ny || 0) * 1.6, 1 + Math.abs(w.nx || 0) * 1.6);
           ctx.beginPath();
-          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-          ctx.strokeStyle = rgba(r.col, r.life * 0.42);
-          ctx.lineWidth = 1 + r.power * 2.5;
+          ctx.arc(0, 0, w.r, 0, Math.PI * 2);
+          ctx.strokeStyle = rgba(w.col, w.life * 0.18);
+          ctx.lineWidth = 0.8 + w.power * 0.45;
+          ctx.shadowColor = w.col;
+          ctx.shadowBlur = 8;
           ctx.stroke();
+          ctx.restore();
+          ctx.shadowBlur = 0;
         });
 
-        sparks.forEach((s, i) => {
-          s.life -= 0.028;
+        shards.forEach((s, i) => {
+          s.life -= 0.036;
           s.x += s.vx;
           s.y += s.vy;
-          s.vx *= 0.965;
-          s.vy *= 0.965;
-          if(s.life <= 0) { sparks.splice(i, 1); return; }
+          s.vx *= 0.96;
+          s.vy *= 0.96;
+          s.rot += s.spin;
+          if(s.life <= 0) { shards.splice(i, 1); return; }
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.rot);
+          ctx.strokeStyle = rgba(s.col, s.life * 0.36);
+          ctx.lineWidth = 0.9;
+          ctx.shadowColor = s.col;
+          ctx.shadowBlur = 5;
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r * s.life, 0, Math.PI * 2);
-          ctx.fillStyle = rgba(s.col, s.life * 0.8);
-          ctx.fill();
+          ctx.moveTo(-s.len * 0.5, 0);
+          ctx.lineTo(s.len * 0.5, 0);
+          ctx.stroke();
+          ctx.restore();
         });
 
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angle);
-
-        for(let g=34; g>0; g-=5) {
-          ctx.fillStyle = rgba(primary, (0.018 + impactPower * 0.012) * (g / 34));
-          roundedRect(-drawW/2-g, -drawH/2-g, drawW+g*2, drawH+g*2, radius + g * 0.45);
-          ctx.fill();
-        }
-
-        const bodyTint = mixHex('#050811', primary, 0.16 + impactPower * 0.04);
-        const shell = ctx.createLinearGradient(-drawW/2, -drawH/2, drawW/2, drawH/2);
-        shell.addColorStop(0, rgba(secondary, 0.48));
-        shell.addColorStop(0.24, 'rgba(255,255,255,0.18)');
-        shell.addColorStop(0.5, bodyTint);
-        shell.addColorStop(0.78, rgba(quaternary, 0.28));
-        shell.addColorStop(1, rgba(primary, 0.2));
-        ctx.fillStyle = shell;
-        roundedRect(-drawW/2, -drawH/2, drawW, drawH, radius);
-        ctx.fill();
-
-        const inset = 9;
-        const glass = ctx.createLinearGradient(0, -drawH/2, 0, drawH/2);
-        glass.addColorStop(0, 'rgba(255,255,255,0.26)');
-        glass.addColorStop(0.32, 'rgba(255,255,255,0.05)');
-        glass.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = glass;
-        roundedRect(-drawW/2 + inset, -drawH/2 + inset, drawW - inset * 2, drawH * 0.42, Math.max(8, radius - 12));
-        ctx.fill();
-
-        ctx.save();
-        ctx.beginPath();
-        roundedRect(-drawW/2 + 4, -drawH/2 + 4, drawW - 8, drawH - 8, Math.max(10, radius - 6));
-        ctx.clip();
-        ctx.globalAlpha = 0.12;
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        for(let sx = -drawW; sx < drawW; sx += 16) {
-          ctx.beginPath();
-          ctx.moveTo(sx + (frameN % 16), -drawH/2);
-          ctx.lineTo(sx + drawH * 0.5 + (frameN % 16), drawH/2);
-          ctx.stroke();
-        }
-        ctx.restore();
-
-        ctx.strokeStyle = rgba(primary, 0.72);
-        ctx.lineWidth = 1.8 + impactPower * 0.8;
-        ctx.shadowColor = primary;
-        ctx.shadowBlur = 18 + impactPower * 28;
-        roundedRect(-drawW/2 + 5, -drawH/2 + 5, drawW - 10, drawH - 10, Math.max(8, radius - 10));
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        ctx.restore();
+        drawComet(x, y, angle, cometLen, cometH, 1, colorIdx, 1);
       }
     };
   },
@@ -2844,6 +2967,7 @@ function activateScene(id, options = {}) {
   ctx.shadowBlur=0;
   ctx.globalAlpha=1;
   activeSceneId = id;
+  applyScenePalette(activeSceneId, activePaletteKey);
   document.querySelectorAll('.scene-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
   currentScene = SceneFactories[id]?.();
   paused = false;
@@ -2909,10 +3033,10 @@ function loop() {
 const savedSessionState = loadSavedSessionState();
 const urlState = loadStateFromUrl();
 const bootSceneId = applyBootState(urlState || savedSessionState || {
-  sceneId: 'block',
-  paletteKey: activePaletteKey,
-  speed,
-  density,
+  sceneId: 'grid3d',
+  paletteKey: 'ocean',
+  speed: 5,
+  density: 6,
   timerSecs: 0,
   customTimerMins: 0,
   autoQualityEnabled,
