@@ -300,7 +300,7 @@
     flex-wrap: wrap;
   }
   .preset-row.shell {
-    justify-content: space-between;
+    justify-content: flex-start;
     width: 100%;
     gap: 0.75rem;
   }
@@ -402,12 +402,13 @@
   /* TIMER */
   #timer-row {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     align-items: center;
-    flex-wrap: wrap;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    padding-top: 1rem;
-    margin-top: 0.65rem;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    margin-left: auto;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgba(255,255,255,0.1);
   }
   #timer-row label {
     font-family: 'DM Mono', monospace;
@@ -416,31 +417,17 @@
     color: rgba(255,255,255,0.4);
     white-space: nowrap;
   }
-  .timer-preset {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.6);
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .timer-preset:hover { background: rgba(255,255,255,0.14); color: #fff; }
-  .timer-preset.active { border-color: #e63b2e; background: rgba(230,59,46,0.18); color: #fff; }
   #timer-display {
     font-family: 'DM Mono', monospace;
     font-size: 0.75rem;
     color: rgba(255,255,255,0.9);
     letter-spacing: 0.1em;
-    margin-left: auto;
     min-width: 52px;
     text-align: right;
+    padding: 0 0.1rem;
   }
   #timer-custom-mins {
-    width: 68px;
+    width: 64px;
     font-family: 'DM Mono', monospace;
     font-size: 0.65rem;
     letter-spacing: 0.04em;
@@ -476,6 +463,22 @@
   #timer-begin:disabled {
     opacity: 0.4;
     cursor: default;
+  }
+
+  @media (max-width: 720px) {
+    .preset-row.shell {
+      align-items: flex-start;
+    }
+    #timer-row {
+      order: 3;
+      width: 100%;
+      margin-left: 0;
+      padding-left: 0;
+      border-left: 0;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .preset-share { order: 2; }
   }
   
   /* ALERT OVERLAY */
@@ -611,23 +614,16 @@
         <label>PRESETS</label>
         <div class="preset-row shell">
           <div class="preset-row slots" id="preset-row"></div>
+          <div id="timer-row" aria-label="Custom timer controls">
+            <label>TIMER</label>
+            <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
+            <button id="timer-begin" disabled>begin</button>
+            <button id="timer-reset">reset</button>
+            <div id="timer-display">--:--</div>
+          </div>
           <button class="preset-share" id="preset-share-btn">SHARE</button>
         </div>
       </div>
-    </div>
-
-    <div id="timer-row">
-      <label>TIMER</label>
-      <button class="timer-preset" data-mins="5">5m</button>
-      <button class="timer-preset" data-mins="10">10m</button>
-      <button class="timer-preset" data-mins="15">15m</button>
-      <button class="timer-preset" data-mins="30">30m</button>
-      <button class="timer-preset" data-mins="45">45m</button>
-      <button class="timer-preset" data-mins="60">60m</button>
-      <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
-      <button id="timer-begin" disabled>begin</button>
-      <button id="timer-reset">reset</button>
-      <div id="timer-display">--:--</div>
     </div>
   </div>
 </div>
@@ -1232,10 +1228,6 @@ const timerBegin   = document.getElementById('timer-begin');
 const timerReset   = document.getElementById('timer-reset');
 const timerAlert   = document.getElementById('timer-alert');
 
-function clearTimerPresetHighlights() {
-  document.querySelectorAll('.timer-preset').forEach(b=>b.classList.remove('active'));
-}
-
 function playAlertSound() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if(!AudioCtx) return;
@@ -1276,7 +1268,6 @@ function startTimer(totalSecs) {
       timerDisplay.textContent = '00:00';
       timerDisplay.classList.remove('running');
       timerBegin.disabled = !timerSelectedSecs;
-      document.querySelectorAll('.timer-preset').forEach(b=>b.classList.remove('active'));
       // show alert and play sound twice
       timerAlert.classList.add('show');
       playAlertSound();
@@ -1294,7 +1285,6 @@ function resetTimer() {
   timerDisplay.textContent = '--:--';
   timerDisplay.classList.remove('running');
   timerBegin.disabled = true;
-  clearTimerPresetHighlights();
   persistAppState();
 }
 
@@ -1309,15 +1299,6 @@ function selectTimer(totalSecs) {
   persistAppState();
 }
 
-document.querySelectorAll('.timer-preset').forEach(btn => {
-  btn.addEventListener('click', () => {
-    clearTimerPresetHighlights();
-    btn.classList.add('active');
-    const secs = btn.dataset.secs ? +btn.dataset.secs : +btn.dataset.mins * 60;
-    timerCustomMinsInput.value = btn.dataset.mins || Math.round(secs / 60);
-    selectTimer(secs);
-  });
-});
 timerBegin.addEventListener('click', () => {
   if(!timerSelectedSecs || timerInterval) return;
   startTimer(timerSelectedSecs);
@@ -1327,7 +1308,6 @@ timerAlert.addEventListener('click', () => timerAlert.classList.remove('show'));
 timerCustomMinsInput.addEventListener('change', () => {
   const mins = Math.max(0, Math.min(180, Math.round(Number(timerCustomMinsInput.value) || 0)));
   timerCustomMinsInput.value = mins ? mins : '';
-  clearTimerPresetHighlights();
   if(!mins) {
     resetTimer();
     return;
