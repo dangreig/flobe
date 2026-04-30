@@ -64,11 +64,30 @@
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    padding-bottom: 2rem;
+    padding-bottom: 1.5rem;
     transition: opacity 0.6s;
   }
-  #ui.hidden { opacity: 0; }
-  #ui.hidden #panel { pointer-events: none; }
+  #ui.hidden #panel,
+  #ui.hidden .logo {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #ui.hidden #title-bar {
+    background: transparent;
+    pointer-events: none;
+  }
+  #ui.hidden #top-actions,
+  body.fullscreen-active #top-actions {
+    opacity: 0.08;
+    transform: translateY(-0.35rem);
+  }
+  #ui.hidden #top-actions:hover,
+  #ui.hidden #top-actions:focus-within,
+  body.fullscreen-active #top-actions:hover,
+  body.fullscreen-active #top-actions:focus-within {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   #title-bar {
     position: fixed;
@@ -120,6 +139,8 @@
     display: flex;
     gap: 0.65rem;
     align-items: center;
+    pointer-events: all;
+    transition: opacity 0.22s ease, transform 0.22s ease;
   }
 
   #hide-btn,
@@ -174,24 +195,16 @@
   /* Panel */
   #panel {
     pointer-events: all;
-    background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.07) 0%,
-      rgba(255,255,255,0.03) 50%,
-      rgba(255,255,255,0.06) 100%
-    );
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    border: 1px solid rgba(255,255,255,0.14);
-    border-bottom-color: rgba(255,255,255,0.06);
-    border-right-color: rgba(255,255,255,0.06);
-    border-radius: 1.2rem;
-    padding: 1.4rem 1.6rem;
-    width: min(96vw, 780px);
+    background: linear-gradient(180deg, rgba(21,28,41,0.82), rgba(13,16,25,0.88));
+    backdrop-filter: blur(30px) saturate(145%);
+    -webkit-backdrop-filter: blur(30px) saturate(145%);
+    border: 1px solid rgba(132,170,220,0.18);
+    border-radius: 1rem;
+    padding: 1rem 1.15rem;
+    width: min(94vw, 1120px);
     box-shadow:
-      0 8px 32px rgba(0,0,0,0.4),
-      0 1px 0 rgba(255,255,255,0.08) inset,
-      0 -1px 0 rgba(0,0,0,0.2) inset;
+      0 22px 70px rgba(0,0,0,0.48),
+      0 1px 0 rgba(255,255,255,0.08) inset;
   }
 
   #panel h2 {
@@ -199,21 +212,61 @@
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: rgba(255,255,255,0.4);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     font-family: 'DM Mono', monospace;
   }
 
   /* SCENE GRID */
+  .scene-rail {
+    position: relative;
+  }
   #scene-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    display: flex;
     gap: 0.6rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    padding-right: 3.1rem;
+    scrollbar-width: none;
+  }
+  #scene-grid::-webkit-scrollbar { display: none; }
+  .scene-scroll-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.15rem;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(13,18,29,0.78);
+    color: rgba(255,255,255,0.72);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: all;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.34);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: background 0.15s, color 0.15s, opacity 0.15s, transform 0.15s;
+  }
+  .scene-scroll-btn:hover {
+    background: rgba(93,255,210,0.18);
+    color: #fff;
+    transform: translateY(-50%) translateX(2px);
+  }
+  .scene-scroll-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
   }
 
   .scene-btn {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
+    min-height: 86px;
+    min-width: 118px;
+    flex: 0 0 118px;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.09);
     border-radius: 0.7rem;
     padding: 0.7rem 0.5rem;
     cursor: pointer;
@@ -222,45 +275,58 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     color: rgba(255,255,255,0.7);
   }
   .scene-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
   .scene-btn.active {
-    border-color: #e63b2e;
-    background: rgba(230,59,46,0.15);
+    border-color: rgba(93,255,210,0.72);
+    background: radial-gradient(circle at 30% 20%, rgba(93,255,210,0.24), rgba(55,134,255,0.12) 55%, rgba(255,255,255,0.04));
+    box-shadow: 0 0 28px rgba(69,202,255,0.22), 0 0 0 1px rgba(76,132,255,0.32) inset;
     color: #fff;
   }
   .scene-btn .icon { font-size: 1.4rem; line-height: 1; }
-  .scene-btn .label { font-size: 0.65rem; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
+  .scene-btn .label {
+    width: 100%;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.06em;
+    line-height: 1.25;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
 
   /*  CONTROLS  */
   #controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  align-items: stretch;
   border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 1rem;
+  padding-top: 0.72rem;
 }
 
   .ctrl {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  flex: 1;
   min-width: 140px;
-}
-.ctrl:last-child {
-  flex-basis: 100%;
-  flex-grow: 0;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.8rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .ctrl.presets {
-  flex-basis: 100%;
-  flex-grow: 0;
+  grid-column: 1 / -1;
   align-items: flex-start;
+  margin-top: 0.1rem;
 }
+
+.ctrl:nth-child(1) { grid-column: 1 / 2; }
+.ctrl:nth-child(2) { grid-column: 2 / 3; }
+.ctrl:nth-child(3) { grid-column: 3 / 5; }
 
   .ctrl label {
     font-family: 'DM Mono', monospace;
@@ -281,9 +347,10 @@
   .ctrl input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 14px; height: 14px;
-    background: #e63b2e;
+    background: #65e7a8;
     border-radius: 50%;
     cursor: pointer;
+    box-shadow: 0 0 14px rgba(101,231,168,0.55);
   }
 
   .palette-row {
@@ -293,6 +360,10 @@
   flex-wrap: wrap;
 }
 
+.ctrl:nth-child(3) {
+  border-color: rgba(255,168,28,0.38);
+}
+
   .preset-row {
     display: flex;
     gap: 0.55rem;
@@ -300,7 +371,7 @@
     flex-wrap: wrap;
   }
   .preset-row.shell {
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     gap: 0.75rem;
   }
@@ -341,8 +412,8 @@
     color: #fff;
   }
   .preset-btn.active {
-    border-color: #e63b2e;
-    background: rgba(230,59,46,0.18);
+    border-color: rgba(93,144,255,0.62);
+    background: rgba(93,144,255,0.14);
     color: #fff;
   }
   .pal-swatch {
@@ -406,9 +477,9 @@
     align-items: center;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    margin-left: auto;
     padding-left: 0.75rem;
     border-left: 1px solid rgba(255,255,255,0.1);
+    margin-left: auto;
   }
   #timer-row label {
     font-family: 'DM Mono', monospace;
@@ -443,9 +514,9 @@
     color: rgba(255,255,255,0.35);
   }
   #timer-custom-mins:focus {
-    border-color: rgba(230,59,46,0.5);
+    border-color: rgba(93,255,210,0.55);
   }
-  #timer-display.running { color: #e63b2e; }
+  #timer-display.running { color: #65e7a8; }
   #timer-begin,
   #timer-reset {
     font-family: 'DM Mono', monospace;
@@ -466,13 +537,28 @@
   }
 
   @media (max-width: 720px) {
+    #ui {
+      padding: 0 0.75rem 0.75rem;
+    }
+    #panel {
+      width: 100%;
+      max-height: 54vh;
+      overflow: auto;
+    }
+    #controls {
+      grid-template-columns: 1fr;
+    }
+    .ctrl:nth-child(1),
+    .ctrl:nth-child(2),
+    .ctrl:nth-child(3) {
+      grid-column: 1 / -1;
+    }
     .preset-row.shell {
       align-items: flex-start;
     }
     #timer-row {
       order: 3;
       width: 100%;
-      margin-left: 0;
       padding-left: 0;
       border-left: 0;
       justify-content: flex-start;
@@ -556,6 +642,18 @@
     color: rgba(255,255,255,0.42);
     white-space: nowrap;
   }
+  .ctrl-value {
+    min-width: 44px;
+    max-width: 54px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.48);
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+  }
   #help-close {
     margin-top: 1rem;
     font-family: 'DM Mono', monospace;
@@ -595,16 +693,20 @@
   </div>
 
   <div id="panel">
-    <h2>Choose a background</h2>
-    <div id="scene-grid"></div>
+    <h2>Background</h2>
+    <div class="scene-rail">
+      <div id="scene-grid"></div>
+      <button id="scene-scroll-btn" class="scene-scroll-btn" title="More backgrounds">›</button>
+    </div>
     <div id="controls">
       <div class="ctrl">
         <label>SPEED</label>
         <input type="range" id="speed-slider" min="1" max="10" value="5">
       </div>
       <div class="ctrl">
-        <label>DENSITY</label>
+        <label id="density-label">DENSITY</label>
         <input type="range" id="density-slider" min="1" max="10" value="5">
+        <span id="density-value" class="ctrl-value">5/10</span>
       </div>
       <div class="ctrl">
         <label>PALETTE</label>
@@ -669,6 +771,10 @@ const PALETTES = {
   forest:  ['#00e676','#69f0ae','#b9f6ca','#00c853','#64dd17','#ccff90'],
   ocean:   ['#00d4ff','#0077ff','#00ffa3','#7bdff2','#2ec4b6','#005f73'],
   jewel:   ['#ff4d8d','#7c3aed','#00e5ff','#ffd166','#06d6a0','#3a0ca3'],
+  glass:   ['#5d90ff','#5dffd2','#a8d8ff','#dce8ff','#64b5f6','#73fbd3'],
+  auric:   ['#ffd166','#ff9f1c','#7ae582','#f7fff7','#4ecdc4','#f4d35e'],
+  dusk:    ['#8ec5ff','#b388ff','#5eead4','#172554','#7dd3fc','#c4b5fd'],
+  bloom:   ['#ffafcc','#bde0fe','#caffbf','#fdffb6','#9bf6ff','#ffc6ff'],
 };
 
 let currentPalette = PALETTES.cosmic;
@@ -686,7 +792,7 @@ let activePresetIndex = -1;
 // ----------------------------------------
 // ----------------------------------------
 const SCENES = [
-  { id:'block',     label:'Glass Comet',   icon:'➤' },
+  { id:'block',     label:'DVD Bounce',    icon:'▶' },
   { id:'particles', label:'Particles',     icon:'✦' },
   { id:'pomodoro', label:'Pomodoro Ring', icon:'◔' },
   { id:'warp',      label:'Warp Speed',    icon:'➜' },
@@ -710,6 +816,8 @@ const transitionCanvas = document.createElement('canvas');
 const transitionCtx = transitionCanvas.getContext('2d');
 const speedSlider = document.getElementById('speed-slider');
 const densitySlider = document.getElementById('density-slider');
+const densityLabel = document.getElementById('density-label');
+const densityValue = document.getElementById('density-value');
 const presetRow = document.getElementById('preset-row');
 const autoQualityBtn = document.getElementById('auto-quality-btn');
 const presetShareBtn = document.getElementById('preset-share-btn');
@@ -722,6 +830,7 @@ const helpClose = document.getElementById('help-close');
 // ----------------------------------------
 // ----------------------------------------
 let speed = 5, density = 5;
+let densityAutoOffset = 0;
 let paused = false;
 let rafId = null;
 let currentScene = null;
@@ -797,11 +906,24 @@ function applyRenderScale(nextScale) {
   updateAutoQualityButton();
 }
 
+function applyAutoDensityOffset(nextOffset) {
+  const clamped = Math.max(0, Math.min(4, Math.round(nextOffset)));
+  if(clamped === densityAutoOffset) return;
+  densityAutoOffset = clamped;
+  rebuildCurrentScene();
+  fpsFrameTimes = [];
+  fpsLastTime = null;
+  fpsAdjustCooldownUntil = performance.now() + 2200;
+  updateDensityMeta();
+  updateAutoQualityButton();
+}
+
 function updateAutoQualityButton() {
   autoQualityBtn.classList.toggle('active', autoQualityEnabled);
   autoQualityBtn.textContent = 'AUTO';
+  const densityNote = densityAutoOffset ? `, density -${densityAutoOffset}` : '';
   autoQualityBtn.title = autoQualityEnabled
-    ? `Auto quality on (${Math.round(renderScale * 100)}%)`
+    ? `Auto quality on (${Math.round(renderScale * 100)}%${densityNote})`
     : 'Auto quality off';
 }
 
@@ -811,6 +933,49 @@ function normalizedSpeedValue(value) {
 
 function normalizedDensityValue(value) {
   return Math.max(1, Math.min(10, Number(value) || 5));
+}
+
+const DENSITY_META = {
+  block: 'DUST',
+  particles: 'PARTICLES',
+  pomodoro: 'AMBIENCE',
+  warp: 'STARS',
+  plasma: 'COMPLEXITY',
+  rain: 'STREAMS',
+  ribbons: 'RIBBONS',
+  topography: 'LINES',
+  confetti: 'PIECES',
+  grid3d: 'GRID',
+  livecoding: 'DETAIL',
+  inkcloud: 'INK',
+};
+
+const DENSITY_CAPS = {
+  pomodoro: 8,
+  warp: 8,
+  rain: 8,
+  ribbons: 8,
+  topography: 8,
+  confetti: 8,
+  grid3d: 8,
+  livecoding: 7,
+  inkcloud: 8,
+};
+
+function effectiveDensityValue(sceneId = activeSceneId) {
+  const cap = DENSITY_CAPS[sceneId] || 10;
+  return Math.max(1, Math.min(cap, density - densityAutoOffset));
+}
+
+function updateDensityMeta(sceneId = activeSceneId) {
+  if(!densityLabel || !densityValue) return;
+  const label = DENSITY_META[sceneId] || 'DENSITY';
+  const effective = effectiveDensityValue(sceneId);
+  densityLabel.textContent = label;
+  densityValue.textContent = `${density}/10`;
+  densityValue.title = effective !== density
+    ? `Rendering at ${effective}/10 density`
+    : `Rendering at ${density}/10 density`;
 }
 
 function rgbToHex(r, g, b) {
@@ -948,6 +1113,7 @@ function applyBootState(state) {
   density = next.density;
   speedSlider.value = speed;
   densitySlider.value = density;
+  updateDensityMeta(next.sceneId);
   setPalette(next.paletteKey);
   autoQualityEnabled = next.autoQualityEnabled;
   if(!autoQualityEnabled) renderScale = 1;
@@ -965,6 +1131,7 @@ function applyBootState(state) {
 // ----------------------------------------
 // ----------------------------------------
 const grid = document.getElementById('scene-grid');
+const sceneScrollBtn = document.getElementById('scene-scroll-btn');
 SCENES.forEach(s => {
   const btn = document.createElement('button');
   btn.className = 'scene-btn';
@@ -977,6 +1144,23 @@ SCENES.forEach(s => {
   });
   grid.appendChild(btn);
 });
+
+function syncSceneScrollButton() {
+  const canScroll = grid.scrollWidth > grid.clientWidth + 4;
+  const atEnd = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 8;
+  sceneScrollBtn.classList.toggle('hidden', !canScroll);
+  sceneScrollBtn.textContent = atEnd ? '‹' : '›';
+  sceneScrollBtn.title = atEnd ? 'Back to first backgrounds' : 'More backgrounds';
+}
+
+sceneScrollBtn.addEventListener('click', () => {
+  const amount = Math.max(220, grid.clientWidth * 0.72);
+  const atEnd = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 8;
+  grid.scrollBy({ left: atEnd ? -grid.scrollWidth : amount, behavior: 'smooth' });
+});
+grid.addEventListener('scroll', syncSceneScrollButton, { passive: true });
+window.addEventListener('resize', syncSceneScrollButton);
+requestAnimationFrame(syncSceneScrollButton);
 
 const palRow = document.getElementById('palette-row');
 Object.keys(PALETTES).forEach(key => {
@@ -1112,6 +1296,8 @@ function applyPreset(index) {
   density = preset.density;
   speedSlider.value = speed;
   densitySlider.value = density;
+  densityAutoOffset = 0;
+  updateDensityMeta(preset.sceneId);
   setPalette(preset.paletteKey);
   activateScene(preset.sceneId);
   syncActivePreset();
@@ -1142,6 +1328,8 @@ speedSlider.addEventListener('input', e => {
 });
 densitySlider.addEventListener('input', e => {
   density = normalizedDensityValue(e.target.value);
+  densityAutoOffset = 0;
+  updateDensityMeta(activeSceneId);
   activateScene(activeSceneId, { transition:false });
   syncActivePreset();
   persistAppState();
@@ -1149,7 +1337,11 @@ densitySlider.addEventListener('input', e => {
 
 autoQualityBtn.addEventListener('click', () => {
   autoQualityEnabled = !autoQualityEnabled;
-  if(!autoQualityEnabled) applyRenderScale(1);
+  if(!autoQualityEnabled) {
+    densityAutoOffset = 0;
+    applyRenderScale(1);
+    updateDensityMeta(activeSceneId);
+  }
   updateAutoQualityButton();
   persistAppState();
 });
@@ -1178,8 +1370,6 @@ function toggleUI() {
   ui.classList.toggle('hidden', uiHidden);
   document.getElementById('hint').style.opacity = uiHidden ? 0.15 : 1;
   hideBtn.textContent = uiHidden ? 'SHOW UI' : 'HIDE UI';
-  if(uiHidden) { ui.style.pointerEvents = 'none'; }
-  else { ui.style.pointerEvents = ''; }
 }
 
 function toggleHelp(show = !helpOverlay.classList.contains('show')) {
@@ -1195,7 +1385,9 @@ async function toggleFullscreen() {
 }
 
 function syncFullscreenLabel() {
-  fullscreenBtn.textContent = document.fullscreenElement ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+  const isFullscreen = Boolean(document.fullscreenElement);
+  fullscreenBtn.textContent = isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+  document.body.classList.toggle('fullscreen-active', isFullscreen);
 }
 
 document.addEventListener('fullscreenchange', syncFullscreenLabel);
@@ -1322,7 +1514,7 @@ function rnd(a,b) { return a + Math.random()*(b-a); }
 function rndInt(a,b) { return Math.floor(rnd(a,b+1)); }
 function rndCol() { return currentPalette[rndInt(0, currentPalette.length-1)]; }
 function lerp(a,b,t) { return a+(b-a)*t; }
-function densityT() { return Math.max(0, Math.min(1, (density - 1) / 9)); }
+function densityT() { return Math.max(0, Math.min(1, (effectiveDensityValue() - 1) / 9)); }
 function densityCount(min,max) { return Math.round(lerp(min, max, densityT())); }
 
 // ----------------------------------------
@@ -1332,245 +1524,124 @@ function densityCount(min,max) { return Math.round(lerp(min, max, densityT())); 
 // ----------------------------------------
 const SceneFactories = {
 
-  // GLASS COMET
+  // DVD BOUNCE
   block() {
-    const size = Math.max(1, Math.min(110, Math.max(24, Math.min(W, H) * 0.12), W * 0.26, H * 0.26));
-    const len = size * 2.2;
-    const radius = len * 0.42;
-    let x = rnd(radius, Math.max(radius, W - radius));
-    let y = rnd(radius, Math.max(radius, H - radius));
-    let vx = (2.1 + speed * 0.32) * (Math.random() < 0.5 ? 1 : -1);
-    let vy = (1.5 + speed * 0.24) * (Math.random() < 0.5 ? 1 : -1);
-    let angle = Math.atan2(vy, vx);
+    const logoW = Math.max(150, Math.min(290, Math.min(W, H) * 0.24));
+    const logoH = logoW * 0.58;
+    let x = rnd(W * 0.22, Math.max(W * 0.22, W * 0.68));
+    let y = rnd(H * 0.16, Math.max(H * 0.16, H * 0.45));
+    let vx = (1.55 + speed * 0.22) * (Math.random() < 0.5 ? 1 : -1);
+    let vy = (1.1 + speed * 0.16) * (Math.random() < 0.5 ? 1 : -1);
     let colorIdx = 0;
-    let impact = 0;
-    let frameN = 0;
-    const waves = [];
-    const shards = [];
-    const motes = Array.from({length: densityCount(24, 68)}, () => ({
+    let tick = 0;
+    const dust = Array.from({ length: densityCount(36, 110) }, (_, i) => ({
       x: rnd(0, W),
       y: rnd(0, H),
-      r: rnd(0.5, 1.8),
+      r: rnd(0.4, 1.6),
       phase: rnd(0, Math.PI * 2),
-      drift: rnd(0.05, 0.22),
-      alpha: rnd(0.05, 0.18),
-      col: rndCol(),
+      alpha: rnd(0.025, 0.13),
+      color: currentPalette[i % currentPalette.length],
     }));
-
     function rgba(hex, alpha) {
       const [r, g, b] = hexToRgb(hex);
       return `rgba(${r},${g},${b},${alpha})`;
     }
-    function mixHex(a, b, t) {
-      const [ar, ag, ab] = hexToRgb(a);
-      const [br, bg, bb] = hexToRgb(b);
-      return `rgb(${Math.round(lerp(ar, br, t))},${Math.round(lerp(ag, bg, t))},${Math.round(lerp(ab, bb, t))})`;
-    }
-    function cometPath(length, height, flare = 0) {
-      const nose = length * 0.52 + flare;
-      const rear = -length * 0.48;
-      const shoulder = length * 0.12;
-      const notch = rear + length * 0.2;
-      ctx.beginPath();
-      ctx.moveTo(nose, 0);
-      ctx.lineTo(shoulder, -height * 0.5);
-      ctx.lineTo(notch, -height * 0.3);
-      ctx.lineTo(rear, -height * 0.12);
-      ctx.lineTo(rear + length * 0.12, 0);
-      ctx.lineTo(rear, height * 0.12);
-      ctx.lineTo(notch, height * 0.3);
-      ctx.lineTo(shoulder, height * 0.5);
-      ctx.closePath();
-    }
-    function drawComet(px, py, rot, length, height, alpha, paletteOffset, glow = 1) {
-      const primary = currentPalette[paletteOffset % currentPalette.length] || '#5ac8fa';
-      const secondary = currentPalette[(paletteOffset + 1) % currentPalette.length] || '#ff2d55';
-      const tertiary = currentPalette[(paletteOffset + 2) % currentPalette.length] || '#30d158';
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(rot);
-
-      ctx.shadowColor = primary;
-      ctx.shadowBlur = 16 * glow;
-      ctx.fillStyle = rgba(primary, alpha * 0.045);
-      cometPath(length + 12 * glow, height + 8 * glow, impact * 5);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      const body = ctx.createLinearGradient(-length * 0.5, -height * 0.5, length * 0.5, height * 0.5);
-      body.addColorStop(0, rgba(secondary, alpha * 0.34));
-      body.addColorStop(0.22, 'rgba(255,255,255,0.2)');
-      body.addColorStop(0.48, mixHex('#080b12', primary, 0.22));
-      body.addColorStop(0.74, rgba(tertiary, alpha * 0.24));
-      body.addColorStop(1, rgba(primary, alpha * 0.42));
-      ctx.fillStyle = body;
-      cometPath(length, height, impact * 4);
-      ctx.fill();
-
-      const inner = ctx.createLinearGradient(-length * 0.35, 0, length * 0.45, 0);
-      inner.addColorStop(0, 'rgba(255,255,255,0)');
-      inner.addColorStop(0.48, rgba(tertiary, alpha * 0.22));
-      inner.addColorStop(0.65, 'rgba(255,255,255,0.28)');
-      inner.addColorStop(1, rgba(primary, alpha * 0.12));
-      ctx.fillStyle = inner;
-      cometPath(length * 0.72, height * 0.48, impact * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.34)';
-      ctx.lineWidth = 1.1;
-      cometPath(length - 4, height - 4, impact * 3);
-      ctx.stroke();
-
-      ctx.strokeStyle = rgba(primary, alpha * 0.68);
-      ctx.lineWidth = 1.8;
-      ctx.shadowColor = primary;
-      ctx.shadowBlur = 16 * glow;
-      cometPath(length + 2, height + 2, impact * 4);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      ctx.beginPath();
-      ctx.arc(length * 0.28, -height * 0.15, Math.max(3, height * 0.08), 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.restore();
-      ctx.shadowBlur = 0;
-    }
-    function spawnImpact(px, py, nx, ny, col, power) {
-      waves.push({ x: px, y: py, nx, ny, r: 8, life: 0.72, col, power });
-      const tangentX = -ny;
-      const tangentY = nx;
-      const count = Math.round(lerp(3, 9, densityT()) * power);
-      for(let i = 0; i < count; i++) {
-        const spread = rnd(-0.5, 0.5);
-        const force = rnd(1.2, 3.8) * power;
-        shards.push({
-          x: px,
-          y: py,
-          vx: nx * force + tangentX * spread * force,
-          vy: ny * force + tangentY * spread * force,
-          rot: rnd(0, Math.PI * 2),
-          spin: rnd(-0.16, 0.16),
-          len: rnd(6, 14),
-          life: rnd(0.3, 0.62),
-          col: currentPalette[(colorIdx + i) % currentPalette.length],
-        });
-      }
-    }
-    function drawBackground(primary, secondary) {
-      const bg = ctx.createRadialGradient(W * 0.5, H * 0.44, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.82);
-      bg.addColorStop(0, mixHex('#0c1018', primary, 0.12));
-      bg.addColorStop(0.52, '#040509');
-      bg.addColorStop(1, '#000000');
+    function drawBackground() {
+      const bg = ctx.createRadialGradient(W * 0.5, H * 0.38, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.86);
+      bg.addColorStop(0, '#111327');
+      bg.addColorStop(0.58, '#060811');
+      bg.addColorStop(1, '#010207');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
       const wash = ctx.createLinearGradient(0, 0, W, H);
-      wash.addColorStop(0, rgba(secondary, 0.05));
-      wash.addColorStop(0.5, 'rgba(255,255,255,0.012)');
-      wash.addColorStop(1, rgba(primary, 0.04));
+      wash.addColorStop(0, 'rgba(255,255,255,0.012)');
+      wash.addColorStop(0.5, 'rgba(255,255,255,0.01)');
+      wash.addColorStop(1, 'rgba(255,255,255,0.008)');
       ctx.fillStyle = wash;
       ctx.fillRect(0, 0, W, H);
 
-      motes.forEach(m => {
-        m.x += Math.cos(frameN * 0.01 + m.phase) * m.drift;
-        m.y += Math.sin(frameN * 0.012 + m.phase) * m.drift + speed * 0.012;
-        if(m.y > H + 8) { m.y = -8; m.x = rnd(0, W); }
-        if(m.x < -8) m.x = W + 8;
-        if(m.x > W + 8) m.x = -8;
+      dust.forEach(p => {
+        p.x += Math.cos(tick * 0.012 + p.phase) * 0.08;
+        p.y += Math.sin(tick * 0.01 + p.phase) * 0.06;
         ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(m.col, m.alpha);
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(p.color, p.alpha);
         ctx.fill();
       });
 
-      const vignette = ctx.createRadialGradient(W/2, H/2, Math.min(W,H) * 0.18, W/2, H/2, Math.max(W,H) * 0.72);
+      const vignette = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.12, W / 2, H / 2, Math.max(W, H) * 0.74);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.64)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.72)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, W, H);
     }
+    function drawDvdLogo(px, py) {
+      const c1 = currentPalette[colorIdx % currentPalette.length] || '#5d90ff';
+      const c2 = currentPalette[(colorIdx + 2) % currentPalette.length] || '#ff4d8d';
+      const c3 = currentPalette[(colorIdx + 4) % currentPalette.length] || '#ffd166';
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(Math.sin(tick * 0.018) * 0.025);
+      ctx.transform(1, -0.09, -0.12, 1, 0, 0);
+
+      ctx.font = `800 ${logoW * 0.34}px Syne, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textGrad = ctx.createLinearGradient(-logoW * 0.48, -logoH * 0.34, logoW * 0.5, logoH * 0.28);
+      textGrad.addColorStop(0, c1);
+      textGrad.addColorStop(0.38, '#a76cff');
+      textGrad.addColorStop(0.72, c2);
+      textGrad.addColorStop(1, c3);
+      ctx.fillStyle = textGrad;
+      ctx.fillText('DVD', 0, -logoH * 0.14);
+
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeText('DVD', 0, -logoH * 0.14);
+
+      const discGrad = ctx.createLinearGradient(-logoW * 0.34, logoH * 0.1, logoW * 0.38, logoH * 0.34);
+      discGrad.addColorStop(0, c1);
+      discGrad.addColorStop(0.45, c2);
+      discGrad.addColorStop(1, c3);
+      ctx.fillStyle = discGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, logoH * 0.24, logoW * 0.42, logoH * 0.09, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(0, logoH * 0.24, logoW * 0.11, logoH * 0.033, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(3,4,10,0.9)';
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.24)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(0, logoH * 0.24, logoW * 0.42, logoH * 0.09, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      ctx.shadowBlur = 0;
+    }
     return {
       draw() {
-        frameN++;
-        const primary = currentPalette[colorIdx % currentPalette.length] || '#5ac8fa';
-        const secondary = currentPalette[(colorIdx + 1) % currentPalette.length] || '#ff2d55';
-        drawBackground(primary, secondary);
+        tick++;
+        drawBackground();
 
         x += vx;
         y += vy;
+        const halfW = logoW * 0.52;
+        const halfH = logoH * 0.34;
         let hit = false;
-        let nx = 0;
-        let ny = 0;
-        if(x > W - radius) { x = W - radius; vx = -Math.abs(vx); hit = true; nx = -1; }
-        if(x < radius) { x = radius; vx = Math.abs(vx); hit = true; nx = 1; }
-        if(y > H - radius) { y = H - radius; vy = -Math.abs(vy); hit = true; ny = -1; }
-        if(y < radius) { y = radius; vy = Math.abs(vy); hit = true; ny = 1; }
+        if(x > W - halfW) { x = W - halfW; vx = -Math.abs(vx); hit = true; }
+        if(x < halfW) { x = halfW; vx = Math.abs(vx); hit = true; }
+        if(y > H - halfH) { y = H - halfH; vy = -Math.abs(vy); hit = true; }
+        if(y < halfH) { y = halfH; vy = Math.abs(vy); hit = true; }
         if(hit) {
-          colorIdx = (colorIdx + 1 + (nx && ny ? 1 : 0)) % currentPalette.length;
-          impact = Math.max(impact, nx && ny ? 0.58 : 0.42);
-          spawnImpact(x + nx * radius, y + ny * radius, nx, ny, currentPalette[(colorIdx + 2) % currentPalette.length], nx && ny ? 0.72 : 0.52);
+          colorIdx = (colorIdx + 1) % currentPalette.length;
         }
 
-        const targetAngle = Math.atan2(vy, vx);
-        let diff = targetAngle - angle;
-        while(diff > Math.PI) diff -= Math.PI * 2;
-        while(diff < -Math.PI) diff += Math.PI * 2;
-        angle += diff * 0.14;
-        impact *= 0.88;
-
-        const cometLen = len * (1 + impact * 0.035);
-        const cometH = size * (0.78 + impact * 0.035);
-
-        waves.forEach((w, i) => {
-          w.life -= 0.03;
-          w.r += (3.4 + speed * 0.32) * w.power;
-          if(w.life <= 0) { waves.splice(i, 1); return; }
-          const bloom = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.r * 1.9);
-          bloom.addColorStop(0, rgba(w.col, w.life * 0.07));
-          bloom.addColorStop(0.42, rgba(w.col, w.life * 0.022));
-          bloom.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = bloom;
-          ctx.fillRect(0, 0, W, H);
-          ctx.save();
-          ctx.translate(w.x, w.y);
-          ctx.scale(1 + Math.abs(w.ny || 0) * 1.6, 1 + Math.abs(w.nx || 0) * 1.6);
-          ctx.beginPath();
-          ctx.arc(0, 0, w.r, 0, Math.PI * 2);
-          ctx.strokeStyle = rgba(w.col, w.life * 0.18);
-          ctx.lineWidth = 0.8 + w.power * 0.45;
-          ctx.shadowColor = w.col;
-          ctx.shadowBlur = 8;
-          ctx.stroke();
-          ctx.restore();
-          ctx.shadowBlur = 0;
-        });
-
-        shards.forEach((s, i) => {
-          s.life -= 0.036;
-          s.x += s.vx;
-          s.y += s.vy;
-          s.vx *= 0.96;
-          s.vy *= 0.96;
-          s.rot += s.spin;
-          if(s.life <= 0) { shards.splice(i, 1); return; }
-          ctx.save();
-          ctx.translate(s.x, s.y);
-          ctx.rotate(s.rot);
-          ctx.strokeStyle = rgba(s.col, s.life * 0.36);
-          ctx.lineWidth = 0.9;
-          ctx.shadowColor = s.col;
-          ctx.shadowBlur = 5;
-          ctx.beginPath();
-          ctx.moveTo(-s.len * 0.5, 0);
-          ctx.lineTo(s.len * 0.5, 0);
-          ctx.stroke();
-          ctx.restore();
-        });
-
-        drawComet(x, y, angle, cometLen, cometH, 1, colorIdx, 1);
+        drawDvdLogo(x, y);
       }
     };
   },
@@ -1664,33 +1735,126 @@ const SceneFactories = {
       alpha: rnd(0.18, 0.7),
       colorIndex: i % currentPalette.length,
     }));
+    const waveParticles = Array.from({ length: densityCount(180, 520) }, (_, i) => ({
+      t: rnd(0, 1),
+      lane: rnd(-1, 1),
+      size: rnd(0.45, 2.2),
+      speed: rnd(0.0005, 0.0018),
+      alpha: rnd(0.14, 0.78),
+      colorIndex: i % currentPalette.length,
+    }));
+    const warpCount = densityCount(80, 260);
+    const warpStars = Array.from({ length: warpCount }, mkPomodoroWarpStar);
+    let warpActiveFrames = 0;
+    let warpDuration = 120;
+    let nextWarpIn = rnd(45, 110);
     let tick = 0;
+    function mkPomodoroWarpStar() {
+      return { x:rnd(-W/2,W/2), y:rnd(-H/2,H/2), z:rnd(1,W), pz:1, col:rndCol() };
+    }
+    function resetPomodoroWarpStars() {
+      for(let i = 0; i < warpStars.length; i++) warpStars[i] = mkPomodoroWarpStar();
+    }
+    function roundedPill(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
     return {
       draw() {
         tick += 0.01 * (0.8 + speed * 0.16);
         const cx = W / 2;
-        const cy = H / 2;
+        const cy = H * 0.38;
         const totalSecs = timerSelectedSecs || 25 * 60;
         const remainingSecs = timerInterval ? timerSecsLeft : totalSecs;
         const progress = totalSecs > 0 ? 1 - (remainingSecs / totalSecs) : 0;
         const displayTime = timerInterval || timerSelectedSecs ? formatTime(Math.max(0, remainingSecs)) : '25:00';
-        const ringRadius = Math.min(W, H) * 0.22;
+        const ringRadius = Math.min(W, H) * 0.21;
         const ringWidth = Math.max(16, Math.min(W, H) * 0.028);
         const pulse = 0.5 + 0.5 * Math.sin(tick * 2.4);
 
         const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
-        bg.addColorStop(0, 'rgba(10,10,18,0.96)');
-        bg.addColorStop(0.45, 'rgba(7,7,14,0.9)');
+        bg.addColorStop(0, 'rgba(13,39,58,0.98)');
+        bg.addColorStop(0.38, 'rgba(6,21,34,0.94)');
+        bg.addColorStop(0.72, 'rgba(3,10,20,0.98)');
         bg.addColorStop(1, 'rgba(0,0,0,1)');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
+        const fieldGlow = ctx.createLinearGradient(0, H * 0.32, W, H * 0.72);
+        fieldGlow.addColorStop(0, 'rgba(35,153,255,0)');
+        fieldGlow.addColorStop(0.48, 'rgba(44,214,255,0.1)');
+        fieldGlow.addColorStop(0.78, 'rgba(90,255,186,0.12)');
+        fieldGlow.addColorStop(1, 'rgba(35,153,255,0)');
+        ctx.fillStyle = fieldGlow;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        waveParticles.forEach(p => {
+          p.t = (p.t + p.speed * (0.6 + speed * 0.12)) % 1;
+          const x = p.t * W;
+          const waveY = H * 0.58
+            + Math.sin(p.t * Math.PI * 2.2 + tick * 0.8) * H * 0.055
+            + Math.sin(p.t * Math.PI * 4.1 - tick * 0.42) * H * 0.025
+            + p.lane * H * 0.08;
+          const depth = 1 - Math.abs(p.lane) * 0.45;
+          ctx.beginPath();
+          ctx.arc(x, waveY, p.size * depth, 0, Math.PI * 2);
+          ctx.fillStyle = `${currentPalette[p.colorIndex]}${Math.round(p.alpha * depth * 145).toString(16).padStart(2,'0')}`;
+          ctx.fill();
+        });
+        ctx.restore();
+
         const haze = ctx.createRadialGradient(cx, cy, ringRadius * 0.3, cx, cy, ringRadius * 2.4);
-        haze.addColorStop(0, `${currentPalette[0]}18`);
-        haze.addColorStop(0.5, `${currentPalette[2 % currentPalette.length]}10`);
+        haze.addColorStop(0, `${currentPalette[0]}22`);
+        haze.addColorStop(0.5, `${currentPalette[2 % currentPalette.length]}16`);
         haze.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = haze;
         ctx.fillRect(0, 0, W, H);
+
+        if(warpActiveFrames <= 0) {
+          nextWarpIn -= 1 + speed * 0.12;
+          if(nextWarpIn <= 0) {
+            warpDuration = rnd(100, 170);
+            warpActiveFrames = warpDuration;
+            nextWarpIn = rnd(55, 135) / (0.95 + densityT() * 0.45);
+            resetPomodoroWarpStars();
+          }
+        }
+
+        if(warpActiveFrames > 0) {
+          warpActiveFrames--;
+          const fadeIn = Math.min(1, (warpDuration - warpActiveFrames) / 26);
+          const fadeOut = Math.min(1, warpActiveFrames / 28);
+          const warpAlpha = Math.min(fadeIn, fadeOut) * 0.74;
+          ctx.save();
+          ctx.translate(cx, cy);
+          warpStars.forEach((s, i) => {
+            s.pz = s.z;
+            s.z -= speed * 3;
+            if(s.z <= 0) { warpStars[i] = mkPomodoroWarpStar(); return; }
+            const sz = Math.max(s.z, 0.1), spz = Math.max(s.pz, 0.1);
+            const sx = (s.x / sz) * W, sy = (s.y / sz) * H;
+            const px = (s.x / spz) * W, py = (s.y / spz) * H;
+            const size = Math.max(0.5, (1 - s.z / W) * 2.5);
+            ctx.beginPath();
+            ctx.moveTo(px, py); ctx.lineTo(sx, sy);
+            ctx.strokeStyle = s.col;
+            ctx.lineWidth = size;
+            ctx.globalAlpha = (1 - s.z / W) * 0.9 * warpAlpha;
+            ctx.stroke(); ctx.globalAlpha = 1;
+          });
+          ctx.restore();
+        }
 
         for(let i = 0; i < 3; i++) {
           ctx.beginPath();
@@ -1765,9 +1929,26 @@ const SceneFactories = {
         ctx.font = `700 ${Math.max(34, Math.min(W, H) * 0.08)}px Syne, sans-serif`;
         ctx.fillText(displayTime, cx, cy + 18);
 
+        const btnW = Math.max(128, Math.min(178, W * 0.13));
+        const btnH = 48;
+        const btnX = cx - btnW / 2;
+        const btnY = cy + 48;
+        const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
+        btnGrad.addColorStop(0, '#67efa9');
+        btnGrad.addColorStop(1, '#35d4ca');
+        ctx.fillStyle = btnGrad;
+        ctx.shadowColor = '#42ffd1';
+        ctx.shadowBlur = 24;
+        roundedPill(btnX, btnY, btnW, btnH, btnH / 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `700 15px DM Mono, monospace`;
+        ctx.fillText(timerInterval ? 'RUNNING' : 'START', cx, btnY + 30);
+
         ctx.fillStyle = 'rgba(255,255,255,0.42)';
         ctx.font = `11px DM Mono, monospace`;
-        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, cy + 66);
+        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, cy + 116);
       }
     };
   },
@@ -2352,15 +2533,32 @@ const SceneFactories = {
   const fileNames = Object.keys(fileSnippets);
 
   const windows = [
-    { fx: 0.04, fy: 0.10, fw: 0.30, fh: 0.50, file: 'index.js' },
-    { fx: 0.36, fy: 0.06, fw: 0.34, fh: 0.58, file: 'api.ts'   },
-    { fx: 0.72, fy: 0.12, fw: 0.24, fh: 0.46, file: 'styles.css'},
+    { fx: 0.04, fy: 0.10, fw: 0.30, fh: 0.50, file: 'index.js',   depth: 0.74 },
+    { fx: 0.36, fy: 0.06, fw: 0.34, fh: 0.58, file: 'api.ts',     depth: 1.00 },
+    { fx: 0.72, fy: 0.12, fw: 0.24, fh: 0.46, file: 'styles.css', depth: 0.82 },
   ].map(p => ({
-    x: W * p.fx, y: W * p.fy,
+    x: W * p.fx, y: H * p.fy,
     w: W * p.fw, h: W * p.fh,
     file: p.file,
     scrollY: 0,
+    depth: p.depth,
     active: false,
+  }));
+
+  const ghostPanes = [
+    { fx: 0.13, fy: 0.18, fw: 0.24, fh: 0.34, file: 'api.ts', scale: 0.82, alpha: 0.17, phase: 0.4 },
+    { fx: 0.58, fy: 0.18, fw: 0.28, fh: 0.38, file: 'index.js', scale: 0.9, alpha: 0.14, phase: 2.1 },
+    { fx: 0.34, fy: 0.52, fw: 0.26, fh: 0.30, file: 'styles.css', scale: 0.76, alpha: 0.12, phase: 4.2 },
+  ].map(p => ({
+    x: W * p.fx, y: H * p.fy,
+    w: W * p.fw, h: W * p.fh,
+    file: p.file,
+    scrollY: rnd(0, 8),
+    scale: p.scale,
+    alpha: p.alpha,
+    phase: p.phase,
+    active: false,
+    depth: 0.42,
   }));
 
   // focus cycles between windows
@@ -2391,47 +2589,68 @@ const SceneFactories = {
     return tokens;
   }
 
-  function drawWindow(panel, bob) {
+  function drawWindow(panel, bob, ghostAlpha = 1) {
     const { x, y, w, h, file, active } = panel;
     const py = y + bob;
     const isFocused = active;
+    const depth = panel.depth || 1;
+    const paneAlpha = ghostAlpha;
+    ctx.save();
+    ctx.globalAlpha *= paneAlpha;
 
     // shadow
     ctx.shadowColor = isFocused
       ? (currentPalette[0] + '55')
       : 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur  = isFocused ? 28 : 12;
+    ctx.shadowBlur  = (isFocused ? 28 : 12) * depth;
 
     // body
-    ctx.fillStyle   = isFocused ? 'rgba(22,26,36,0.88)' : 'rgba(12,16,22,0.72)';
+    ctx.fillStyle   = isFocused ? `rgba(22,26,36,${0.88 * paneAlpha})` : `rgba(12,16,22,${0.72 * paneAlpha})`;
     ctx.strokeStyle = isFocused
       ? (currentPalette[0] + '55')
-      : 'rgba(120,180,255,0.09)';
+      : `rgba(120,180,255,${0.09 * paneAlpha})`;
     ctx.lineWidth   = isFocused ? 1.5 : 1;
     ctx.fillRect(x, py, w, h);
     ctx.strokeRect(x, py, w, h);
     ctx.shadowBlur  = 0;
 
     // title bar
-    ctx.fillStyle   = isFocused ? 'rgba(40,44,56,0.95)' : 'rgba(20,24,32,0.8)';
+    ctx.fillStyle   = isFocused ? `rgba(40,44,56,${0.95 * paneAlpha})` : `rgba(20,24,32,${0.8 * paneAlpha})`;
     ctx.fillRect(x, py, w, TITLE_H);
 
     // traffic lights
     ['#ff5f56','#ffbd2e','#27c93f'].forEach((col, i) => {
-      ctx.fillStyle = col;
+      ctx.fillStyle = paneAlpha >= 0.9 ? col : `rgba(255,255,255,${0.16 * paneAlpha})`;
       ctx.beginPath();
       ctx.arc(x + 14 + i * 18, py + TITLE_H / 2, 5, 0, Math.PI * 2);
       ctx.fill();
     });
 
     // filename tab
-    ctx.fillStyle   = isFocused ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)';
-    const tabW      = ctx.measureText(file).width + 28;
-    ctx.fillRect(x + 62, py, tabW, TITLE_H);
-    ctx.fillStyle   = isFocused ? '#fff' : 'rgba(255,255,255,0.45)';
     ctx.font        = `12px DM Mono, monospace`;
     ctx.textAlign   = 'left';
+    ctx.fillStyle   = isFocused ? `rgba(255,255,255,${0.12 * paneAlpha})` : `rgba(255,255,255,${0.05 * paneAlpha})`;
+    const tabW      = ctx.measureText(file).width + 28;
+    ctx.fillRect(x + 62, py, tabW, TITLE_H);
+    if(paneAlpha > 0.8) {
+      const altFile = file === 'index.js' ? 'api.ts' : file === 'api.ts' ? 'styles.css' : 'index.js';
+      const altTabW = Math.max(0, Math.min(92, w - tabW - 78));
+      if(altTabW > 24) {
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(x + 64 + tabW, py + 5, altTabW, TITLE_H - 8);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillText(altFile, x + 76 + tabW, py + TITLE_H / 2 + 4);
+      }
+    }
+    ctx.fillStyle   = isFocused ? `rgba(255,255,255,${paneAlpha})` : `rgba(255,255,255,${0.45 * paneAlpha})`;
     ctx.fillText(file, x + 76, py + TITLE_H / 2 + 4);
+
+    if(paneAlpha > 0.8) {
+      ctx.fillStyle = `rgba(255,255,255,${isFocused ? 0.28 : 0.14})`;
+      ctx.font = '10px DM Mono, monospace';
+      const crumb = file === 'styles.css' ? 'src / ui / styles.css' : `src / app / ${file}`;
+      ctx.fillText(crumb, x + 12, py + TITLE_H + 18);
+    }
 
     // clip content area
     ctx.save();
@@ -2440,7 +2659,9 @@ const SceneFactories = {
     ctx.clip();
 
     const snippets  = fileSnippets[file];
-    const lineCount = Math.ceil((h - TITLE_H) / LINE_H) + 4;
+    const contentTop = py + TITLE_H + (paneAlpha > 0.8 ? 20 : 0);
+    const contentH = h - TITLE_H - (paneAlpha > 0.8 ? 20 : 0);
+    const lineCount = Math.ceil(contentH / LINE_H) + 4;
     const startLine = Math.floor(panel.scrollY);
     const baseColor = file === 'styles.css' ? '#a8ff78'
                     : file === 'api.ts'     ? '#8be9fd'
@@ -2450,10 +2671,17 @@ const SceneFactories = {
       const lineIdx  = (startLine + li) % snippets.length;
       const lineText = snippets[lineIdx];
       const lx       = x + GUTTER;
-      const ly       = py + TITLE_H + (li - (panel.scrollY % 1)) * LINE_H + LINE_H;
+      const ly       = contentTop + (li - (panel.scrollY % 1)) * LINE_H + LINE_H;
+      const pulseLine = isFocused && paneAlpha > 0.8 && ((startLine + li) % 6 === Math.floor((tick * 5) % 6));
+
+      if(pulseLine) {
+        const pulse = 0.5 + 0.5 * Math.sin(tick * 9);
+        ctx.fillStyle = `${currentPalette[(li + focusedWindow) % currentPalette.length]}${Math.round((34 + pulse * 34) * paneAlpha).toString(16).padStart(2,'0')}`;
+        ctx.fillRect(x + GUTTER - 4, ly - LINE_H + 4, w - GUTTER - 16, LINE_H);
+      }
 
       // line number
-      ctx.fillStyle  = 'rgba(255,255,255,0.18)';
+      ctx.fillStyle  = `rgba(255,255,255,${0.18 * paneAlpha})`;
       ctx.font       = '11px DM Mono, monospace';
       ctx.textAlign  = 'right';
       ctx.fillText(String((startLine + li + 1) % 999 + 1), x + GUTTER - 6, ly);
@@ -2465,31 +2693,49 @@ const SceneFactories = {
       ctx.textAlign  = 'left';
       tokens.forEach(tok => {
         ctx.fillStyle = tok.color;
+        if(pulseLine && (KEYWORDS.includes(tok.text) || TYPES.includes(tok.text))) {
+          ctx.shadowColor = tok.color;
+          ctx.shadowBlur = 10;
+        }
         ctx.fillText(tok.text, tx, ly);
+        ctx.shadowBlur = 0;
         tx += ctx.measureText(tok.text).width;
       });
     }
 
     // scrollbar
-    const barH     = Math.max(24, (h - TITLE_H) / snippets.length * (h - TITLE_H) / LINE_H * 4);
-    const barY     = py + TITLE_H + ((panel.scrollY / snippets.length) % 1) * (h - TITLE_H - barH);
-    ctx.fillStyle  = 'rgba(255,255,255,0.1)';
-    ctx.fillRect(x + w - 6, py + TITLE_H, 4, h - TITLE_H);
-    ctx.fillStyle  = isFocused ? currentPalette[0] + 'aa' : 'rgba(255,255,255,0.25)';
+    const barH     = Math.max(24, contentH / snippets.length * contentH / LINE_H * 4);
+    const barY     = contentTop + ((panel.scrollY / snippets.length) % 1) * (contentH - barH);
+    ctx.fillStyle  = `rgba(255,255,255,${0.1 * paneAlpha})`;
+    ctx.fillRect(x + w - 6, contentTop, 4, contentH);
+    ctx.fillStyle  = isFocused ? currentPalette[0] + 'aa' : `rgba(255,255,255,${0.25 * paneAlpha})`;
     ctx.fillRect(x + w - 6, barY, 4, barH);
+
+    if(paneAlpha > 0.8) {
+      const miniX = x + w - 26;
+      const miniY = contentTop + 8;
+      const miniH = Math.max(40, contentH - 18);
+      ctx.fillStyle = 'rgba(255,255,255,0.035)';
+      ctx.fillRect(miniX, miniY, 12, miniH);
+      snippets.forEach((_, i) => {
+        ctx.fillStyle = i % 3 === 0 ? currentPalette[i % currentPalette.length] + '77' : 'rgba(255,255,255,0.12)';
+        ctx.fillRect(miniX + 2, miniY + 3 + (i / snippets.length) * (miniH - 8), 8, 1);
+      });
+    }
 
     ctx.restore();
 
     // active glow pulse around focused window
     if(isFocused) {
       const pulse   = 0.5 + 0.5 * Math.sin(Date.now() * 0.003);
-      ctx.strokeStyle = currentPalette[0] + Math.round(pulse * 80 + 20).toString(16).padStart(2,'0');
+      ctx.strokeStyle = currentPalette[0] + Math.round((pulse * 80 + 20) * paneAlpha).toString(16).padStart(2,'0');
       ctx.lineWidth   = 1.5;
       ctx.shadowColor = currentPalette[0];
       ctx.shadowBlur  = 12 + pulse * 10;
       ctx.strokeRect(x + 1, py + 1, w - 2, h - 2);
       ctx.shadowBlur  = 0;
     }
+    ctx.restore();
   }
 
   // ---- errors ----
@@ -2551,6 +2797,10 @@ const SceneFactories = {
   // ---- second cursor ----
   let cursor2X      = W * 0.55;
   let cursor2Y      = H * 0.32;
+  let cursor2TX     = cursor2X;
+  let cursor2TY     = cursor2Y;
+  let selectionLife = 0;
+  let selectionW    = 0;
   let cursor2Timer  = 0;
 
   // ---- status bar ----
@@ -2598,8 +2848,26 @@ const SceneFactories = {
         p.active    = i === focusedWindow;
         p.scrollY  += speed * (p.active ? 0.025 : 0.012);
       });
+      ghostPanes.forEach((p, i) => {
+        p.scrollY += speed * (0.006 + i * 0.002);
+      });
 
-      // ---- draw windows ----
+      // ---- depth editor layers ----
+      ghostPanes.forEach((panel, index) => {
+        const drift = Math.sin(tick * 0.85 + panel.phase) * 10;
+        ctx.save();
+        ctx.translate(panel.x + panel.w * 0.5, panel.y + panel.h * 0.5);
+        ctx.scale(panel.scale, panel.scale);
+        const ghost = {
+          ...panel,
+          x: -panel.w * 0.5,
+          y: -panel.h * 0.5,
+        };
+        drawWindow(ghost, drift, panel.alpha);
+        ctx.restore();
+      });
+
+      // ---- primary editor windows ----
       windows.forEach((panel, index) => {
         const bob = Math.sin(tick * 1.4 + index) * 4;
         drawWindow(panel, bob);
@@ -2730,18 +2998,30 @@ const SceneFactories = {
       if(cursor2Timer > 1) {
         cursor2Timer = 0;
         const fw     = windows[focusedWindow];
-        cursor2X     = fw.x + GUTTER + rnd(0, fw.w - GUTTER - 40);
-        cursor2Y     = fw.y + TITLE_H + rnd(LINE_H, fw.h - TITLE_H - LINE_H)
+        cursor2TX    = fw.x + GUTTER + rnd(0, Math.max(12, fw.w - GUTTER - 64));
+        cursor2TY    = fw.y + TITLE_H + rnd(LINE_H * 2, Math.max(LINE_H * 3, fw.h - TITLE_H - LINE_H))
                      + Math.sin(tick * 1.4 + focusedWindow) * 4;
+        selectionLife = Math.random() > 0.45 ? 1 : 0;
+        selectionW = rnd(42, 150);
       }
-      const c2vis  = Math.floor(tick * 20) % 2 === 0;
-      ctx.fillStyle = c2vis ? 'rgba(189,147,249,0.85)' : 'rgba(189,147,249,0.12)';
+      cursor2X += (cursor2TX - cursor2X) * 0.12;
+      cursor2Y += (cursor2TY - cursor2Y) * 0.12;
+      selectionLife *= 0.965;
+      if(selectionLife > 0.04) {
+        ctx.fillStyle = `${currentPalette[(focusedWindow + 2) % currentPalette.length]}${Math.round(selectionLife * 44).toString(16).padStart(2,'0')}`;
+        ctx.fillRect(cursor2X, cursor2Y - 13, selectionW * selectionLife, 17);
+      }
+      const c2vis  = Math.sin(tick * 18) > -0.2;
+      ctx.fillStyle = c2vis ? 'rgba(189,147,249,0.88)' : 'rgba(189,147,249,0.1)';
       ctx.fillRect(cursor2X, cursor2Y, 2, 14);
 
       // primary caret
-      const caretVis = Math.floor(tick * 24) % 2 === 0;
+      const caretVis = Math.sin(tick * 24) > -0.1;
       ctx.fillStyle   = caretVis ? 'rgba(80,250,123,0.9)' : 'rgba(80,250,123,0.16)';
-      ctx.fillRect(W * 0.39, H * 0.28, 3, 16);
+      const fw = windows[focusedWindow];
+      const caretX = fw.x + GUTTER + 44 + Math.sin(tick * 1.8) * 10;
+      const caretY = fw.y + TITLE_H + 54 + Math.sin(tick * 1.2 + focusedWindow) * 18;
+      ctx.fillRect(caretX, caretY, 3, 16);
 
       // ---- notification ----
       notifTimer += speed * 0.006;
@@ -2948,6 +3228,7 @@ function activateScene(id, options = {}) {
   ctx.globalAlpha=1;
   activeSceneId = id;
   applyScenePalette(activeSceneId, activePaletteKey);
+  updateDensityMeta(activeSceneId);
   document.querySelectorAll('.scene-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
   currentScene = SceneFactories[id]?.();
   paused = false;
@@ -2976,11 +3257,17 @@ function tickFps(now) {
     const fps = Math.round(1000 / avg);
     fpsCurrent = fps;
     if(autoQualityEnabled && fpsFrameTimes.length >= 24 && now > fpsAdjustCooldownUntil) {
-      if(fps < 42 && renderScale > MIN_RENDER_SCALE) applyRenderScale(renderScale - 0.08);
-      else if(fps > 57 && renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.04);
+      if(fps < 42) {
+        if(densityAutoOffset < 4 && effectiveDensityValue() > 1) applyAutoDensityOffset(densityAutoOffset + 1);
+        else if(renderScale > MIN_RENDER_SCALE) applyRenderScale(renderScale - 0.08);
+      } else if(fps > 57) {
+        if(densityAutoOffset > 0) applyAutoDensityOffset(densityAutoOffset - 1);
+        else if(renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.04);
+      }
     }
     if(fpsVisible) {
-      fpsText.textContent = autoQualityEnabled ? `${fps} fps · ${Math.round(renderScale * 100)}%` : `${fps} fps`;
+      const densityNote = densityAutoOffset ? ` · d-${densityAutoOffset}` : '';
+      fpsText.textContent = autoQualityEnabled ? `${fps} fps · ${Math.round(renderScale * 100)}%${densityNote}` : `${fps} fps`;
       fpsDot.className = fps >= 50 ? '' : fps >= 35 ? 'amber' : 'red';
     }
   }
