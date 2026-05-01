@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Flobe - Dynamic Backgrounds</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
@@ -36,13 +36,20 @@
 .pal-wrap:hover .pal-label { color: rgba(255,255,255,0.7); }
 .pal-swatch.active + .pal-label { color: rgba(255,255,255,0.9); }
 
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
   body {
     font-family: 'Syne', sans-serif;
     background: #0f0f0f;
     color: #fff;
     overflow: hidden;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
+    touch-action: manipulation;
   }
 
   /* CANVAS LAYER */
@@ -146,6 +153,7 @@
   #hide-btn,
   #fullscreen-btn,
   #auto-quality-btn,
+  #idea-btn,
   #help-btn {
     font-family: 'DM Mono', monospace;
     font-size: 0.7rem;
@@ -162,6 +170,7 @@
   #hide-btn:hover,
   #fullscreen-btn:hover,
   #auto-quality-btn:hover,
+  #idea-btn:hover,
   #help-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
   #auto-quality-btn.active {
     background: rgba(48,209,88,0.22);
@@ -185,11 +194,27 @@
 #fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 #fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
 
+  #idea-btn,
   #help-btn {
     width: 34px;
     min-width: 34px;
     padding-left: 0;
     padding-right: 0;
+  }
+
+  #idea-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #idea-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   
   /* Panel */
@@ -338,6 +363,7 @@
 
   .ctrl input[type=range] {
     flex: 1;
+    min-width: 0;
     -webkit-appearance: none;
     height: 3px;
     background: rgba(255,255,255,0.15);
@@ -537,24 +563,149 @@
   }
 
   @media (max-width: 720px) {
+    #title-bar {
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: calc(0.75rem + env(safe-area-inset-top)) 0.75rem 0.6rem;
+    }
+    .logo-focus,
+    .logo-flow {
+      font-size: 1rem;
+      letter-spacing: 0.045em;
+    }
+    .logo-dot {
+      width: 5px;
+      height: 5px;
+      margin-bottom: 0.16em;
+    }
+    #top-actions {
+      max-width: 68vw;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.35rem;
+    }
+    #hide-btn,
+    #fullscreen-btn,
+    #auto-quality-btn,
+    #fps-btn,
+    #idea-btn,
+    #help-btn {
+      font-size: 0.56rem;
+      letter-spacing: 0.05em;
+      padding: 0.32rem 0.5rem;
+    }
+    #idea-btn,
+    #help-btn {
+      width: 30px;
+      min-width: 30px;
+    }
     #ui {
-      padding: 0 0.75rem 0.75rem;
+      padding: 0 0.55rem calc(0.55rem + env(safe-area-inset-bottom));
     }
     #panel {
       width: 100%;
-      max-height: 54vh;
-      overflow: auto;
+      max-height: min(61dvh, 560px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      border-radius: 0.85rem;
+      padding: 0.75rem;
+    }
+    #panel h2 {
+      font-size: 0.56rem;
+      margin-bottom: 0.55rem;
+    }
+    #scene-grid {
+      gap: 0.45rem;
+      padding-right: 2.6rem;
+    }
+    .scene-btn {
+      min-width: 96px;
+      flex-basis: 96px;
+      min-height: 72px;
+      padding: 0.55rem 0.4rem;
+      border-radius: 0.58rem;
+    }
+    .scene-btn .icon {
+      font-size: 1.08rem;
+    }
+    .scene-btn .label {
+      font-size: 0.55rem;
+      line-height: 1.2;
+    }
+    .scene-scroll-btn {
+      width: 32px;
+      height: 32px;
+      right: 0;
+      font-size: 1.05rem;
     }
     #controls {
       grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding-top: 0.55rem;
     }
     .ctrl:nth-child(1),
     .ctrl:nth-child(2),
     .ctrl:nth-child(3) {
       grid-column: 1 / -1;
     }
+    .ctrl {
+      min-width: 0;
+      padding: 0.62rem;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      border-radius: 0.68rem;
+    }
+    .ctrl label {
+      font-size: 0.56rem;
+    }
+    .ctrl input[type=range] {
+      min-width: 112px;
+    }
+    .palette-row {
+      width: 100%;
+      max-width: 100%;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+      scrollbar-width: none;
+    }
+    .palette-row::-webkit-scrollbar {
+      display: none;
+    }
+    .pal-wrap {
+      min-width: 38px;
+      gap: 0.25rem;
+    }
+    .pal-swatch {
+      width: 20px;
+      height: 20px;
+    }
+    .pal-label {
+      font-size: 0.45rem;
+      letter-spacing: 0.04em;
+    }
     .preset-row.shell {
       align-items: flex-start;
+      justify-content: flex-start;
+      gap: 0.5rem;
+    }
+    .preset-row.slots {
+      gap: 0.4rem;
+    }
+    .preset-slot {
+      gap: 0.25rem;
+    }
+    .preset-btn {
+      min-width: 78px;
+      padding: 0.32rem 0.58rem;
+      font-size: 0.55rem;
+    }
+    .preset-edit,
+    .preset-share {
+      min-width: 30px;
+      padding: 0.32rem 0.45rem;
+      font-size: 0.55rem;
     }
     #timer-row {
       order: 3;
@@ -563,8 +714,69 @@
       border-left: 0;
       justify-content: flex-start;
       flex-wrap: wrap;
+      margin-left: 0;
+      gap: 0.35rem;
+    }
+    #timer-row label,
+    #timer-custom-mins,
+    #timer-begin,
+    #timer-reset {
+      font-size: 0.55rem;
+    }
+    #timer-custom-mins {
+      width: 56px;
+      padding: 0.32rem 0.45rem;
+    }
+    #timer-display {
+      min-width: 48px;
+      font-size: 0.62rem;
+      text-align: left;
     }
     .preset-share { order: 2; }
+    #hint {
+      display: none;
+    }
+    #fps-counter {
+      top: auto;
+      left: 0.75rem;
+      bottom: calc(0.45rem + env(safe-area-inset-bottom));
+      transform: none;
+      font-size: 0.56rem;
+      padding: 0.25rem 0.62rem;
+    }
+    #help-overlay {
+      padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
+    }
+    #help-box {
+      max-height: 80dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  @media (max-width: 420px) {
+    #top-actions {
+      max-width: 72vw;
+    }
+    #panel {
+      max-height: min(65dvh, 560px);
+    }
+    .scene-btn {
+      min-width: 88px;
+      flex-basis: 88px;
+    }
+    .ctrl input[type=range] {
+      min-width: 92px;
+    }
+  }
+
+  @media (max-height: 640px) and (max-width: 720px) {
+    #panel {
+      max-height: 70dvh;
+    }
+    .scene-btn {
+      min-height: 64px;
+    }
   }
   
   /* ALERT OVERLAY */
@@ -608,6 +820,107 @@
     pointer-events: all;
   }
   #help-overlay.show { display: flex; }
+
+  #idea-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: all;
+  }
+  #idea-overlay.show { display: flex; }
+
+  #idea-box {
+    width: min(92vw, 460px);
+    background: rgba(12,14,20,0.92);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    padding: 1.25rem;
+    color: rgba(255,255,255,0.82);
+  }
+  #idea-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.56);
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+  }
+  #idea-text {
+    width: 100%;
+    min-height: 132px;
+    resize: vertical;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.88);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 0.75rem;
+    outline: none;
+    padding: 0.8rem;
+  }
+  #idea-text::placeholder {
+    color: rgba(255,255,255,0.34);
+  }
+  #idea-text:focus {
+    border-color: rgba(93,255,210,0.48);
+    box-shadow: 0 0 0 1px rgba(93,255,210,0.16);
+  }
+  .idea-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-top: 0.85rem;
+  }
+  .idea-actions button {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.72);
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .idea-actions button:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+  #idea-copy {
+    border-color: rgba(93,255,210,0.36);
+    color: rgba(169,255,231,0.88);
+  }
+  #idea-status {
+    min-height: 1.1rem;
+    margin-top: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(101,231,168,0.78);
+  }
+
+  @media (max-width: 720px) {
+    #idea-overlay {
+      padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
+    }
+    #idea-box {
+      max-height: 80dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   #help-box {
     width: min(92vw, 420px);
     background: rgba(12,14,20,0.9);
@@ -654,6 +967,15 @@
     overflow-wrap: anywhere;
     line-height: 1.15;
   }
+
+  @media (max-width: 720px) {
+    .ctrl-value {
+      margin-left: auto;
+      max-width: 48px;
+      font-size: 0.55rem;
+      text-align: right;
+    }
+  }
   #help-close {
     margin-top: 1rem;
     font-family: 'DM Mono', monospace;
@@ -688,6 +1010,14 @@
       <button id="hide-btn">HIDE UI</button>
       <button id="auto-quality-btn">AUTO</button>
       <button id="fps-btn">FPS</button>
+      <button id="idea-btn" title="Share an idea" aria-label="Share an idea">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 14c.2-1.2.9-2 1.7-2.9A6 6 0 1 0 7.3 11c.8.9 1.5 1.8 1.7 3"></path>
+          <path d="M9 18h6"></path>
+          <path d="M10 22h4"></path>
+          <path d="M10 14h4"></path>
+        </svg>
+      </button>
       <button id="help-btn" title="Help">?</button>
     </div>
   </div>
@@ -751,6 +1081,18 @@
       <div><span>SHARE</span><span>copies the current scene settings as a link</span></div>
     </div>
     <button id="help-close">CLOSE</button>
+  </div>
+</div>
+
+<div id="idea-overlay">
+  <div id="idea-box">
+    <h3>Idea Box</h3>
+    <textarea id="idea-text" placeholder="What should Flobe do next?"></textarea>
+    <div class="idea-actions">
+      <button id="idea-copy">COPY IDEA</button>
+      <button id="idea-close">CLOSE</button>
+    </div>
+    <div id="idea-status" aria-live="polite"></div>
   </div>
 </div>
 
@@ -822,6 +1164,12 @@ const presetRow = document.getElementById('preset-row');
 const autoQualityBtn = document.getElementById('auto-quality-btn');
 const presetShareBtn = document.getElementById('preset-share-btn');
 const timerCustomMinsInput = document.getElementById('timer-custom-mins');
+const ideaBtn = document.getElementById('idea-btn');
+const ideaOverlay = document.getElementById('idea-overlay');
+const ideaText = document.getElementById('idea-text');
+const ideaCopy = document.getElementById('idea-copy');
+const ideaClose = document.getElementById('idea-close');
+const ideaStatus = document.getElementById('idea-status');
 const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
@@ -845,14 +1193,26 @@ const MAX_RENDER_SCALE = 1;
 let fpsCurrent = 0;
 let fpsAdjustCooldownUntil = 0;
 
+function viewportSize() {
+  const vv = window.visualViewport;
+  return {
+    width: Math.max(1, Math.round(vv?.width || window.innerWidth)),
+    height: Math.max(1, Math.round(vv?.height || window.innerHeight)),
+  };
+}
+
 function resize() {
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight}px`;
-  W = canvas.width  = Math.max(1, Math.round(window.innerWidth * renderScale));
-  H = canvas.height = Math.max(1, Math.round(window.innerHeight * renderScale));
-  if(currentScene) currentScene.reset?.();
+  const viewport = viewportSize();
+  canvas.style.width = `${viewport.width}px`;
+  canvas.style.height = `${viewport.height}px`;
+  W = canvas.width  = Math.max(1, Math.round(viewport.width * renderScale));
+  H = canvas.height = Math.max(1, Math.round(viewport.height * renderScale));
+  if(currentScene && SceneFactories[activeSceneId]) {
+    currentScene = SceneFactories[activeSceneId]();
+  }
 }
 window.addEventListener('resize', resize);
+window.visualViewport?.addEventListener('resize', resize);
 resize();
 
 function captureTransitionFrame() {
@@ -1376,6 +1736,14 @@ function toggleHelp(show = !helpOverlay.classList.contains('show')) {
   helpOverlay.classList.toggle('show', show);
 }
 
+function toggleIdeaBox(show = !ideaOverlay.classList.contains('show')) {
+  ideaOverlay.classList.toggle('show', show);
+  if(show) {
+    ideaStatus.textContent = '';
+    requestAnimationFrame(() => ideaText.focus());
+  }
+}
+
 async function toggleFullscreen() {
   if (!document.fullscreenElement) {
     await document.documentElement.requestFullscreen?.();
@@ -1399,7 +1767,32 @@ helpOverlay.addEventListener('click', e => {
   if(e.target === helpOverlay) toggleHelp(false);
 });
 
+ideaBtn.addEventListener('click', () => toggleIdeaBox(true));
+ideaClose.addEventListener('click', () => toggleIdeaBox(false));
+ideaOverlay.addEventListener('click', e => {
+  if(e.target === ideaOverlay) toggleIdeaBox(false);
+});
+ideaCopy.addEventListener('click', async () => {
+  const idea = ideaText.value.trim();
+  if(!idea) {
+    ideaStatus.textContent = 'Add an idea first.';
+    return;
+  }
+  const payload = `Flobe idea:\n\n${idea}`;
+  try {
+    await navigator.clipboard.writeText(payload);
+    ideaStatus.textContent = 'Copied. Ready to share.';
+  } catch {
+    ideaText.select();
+    ideaStatus.textContent = 'Select and copy the idea text.';
+  }
+});
+
 document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && ideaOverlay.classList.contains('show')) {
+    toggleIdeaBox(false);
+    return;
+  }
   if(e.key === 'Escape' && helpOverlay.classList.contains('show')) {
     toggleHelp(false);
     return;
@@ -1526,7 +1919,8 @@ const SceneFactories = {
 
   // DVD BOUNCE
   block() {
-    const logoW = Math.max(150, Math.min(290, Math.min(W, H) * 0.24));
+    const compact = Math.min(W, H) < 720;
+    const logoW = Math.max(compact ? 112 : 150, Math.min(compact ? 230 : 290, Math.min(W, H) * (compact ? 0.3 : 0.24), W * (compact ? 0.48 : 0.36)));
     const logoH = logoW * 0.58;
     let x = rnd(W * 0.22, Math.max(W * 0.22, W * 0.68));
     let y = rnd(H * 0.16, Math.max(H * 0.16, H * 0.45));
@@ -1772,13 +2166,14 @@ const SceneFactories = {
       draw() {
         tick += 0.01 * (0.8 + speed * 0.16);
         const cx = W / 2;
-        const cy = H * 0.38;
+        const compact = Math.min(W, H) < 720;
+        const cy = H * (compact ? 0.29 : 0.38);
         const totalSecs = timerSelectedSecs || 25 * 60;
         const remainingSecs = timerInterval ? timerSecsLeft : totalSecs;
         const progress = totalSecs > 0 ? 1 - (remainingSecs / totalSecs) : 0;
         const displayTime = timerInterval || timerSelectedSecs ? formatTime(Math.max(0, remainingSecs)) : '25:00';
-        const ringRadius = Math.min(W, H) * 0.21;
-        const ringWidth = Math.max(16, Math.min(W, H) * 0.028);
+        const ringRadius = Math.min(W, H) * (compact ? 0.18 : 0.21);
+        const ringWidth = Math.max(compact ? 11 : 16, Math.min(W, H) * (compact ? 0.024 : 0.028));
         const pulse = 0.5 + 0.5 * Math.sin(tick * 2.4);
 
         const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
@@ -1920,19 +2315,19 @@ const SceneFactories = {
         ctx.fill();
 
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.font = `12px DM Mono, monospace`;
+        ctx.font = `${compact ? 10 : 12}px DM Mono, monospace`;
         ctx.textAlign = 'center';
         const pomodoroLabel = timerInterval ? 'FOCUS RUNNING' : (timerSelectedSecs ? 'READY TO BEGIN' : 'POMODORO READY');
-        ctx.fillText(pomodoroLabel, cx, cy - 34);
+        ctx.fillText(pomodoroLabel, cx, cy - (compact ? 26 : 34));
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = `700 ${Math.max(34, Math.min(W, H) * 0.08)}px Syne, sans-serif`;
-        ctx.fillText(displayTime, cx, cy + 18);
+        ctx.font = `700 ${Math.max(compact ? 28 : 34, Math.min(W, H) * (compact ? 0.072 : 0.08))}px Syne, sans-serif`;
+        ctx.fillText(displayTime, cx, cy + (compact ? 14 : 18));
 
-        const btnW = Math.max(128, Math.min(178, W * 0.13));
-        const btnH = 48;
+        const btnW = Math.max(compact ? 108 : 128, Math.min(compact ? 148 : 178, W * (compact ? 0.32 : 0.13)));
+        const btnH = compact ? 40 : 48;
         const btnX = cx - btnW / 2;
-        const btnY = cy + 48;
+        const btnY = cy + (compact ? 36 : 48);
         const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
         btnGrad.addColorStop(0, '#67efa9');
         btnGrad.addColorStop(1, '#35d4ca');
@@ -1943,12 +2338,12 @@ const SceneFactories = {
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#ffffff';
-        ctx.font = `700 15px DM Mono, monospace`;
-        ctx.fillText(timerInterval ? 'RUNNING' : 'START', cx, btnY + 30);
+        ctx.font = `700 ${compact ? 12 : 15}px DM Mono, monospace`;
+        ctx.fillText(timerInterval ? 'RUNNING' : 'START', cx, btnY + (compact ? 25 : 30));
 
         ctx.fillStyle = 'rgba(255,255,255,0.42)';
-        ctx.font = `11px DM Mono, monospace`;
-        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, cy + 116);
+        ctx.font = `${compact ? 9 : 11}px DM Mono, monospace`;
+        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, cy + (compact ? 86 : 116));
       }
     };
   },
