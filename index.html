@@ -153,6 +153,7 @@
   #hide-btn,
   #fullscreen-btn,
   #auto-quality-btn,
+  #leaderboard-btn,
   #idea-btn,
   #help-btn {
     font-family: 'DM Mono', monospace;
@@ -170,6 +171,7 @@
   #hide-btn:hover,
   #fullscreen-btn:hover,
   #auto-quality-btn:hover,
+  #leaderboard-btn:hover,
   #idea-btn:hover,
   #help-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
   #auto-quality-btn.active {
@@ -588,6 +590,7 @@
     #fullscreen-btn,
     #auto-quality-btn,
     #fps-btn,
+    #leaderboard-btn,
     #idea-btn,
     #help-btn {
       font-size: 0.56rem;
@@ -836,6 +839,129 @@
   }
   #idea-overlay.show { display: flex; }
 
+  #leaderboard-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: all;
+  }
+  #leaderboard-overlay.show { display: flex; }
+
+  #leaderboard-box {
+    width: min(92vw, 500px);
+    background: rgba(12,14,20,0.92);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    padding: 1.25rem;
+    color: rgba(255,255,255,0.82);
+  }
+  #leaderboard-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.56);
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+  }
+  #leaderboard-list {
+    display: grid;
+    gap: 0.55rem;
+  }
+  .leaderboard-row {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.74);
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.7rem;
+    padding: 0.62rem 0.7rem;
+  }
+  .leaderboard-rank {
+    color: rgba(93,255,210,0.78);
+  }
+  .leaderboard-name {
+    min-width: 0;
+  }
+  .leaderboard-name span {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .leaderboard-bar {
+    height: 3px;
+    margin-top: 0.38rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+  .leaderboard-bar i {
+    display: block;
+    height: 100%;
+    width: var(--usage-width, 0%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(93,255,210,0.86), rgba(93,144,255,0.78));
+  }
+  .leaderboard-time {
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+  }
+  .leaderboard-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.58);
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.7rem;
+    padding: 0.85rem;
+  }
+  #leaderboard-close {
+    margin-top: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.72);
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  #leaderboard-close:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+
+  @media (max-width: 720px) {
+    #leaderboard-overlay {
+      padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
+    }
+    #leaderboard-box {
+      max-height: 80dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .leaderboard-row {
+      grid-template-columns: 22px minmax(0, 1fr);
+    }
+    .leaderboard-time {
+      grid-column: 2 / 3;
+    }
+  }
+
   #idea-box {
     width: min(92vw, 460px);
     background: rgba(12,14,20,0.92);
@@ -1010,6 +1136,7 @@
       <button id="hide-btn">HIDE UI</button>
       <button id="auto-quality-btn">AUTO</button>
       <button id="fps-btn">FPS</button>
+      <button id="leaderboard-btn" title="Most used backgrounds">TIME</button>
       <button id="idea-btn" title="Share an idea" aria-label="Share an idea">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 14c.2-1.2.9-2 1.7-2.9A6 6 0 1 0 7.3 11c.8.9 1.5 1.8 1.7 3"></path>
@@ -1084,6 +1211,14 @@
   </div>
 </div>
 
+<div id="leaderboard-overlay">
+  <div id="leaderboard-box">
+    <h3>Most Used</h3>
+    <div id="leaderboard-list"></div>
+    <button id="leaderboard-close">CLOSE</button>
+  </div>
+</div>
+
 <div id="idea-overlay">
   <div id="idea-box">
     <h3>Idea Box</h3>
@@ -1123,6 +1258,7 @@ let currentPalette = PALETTES.cosmic;
 let activePaletteKey = 'cosmic';
 const PRESET_STORAGE_KEY = 'flobe-presets-v1';
 const SESSION_STORAGE_KEY = 'flobe-session-v1';
+const USAGE_STORAGE_KEY = 'flobe-usage-v1';
 const DEFAULT_PRESETS = [
   { name:'Deep Work', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
   { name:'Night Drive', sceneId:'grid3d', paletteKey:'ocean', speed:5, density:6 },
@@ -1164,6 +1300,10 @@ const presetRow = document.getElementById('preset-row');
 const autoQualityBtn = document.getElementById('auto-quality-btn');
 const presetShareBtn = document.getElementById('preset-share-btn');
 const timerCustomMinsInput = document.getElementById('timer-custom-mins');
+const leaderboardBtn = document.getElementById('leaderboard-btn');
+const leaderboardOverlay = document.getElementById('leaderboard-overlay');
+const leaderboardList = document.getElementById('leaderboard-list');
+const leaderboardClose = document.getElementById('leaderboard-close');
 const ideaBtn = document.getElementById('idea-btn');
 const ideaOverlay = document.getElementById('idea-overlay');
 const ideaText = document.getElementById('idea-text');
@@ -1192,6 +1332,9 @@ const MIN_RENDER_SCALE = 0.7;
 const MAX_RENDER_SCALE = 1;
 let fpsCurrent = 0;
 let fpsAdjustCooldownUntil = 0;
+let usageStats = loadUsageStats();
+let usageLastNow = null;
+let usageUnsavedMs = 0;
 
 function viewportSize() {
   const vv = window.visualViewport;
@@ -1214,6 +1357,81 @@ function resize() {
 window.addEventListener('resize', resize);
 window.visualViewport?.addEventListener('resize', resize);
 resize();
+
+function loadUsageStats() {
+  try {
+    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return SCENES.reduce((stats, scene) => {
+      stats[scene.id] = Math.max(0, Number(parsed?.[scene.id]) || 0);
+      return stats;
+    }, {});
+  } catch {
+    return SCENES.reduce((stats, scene) => {
+      stats[scene.id] = 0;
+      return stats;
+    }, {});
+  }
+}
+
+function saveUsageStats() {
+  try {
+    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(usageStats));
+  } catch {}
+}
+
+function flushUsageStats() {
+  if(usageUnsavedMs <= 0) return;
+  saveUsageStats();
+  usageUnsavedMs = 0;
+}
+
+function recordUsageTick(now) {
+  if(usageLastNow === null) {
+    usageLastNow = now;
+    return;
+  }
+  const delta = Math.max(0, Math.min(1000, now - usageLastNow));
+  usageLastNow = now;
+  if(!activeSceneId || document.hidden) return;
+  usageStats[activeSceneId] = (usageStats[activeSceneId] || 0) + delta;
+  usageUnsavedMs += delta;
+  if(usageUnsavedMs >= 10000) flushUsageStats();
+}
+
+function formatUsageTime(ms) {
+  const minutes = Math.floor(ms / 60000);
+  if(minutes < 1) return '0m';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return hours ? `${hours}h ${mins}m` : `${mins}m`;
+}
+
+function renderLeaderboard() {
+  flushUsageStats();
+  const rows = SCENES
+    .map(scene => ({ ...scene, ms: usageStats[scene.id] || 0 }))
+    .filter(scene => scene.ms > 0)
+    .sort((a, b) => b.ms - a.ms);
+  if(!rows.length) {
+    leaderboardList.innerHTML = '<div class="leaderboard-empty">Use a few backgrounds and they will appear here with time tracked in hours and minutes.</div>';
+    return;
+  }
+  const topMs = Math.max(1, rows[0].ms);
+  leaderboardList.innerHTML = rows.slice(0, 8).map((scene, i) => {
+    const width = Math.max(4, Math.round((scene.ms / topMs) * 100));
+    return `
+      <div class="leaderboard-row">
+        <div class="leaderboard-rank">${i + 1}</div>
+        <div class="leaderboard-name">
+          <span>${scene.label}</span>
+          <div class="leaderboard-bar" style="--usage-width:${width}%"><i></i></div>
+        </div>
+        <div class="leaderboard-time">${formatUsageTime(scene.ms)}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 function captureTransitionFrame() {
   if(!W || !H || !currentScene) return;
@@ -1744,6 +1962,11 @@ function toggleIdeaBox(show = !ideaOverlay.classList.contains('show')) {
   }
 }
 
+function toggleLeaderboard(show = !leaderboardOverlay.classList.contains('show')) {
+  leaderboardOverlay.classList.toggle('show', show);
+  if(show) renderLeaderboard();
+}
+
 async function toggleFullscreen() {
   if (!document.fullscreenElement) {
     await document.documentElement.requestFullscreen?.();
@@ -1788,7 +2011,17 @@ ideaCopy.addEventListener('click', async () => {
   }
 });
 
+leaderboardBtn.addEventListener('click', () => toggleLeaderboard(true));
+leaderboardClose.addEventListener('click', () => toggleLeaderboard(false));
+leaderboardOverlay.addEventListener('click', e => {
+  if(e.target === leaderboardOverlay) toggleLeaderboard(false);
+});
+
 document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && leaderboardOverlay.classList.contains('show')) {
+    toggleLeaderboard(false);
+    return;
+  }
   if(e.key === 'Escape' && ideaOverlay.classList.contains('show')) {
     toggleIdeaBox(false);
     return;
@@ -1797,10 +2030,32 @@ document.addEventListener('keydown', e => {
     toggleHelp(false);
     return;
   }
+  if(['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
   if(e.key.toLowerCase() === 'h') toggleUI();
   if(e.key.toLowerCase() === 'f') toggleFullscreen();
-  if(e.key === ' ') { paused = !paused; if(!paused) loop(); e.preventDefault(); }
+  if(e.key === ' ') {
+    paused = !paused;
+    if(paused) {
+      flushUsageStats();
+      usageLastNow = null;
+    } else {
+      usageLastNow = performance.now();
+      loop();
+    }
+    e.preventDefault();
+  }
 });
+
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) {
+    flushUsageStats();
+    usageLastNow = null;
+  } else {
+    usageLastNow = performance.now();
+  }
+});
+window.addEventListener('pagehide', flushUsageStats);
+window.addEventListener('beforeunload', flushUsageStats);
 
 // ----------------------------------------
 // ----------------------------------------
@@ -3615,6 +3870,8 @@ function hexToRgb(hex) {
 // ----------------------------------------
 function activateScene(id, options = {}) {
   if(!id) return;
+  flushUsageStats();
+  usageLastNow = performance.now();
   const shouldTransition = options.transition !== false;
   if(shouldTransition && currentScene) captureTransitionFrame();
   cancelAnimationFrame(rafId);
@@ -3682,6 +3939,7 @@ fpsBtn.addEventListener('click', toggleFps);
 function loop() {
   if(paused) return;
   const now = performance.now();
+  recordUsageTick(now);
   tickFps(now);
   currentScene?.draw();
   if(transitionActive) drawTransition(now);
