@@ -179,6 +179,11 @@
     border-color: rgba(48,209,88,0.45);
     color: #9df0b3;
   }
+  #auto-quality-btn.battery {
+    background: rgba(255,159,10,0.2);
+    border-color: rgba(255,159,10,0.42);
+    color: #ffd28a;
+  }
 
 #fps-btn {
   font-family: 'DM Mono', monospace;
@@ -195,6 +200,26 @@
 }
 #fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 #fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
+
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  .pal-wrap:focus-visible,
+  .scene-btn:focus-visible {
+    outline: 2px solid rgba(93,255,210,0.85);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
 
   #idea-btn,
   #help-btn {
@@ -498,6 +523,31 @@
 #fps-dot.amber { background: #ff9f0a; }
 #fps-dot.red   { background: #e63b2e; }
 
+#qa-badge {
+  position: fixed;
+  top: 4.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
+  display: none;
+  max-width: 90vw;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  color: rgba(255,255,255,0.76);
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(93,255,210,0.22);
+  border-radius: 999px;
+  padding: 0.34rem 0.78rem;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#qa-badge.visible { display: block; }
+
   /* TIMER */
   #timer-row {
     display: flex;
@@ -581,10 +631,15 @@
       margin-bottom: 0.16em;
     }
     #top-actions {
-      max-width: 68vw;
-      flex-wrap: wrap;
+      max-width: 72vw;
+      flex-wrap: nowrap;
       justify-content: flex-end;
+      overflow-x: auto;
+      scrollbar-width: none;
       gap: 0.35rem;
+    }
+    #top-actions::-webkit-scrollbar {
+      display: none;
     }
     #hide-btn,
     #fullscreen-btn,
@@ -596,6 +651,7 @@
       font-size: 0.56rem;
       letter-spacing: 0.05em;
       padding: 0.32rem 0.5rem;
+      flex: 0 0 auto;
     }
     #idea-btn,
     #help-btn {
@@ -747,6 +803,9 @@
       font-size: 0.56rem;
       padding: 0.25rem 0.62rem;
     }
+    #qa-badge {
+      top: calc(3.15rem + env(safe-area-inset-top));
+    }
     #help-overlay {
       padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
     }
@@ -759,7 +818,7 @@
 
   @media (max-width: 420px) {
     #top-actions {
-      max-width: 72vw;
+      max-width: 74vw;
     }
     #panel {
       max-height: min(65dvh, 560px);
@@ -770,6 +829,28 @@
     }
     .ctrl input[type=range] {
       min-width: 92px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    #title-bar {
+      padding-left: 0.55rem;
+      padding-right: 0.55rem;
+    }
+    .logo-focus,
+    .logo-flow {
+      font-size: 0.86rem;
+    }
+    #top-actions {
+      max-width: 76vw;
+    }
+    #hide-btn,
+    #fullscreen-btn,
+    #auto-quality-btn,
+    #fps-btn,
+    #leaderboard-btn {
+      font-size: 0.52rem;
+      padding: 0.28rem 0.42rem;
     }
   }
 
@@ -1118,11 +1199,12 @@
     background: rgba(255,255,255,0.14);
     color: #fff;
   }
+
 </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
 
 <div id="ui">
   <div id="title-bar">
@@ -1132,12 +1214,12 @@
       <span class="logo-flow">be</span>
     </div>
     <div id="top-actions">
-      <button id="fullscreen-btn">FULLSCREEN</button>
-      <button id="hide-btn">HIDE UI</button>
-      <button id="auto-quality-btn">AUTO</button>
-      <button id="fps-btn">FPS</button>
-      <button id="leaderboard-btn" title="Most used backgrounds">TIME</button>
-      <button id="idea-btn" title="Share an idea" aria-label="Share an idea">
+      <button id="fullscreen-btn" type="button" aria-label="Toggle fullscreen">FULLSCREEN</button>
+      <button id="hide-btn" type="button" aria-label="Hide interface">HIDE UI</button>
+      <button id="auto-quality-btn" type="button" aria-label="Change quality profile">AUTO</button>
+      <button id="fps-btn" type="button" aria-label="Show frames per second">FPS</button>
+      <button id="leaderboard-btn" type="button" title="Most used backgrounds" aria-label="Most used backgrounds">TIME</button>
+      <button id="idea-btn" type="button" title="Share an idea" aria-label="Share an idea">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 14c.2-1.2.9-2 1.7-2.9A6 6 0 1 0 7.3 11c.8.9 1.5 1.8 1.7 3"></path>
           <path d="M9 18h6"></path>
@@ -1145,7 +1227,7 @@
           <path d="M10 14h4"></path>
         </svg>
       </button>
-      <button id="help-btn" title="Help">?</button>
+      <button id="help-btn" type="button" title="Help" aria-label="Help">?</button>
     </div>
   </div>
 
@@ -1153,16 +1235,16 @@
     <h2>Background</h2>
     <div class="scene-rail">
       <div id="scene-grid"></div>
-      <button id="scene-scroll-btn" class="scene-scroll-btn" title="More backgrounds">›</button>
+      <button id="scene-scroll-btn" class="scene-scroll-btn" type="button" title="More backgrounds" aria-label="More backgrounds">›</button>
     </div>
-    <div id="controls">
+      <div id="controls">
       <div class="ctrl">
         <label>SPEED</label>
-        <input type="range" id="speed-slider" min="1" max="10" value="5">
+        <input type="range" id="speed-slider" min="1" max="10" value="5" aria-label="Speed">
       </div>
       <div class="ctrl">
         <label id="density-label">DENSITY</label>
-        <input type="range" id="density-slider" min="1" max="10" value="5">
+        <input type="range" id="density-slider" min="1" max="10" value="5" aria-label="Density">
         <span id="density-value" class="ctrl-value">5/10</span>
       </div>
       <div class="ctrl">
@@ -1176,11 +1258,11 @@
           <div id="timer-row" aria-label="Custom timer controls">
             <label>TIMER</label>
             <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
-            <button id="timer-begin" disabled>begin</button>
-            <button id="timer-reset">reset</button>
+            <button id="timer-begin" type="button" disabled>begin</button>
+            <button id="timer-reset" type="button">reset</button>
             <div id="timer-display">--:--</div>
           </div>
-          <button class="preset-share" id="preset-share-btn">SHARE</button>
+          <button class="preset-share" id="preset-share-btn" type="button">SHARE</button>
         </div>
       </div>
     </div>
@@ -1196,36 +1278,39 @@
   <span id="fps-text">-- fps</span>
 </div>
 
-<div id="help-overlay">
+<div id="qa-badge" aria-live="polite"></div>
+
+<div id="help-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div id="help-box">
-    <h3>Flobe</h3>
+    <h3 id="help-title">Flobe</h3>
     <div class="help-list">
       <div><span>H</span><span>hide or show the interface</span></div>
       <div><span>F</span><span>toggle fullscreen</span></div>
       <div><span>Space</span><span>pause or resume motion</span></div>
-      <div><span>AUTO</span><span>adjusts render quality when frame rate drops</span></div>
+      <div><span>QUALITY</span><span>cycles Auto, Crisp, and Battery render profiles</span></div>
+      <div><span>V</span><span>runs a visual QA cycle across scenes</span></div>
       <div><span>PRESETS</span><span>save two local scene setups in this browser</span></div>
       <div><span>SHARE</span><span>copies the current scene settings as a link</span></div>
     </div>
-    <button id="help-close">CLOSE</button>
+    <button id="help-close" type="button">CLOSE</button>
   </div>
 </div>
 
-<div id="leaderboard-overlay">
+<div id="leaderboard-overlay" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
   <div id="leaderboard-box">
-    <h3>Most Used</h3>
+    <h3 id="leaderboard-title">Most Used</h3>
     <div id="leaderboard-list"></div>
-    <button id="leaderboard-close">CLOSE</button>
+    <button id="leaderboard-close" type="button">CLOSE</button>
   </div>
 </div>
 
-<div id="idea-overlay">
+<div id="idea-overlay" role="dialog" aria-modal="true" aria-labelledby="idea-title">
   <div id="idea-box">
-    <h3>Idea Box</h3>
+    <h3 id="idea-title">Idea Box</h3>
     <textarea id="idea-text" placeholder="What should Flobe do next?"></textarea>
     <div class="idea-actions">
-      <button id="idea-copy">COPY IDEA</button>
-      <button id="idea-close">CLOSE</button>
+      <button id="idea-copy" type="button">COPY IDEA</button>
+      <button id="idea-close" type="button">CLOSE</button>
     </div>
     <div id="idea-status" aria-live="polite"></div>
   </div>
@@ -1313,6 +1398,7 @@ const ideaStatus = document.getElementById('idea-status');
 const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
+const qaBadge = document.getElementById('qa-badge');
 
 // ----------------------------------------
 // ----------------------------------------
@@ -1325,6 +1411,7 @@ let currentScene = null;
 let activeSceneId = null;
 let renderScale = 1;
 let autoQualityEnabled = true;
+let qualityProfile = 'auto';
 let transitionStart = 0;
 let transitionActive = false;
 const TRANSITION_DURATION = 360;
@@ -1335,6 +1422,10 @@ let fpsAdjustCooldownUntil = 0;
 let usageStats = loadUsageStats();
 let usageLastNow = null;
 let usageUnsavedMs = 0;
+let visualQaActive = false;
+let visualQaTimer = null;
+let visualQaIndex = 0;
+let visualQaPreviousState = null;
 
 function viewportSize() {
   const vv = window.visualViewport;
@@ -1484,7 +1575,37 @@ function applyRenderScale(nextScale) {
   updateAutoQualityButton();
 }
 
+function setQualityProfile(profile, options = {}) {
+  const next = ['auto', 'crisp', 'battery'].includes(profile) ? profile : 'auto';
+  qualityProfile = next;
+  autoQualityEnabled = next === 'auto';
+  if(next === 'crisp') {
+    densityAutoOffset = 0;
+    renderScale = 1;
+    resize();
+    rebuildCurrentScene();
+    fpsFrameTimes = [];
+    fpsLastTime = null;
+  }
+  if(next === 'battery') {
+    densityAutoOffset = 2;
+    renderScale = Math.min(renderScale, 0.82);
+    resize();
+    rebuildCurrentScene();
+    fpsFrameTimes = [];
+    fpsLastTime = null;
+  }
+  if(next === 'auto' && options.reset !== false) {
+    densityAutoOffset = 0;
+    applyRenderScale(Math.max(renderScale, 0.9));
+  }
+  updateDensityMeta();
+  updateAutoQualityButton();
+  if(options.persist !== false) persistAppState();
+}
+
 function applyAutoDensityOffset(nextOffset) {
+  if(qualityProfile !== 'auto') return;
   const clamped = Math.max(0, Math.min(4, Math.round(nextOffset)));
   if(clamped === densityAutoOffset) return;
   densityAutoOffset = clamped;
@@ -1497,12 +1618,12 @@ function applyAutoDensityOffset(nextOffset) {
 }
 
 function updateAutoQualityButton() {
-  autoQualityBtn.classList.toggle('active', autoQualityEnabled);
-  autoQualityBtn.textContent = 'AUTO';
+  autoQualityBtn.classList.toggle('active', qualityProfile === 'auto');
+  autoQualityBtn.classList.toggle('battery', qualityProfile === 'battery');
+  autoQualityBtn.textContent = qualityProfile.toUpperCase();
   const densityNote = densityAutoOffset ? `, density -${densityAutoOffset}` : '';
-  autoQualityBtn.title = autoQualityEnabled
-    ? `Auto quality on (${Math.round(renderScale * 100)}%${densityNote})`
-    : 'Auto quality off';
+  autoQualityBtn.title = `${qualityProfile[0].toUpperCase()}${qualityProfile.slice(1)} quality (${Math.round(renderScale * 100)}%${densityNote})`;
+  autoQualityBtn.setAttribute('aria-label', `Quality profile: ${qualityProfile}`);
 }
 
 function normalizedSpeedValue(value) {
@@ -1618,6 +1739,7 @@ function buildShareUrl() {
   if(timerSelectedSecs > 0) url.searchParams.set('timer', String(Math.max(1, Math.round(timerSelectedSecs / 60))));
   else url.searchParams.delete('timer');
   url.searchParams.set('auto', autoQualityEnabled ? '1' : '0');
+  url.searchParams.set('quality', qualityProfile);
   return url;
 }
 
@@ -1636,6 +1758,7 @@ function getSessionState() {
     timerSecs: timerSelectedSecs,
     customTimerMins: Math.max(0, Number(timerCustomMinsInput.value) || 0),
     autoQualityEnabled,
+    qualityProfile,
   };
 }
 
@@ -1658,6 +1781,9 @@ function sanitizeState(raw = {}) {
     timerSecs,
     customTimerMins,
     autoQualityEnabled: raw.autoQualityEnabled !== false,
+    qualityProfile: ['auto', 'crisp', 'battery'].includes(raw.qualityProfile || raw.quality)
+      ? (raw.qualityProfile || raw.quality)
+      : (raw.autoQualityEnabled === false ? 'crisp' : 'auto'),
   };
 }
 
@@ -1682,6 +1808,7 @@ function loadStateFromUrl() {
     timerSecs: (Number(params.get('timer')) || 0) * 60,
     customTimerMins: Number(params.get('timer')) || 0,
     autoQualityEnabled: params.get('auto') !== '0',
+    quality: params.get('quality'),
   });
 }
 
@@ -1693,8 +1820,13 @@ function applyBootState(state) {
   densitySlider.value = density;
   updateDensityMeta(next.sceneId);
   setPalette(next.paletteKey);
-  autoQualityEnabled = next.autoQualityEnabled;
-  if(!autoQualityEnabled) renderScale = 1;
+  qualityProfile = next.qualityProfile === 'auto' && next.autoQualityEnabled === false ? 'crisp' : next.qualityProfile;
+  autoQualityEnabled = qualityProfile === 'auto' && next.autoQualityEnabled !== false;
+  if(qualityProfile === 'crisp' || !autoQualityEnabled) renderScale = 1;
+  if(qualityProfile === 'battery') {
+    renderScale = 0.82;
+    densityAutoOffset = 2;
+  }
   updateAutoQualityButton();
   if(next.timerSecs > 0) {
     selectTimer(next.timerSecs);
@@ -1713,7 +1845,9 @@ const sceneScrollBtn = document.getElementById('scene-scroll-btn');
 SCENES.forEach(s => {
   const btn = document.createElement('button');
   btn.className = 'scene-btn';
+  btn.type = 'button';
   btn.dataset.id = s.id;
+  btn.setAttribute('aria-pressed', 'false');
   btn.innerHTML = `<span class="icon">${s.icon}</span><span class="label">${s.label}</span>`;
   btn.addEventListener('click', () => {
     activateScene(s.id);
@@ -1744,6 +1878,10 @@ const palRow = document.getElementById('palette-row');
 Object.keys(PALETTES).forEach(key => {
   const wrap = document.createElement('div');
   wrap.className = 'pal-wrap';
+  wrap.tabIndex = 0;
+  wrap.setAttribute('role', 'button');
+  wrap.setAttribute('aria-label', `${key} palette`);
+  wrap.setAttribute('aria-pressed', key === activePaletteKey ? 'true' : 'false');
 
   const sw = document.createElement('div');
   sw.className = 'pal-swatch' + (key === activePaletteKey ? ' active' : '');
@@ -1763,6 +1901,11 @@ Object.keys(PALETTES).forEach(key => {
     syncActivePreset();
     persistAppState();
   });
+  wrap.addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    wrap.click();
+  });
   palRow.appendChild(wrap);
 });
 
@@ -1773,6 +1916,7 @@ function setPalette(key) {
     const match = Object.keys(PALETTES)[i] === key;
     const swatch = wrap.querySelector('.pal-swatch');
     if(match && swatch) swatch.classList.add('active');
+    wrap.setAttribute('aria-pressed', match ? 'true' : 'false');
   });
   activePaletteKey = key;
   applyScenePalette(activeSceneId, activePaletteKey);
@@ -1914,14 +2058,9 @@ densitySlider.addEventListener('input', e => {
 });
 
 autoQualityBtn.addEventListener('click', () => {
-  autoQualityEnabled = !autoQualityEnabled;
-  if(!autoQualityEnabled) {
-    densityAutoOffset = 0;
-    applyRenderScale(1);
-    updateDensityMeta(activeSceneId);
-  }
-  updateAutoQualityButton();
-  persistAppState();
+  const order = ['auto', 'crisp', 'battery'];
+  const next = order[(order.indexOf(qualityProfile) + 1) % order.length];
+  setQualityProfile(next);
 });
 presetShareBtn.addEventListener('click', async () => {
   const url = buildShareUrl().toString();
@@ -1965,6 +2104,64 @@ function toggleIdeaBox(show = !ideaOverlay.classList.contains('show')) {
 function toggleLeaderboard(show = !leaderboardOverlay.classList.contains('show')) {
   leaderboardOverlay.classList.toggle('show', show);
   if(show) renderLeaderboard();
+}
+
+function qaLabelForState(sceneId, paletteKey, nextSpeed, nextDensity) {
+  const scene = SCENES.find(item => item.id === sceneId)?.label || sceneId;
+  return `QA ${scene} · ${paletteKey} · S${nextSpeed} D${nextDensity}`;
+}
+
+function applyVisualQaStep() {
+  if(!visualQaActive) return;
+  const scene = SCENES[visualQaIndex % SCENES.length];
+  const paletteKeys = Object.keys(PALETTES);
+  const paletteKey = paletteKeys[visualQaIndex % paletteKeys.length];
+  speed = 3 + (visualQaIndex % 4) * 2;
+  density = 4 + (visualQaIndex % 3) * 2;
+  speedSlider.value = speed;
+  densitySlider.value = density;
+  densityAutoOffset = qualityProfile === 'battery' ? 2 : 0;
+  setPalette(paletteKey);
+  activateScene(scene.id, { transition:false });
+  qaBadge.textContent = qaLabelForState(scene.id, paletteKey, speed, density);
+  visualQaIndex++;
+}
+
+function stopVisualQa(restore = true) {
+  visualQaActive = false;
+  clearInterval(visualQaTimer);
+  visualQaTimer = null;
+  qaBadge.classList.remove('visible');
+  if(restore && visualQaPreviousState) {
+    speed = visualQaPreviousState.speed;
+    density = visualQaPreviousState.density;
+    speedSlider.value = speed;
+    densitySlider.value = density;
+    densityAutoOffset = visualQaPreviousState.densityAutoOffset;
+    setPalette(visualQaPreviousState.paletteKey);
+    activateScene(visualQaPreviousState.sceneId, { transition:false });
+    persistAppState();
+  }
+  visualQaPreviousState = null;
+}
+
+function toggleVisualQa() {
+  if(visualQaActive) {
+    stopVisualQa(true);
+    return;
+  }
+  visualQaPreviousState = {
+    sceneId: activeSceneId,
+    paletteKey: activePaletteKey,
+    speed,
+    density,
+    densityAutoOffset,
+  };
+  visualQaActive = true;
+  visualQaIndex = 0;
+  qaBadge.classList.add('visible');
+  applyVisualQaStep();
+  visualQaTimer = setInterval(applyVisualQaStep, 1500);
 }
 
 async function toggleFullscreen() {
@@ -2016,7 +2213,6 @@ leaderboardClose.addEventListener('click', () => toggleLeaderboard(false));
 leaderboardOverlay.addEventListener('click', e => {
   if(e.target === leaderboardOverlay) toggleLeaderboard(false);
 });
-
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && leaderboardOverlay.classList.contains('show')) {
     toggleLeaderboard(false);
@@ -2033,6 +2229,10 @@ document.addEventListener('keydown', e => {
   if(['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
   if(e.key.toLowerCase() === 'h') toggleUI();
   if(e.key.toLowerCase() === 'f') toggleFullscreen();
+  if(e.key.toLowerCase() === 'v') {
+    toggleVisualQa();
+    e.preventDefault();
+  }
   if(e.key === ' ') {
     paused = !paused;
     if(paused) {
@@ -3881,7 +4081,11 @@ function activateScene(id, options = {}) {
   activeSceneId = id;
   applyScenePalette(activeSceneId, activePaletteKey);
   updateDensityMeta(activeSceneId);
-  document.querySelectorAll('.scene-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+  document.querySelectorAll('.scene-btn').forEach(b => {
+    const active = b.dataset.id === id;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
   currentScene = SceneFactories[id]?.();
   paused = false;
   loop();
