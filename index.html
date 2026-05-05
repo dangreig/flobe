@@ -154,6 +154,7 @@
   #fullscreen-btn,
   #auto-quality-btn,
   #leaderboard-btn,
+  #sound-btn,
   #idea-btn,
   #help-btn {
     font-family: 'DM Mono', monospace;
@@ -168,10 +169,14 @@
     pointer-events: all;
     transition: background 0.2s, color 0.2s;
   }
+  #auto-quality-btn {
+    min-width: 112px;
+  }
   #hide-btn:hover,
   #fullscreen-btn:hover,
   #auto-quality-btn:hover,
   #leaderboard-btn:hover,
+  #sound-btn:hover,
   #idea-btn:hover,
   #help-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
   #auto-quality-btn.active {
@@ -183,6 +188,16 @@
     background: rgba(255,159,10,0.2);
     border-color: rgba(255,159,10,0.42);
     color: #ffd28a;
+  }
+  #sound-btn.active {
+    background: rgba(93,255,210,0.18);
+    border-color: rgba(93,255,210,0.42);
+    color: #b6ffeb;
+  }
+  #auto-quality-btn.crisp {
+    background: rgba(93,144,255,0.2);
+    border-color: rgba(93,144,255,0.42);
+    color: #b8ceff;
   }
 
 #fps-btn {
@@ -314,6 +329,7 @@
   }
 
   .scene-btn {
+    position: relative;
     min-height: 86px;
     min-width: 118px;
     flex: 0 0 118px;
@@ -347,6 +363,32 @@
     line-height: 1.25;
     text-align: center;
     overflow-wrap: anywhere;
+  }
+  .scene-fav {
+    position: absolute;
+    top: 0.38rem;
+    right: 0.38rem;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    background: rgba(0,0,0,0.22);
+    color: rgba(255,255,255,0.34);
+    font-size: 0.7rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .scene-fav:hover {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+  }
+  .scene-fav.active {
+    border-color: rgba(255,209,102,0.58);
+    color: #ffd166;
+    background: rgba(255,209,102,0.14);
   }
 
   /*  CONTROLS  */
@@ -646,12 +688,16 @@
     #auto-quality-btn,
     #fps-btn,
     #leaderboard-btn,
+    #sound-btn,
     #idea-btn,
     #help-btn {
       font-size: 0.56rem;
       letter-spacing: 0.05em;
       padding: 0.32rem 0.5rem;
       flex: 0 0 auto;
+    }
+    #auto-quality-btn {
+      min-width: 96px;
     }
     #idea-btn,
     #help-btn {
@@ -852,6 +898,13 @@
       font-size: 0.52rem;
       padding: 0.28rem 0.42rem;
     }
+    #sound-btn {
+      font-size: 0.52rem;
+      padding: 0.28rem 0.42rem;
+    }
+    #auto-quality-btn {
+      min-width: 88px;
+    }
   }
 
   @media (max-height: 640px) and (max-width: 720px) {
@@ -890,7 +943,7 @@
     50%      { transform: scale(1.06); }
   }
 
-  #help-overlay {
+  .modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 30;
@@ -903,37 +956,7 @@
     -webkit-backdrop-filter: blur(10px);
     pointer-events: all;
   }
-  #help-overlay.show { display: flex; }
-
-  #idea-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: rgba(0,0,0,0.42);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    pointer-events: all;
-  }
-  #idea-overlay.show { display: flex; }
-
-  #leaderboard-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: rgba(0,0,0,0.42);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    pointer-events: all;
-  }
-  #leaderboard-overlay.show { display: flex; }
+  .modal-overlay.show { display: flex; }
 
   #leaderboard-box {
     width: min(92vw, 500px);
@@ -955,6 +978,34 @@
   #leaderboard-list {
     display: grid;
     gap: 0.55rem;
+  }
+  .usage-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 0.75rem;
+  }
+  .usage-card {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.7rem;
+    padding: 0.65rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .usage-card span {
+    display: block;
+    margin-bottom: 0.28rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.42);
+  }
+  .usage-card strong {
+    display: block;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.88);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .leaderboard-row {
     display: grid;
@@ -1027,7 +1078,7 @@
   }
 
   @media (max-width: 720px) {
-    #leaderboard-overlay {
+    .modal-overlay {
       padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
     }
     #leaderboard-box {
@@ -1041,6 +1092,9 @@
     .leaderboard-time {
       grid-column: 2 / 3;
     }
+    .usage-summary {
+      grid-template-columns: 1fr;
+    }
   }
 
   #idea-box {
@@ -1051,6 +1105,81 @@
     box-shadow: 0 18px 60px rgba(0,0,0,0.5);
     padding: 1.25rem;
     color: rgba(255,255,255,0.82);
+  }
+  #sound-box {
+    width: min(92vw, 460px);
+    background: rgba(12,14,20,0.92);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    padding: 1.25rem;
+    color: rgba(255,255,255,0.82);
+  }
+  #sound-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.56);
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+  }
+  .sound-list {
+    display: grid;
+    gap: 0.55rem;
+  }
+  .sound-option {
+    display: grid;
+    gap: 0.24rem;
+    width: 100%;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.7rem;
+    color: rgba(255,255,255,0.72);
+    padding: 0.72rem 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .sound-option strong {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.88);
+    text-transform: uppercase;
+  }
+  .sound-option span {
+    font-size: 0.62rem;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.48);
+  }
+  .sound-option:hover,
+  .sound-option.active {
+    background: rgba(93,255,210,0.1);
+    border-color: rgba(93,255,210,0.34);
+  }
+  #sound-status {
+    min-height: 1.1rem;
+    margin-top: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(101,231,168,0.78);
+  }
+  #sound-close {
+    margin-top: 0.85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.72);
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  #sound-close:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
   }
   #idea-box h3 {
     font-family: 'DM Mono', monospace;
@@ -1118,10 +1247,12 @@
   }
 
   @media (max-width: 720px) {
-    #idea-overlay {
-      padding: calc(0.8rem + env(safe-area-inset-top)) 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
-    }
     #idea-box {
+      max-height: 80dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #sound-box {
       max-height: 80dvh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -1219,6 +1350,7 @@
       <button id="auto-quality-btn" type="button" aria-label="Change quality profile">AUTO</button>
       <button id="fps-btn" type="button" aria-label="Show frames per second">FPS</button>
       <button id="leaderboard-btn" type="button" title="Most used backgrounds" aria-label="Most used backgrounds">TIME</button>
+      <button id="sound-btn" type="button" title="Ambient sounds" aria-label="Ambient sounds">SOUND</button>
       <button id="idea-btn" type="button" title="Share an idea" aria-label="Share an idea">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 14c.2-1.2.9-2 1.7-2.9A6 6 0 1 0 7.3 11c.8.9 1.5 1.8 1.7 3"></path>
@@ -1280,7 +1412,7 @@
 
 <div id="qa-badge" aria-live="polite"></div>
 
-<div id="help-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title">
+<div id="help-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div id="help-box">
     <h3 id="help-title">Flobe</h3>
     <div class="help-list">
@@ -1288,6 +1420,7 @@
       <div><span>F</span><span>toggle fullscreen</span></div>
       <div><span>Space</span><span>pause or resume motion</span></div>
       <div><span>QUALITY</span><span>cycles Auto, Crisp, and Battery render profiles</span></div>
+      <div><span>SOUND</span><span>opens three opt-in ambient sound choices</span></div>
       <div><span>V</span><span>runs a visual QA cycle across scenes</span></div>
       <div><span>PRESETS</span><span>save two local scene setups in this browser</span></div>
       <div><span>SHARE</span><span>copies the current scene settings as a link</span></div>
@@ -1296,15 +1429,25 @@
   </div>
 </div>
 
-<div id="leaderboard-overlay" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
+<div id="leaderboard-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
   <div id="leaderboard-box">
     <h3 id="leaderboard-title">Most Used</h3>
+    <div id="usage-summary" class="usage-summary"></div>
     <div id="leaderboard-list"></div>
     <button id="leaderboard-close" type="button">CLOSE</button>
   </div>
 </div>
 
-<div id="idea-overlay" role="dialog" aria-modal="true" aria-labelledby="idea-title">
+<div id="sound-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sound-title">
+  <div id="sound-box">
+    <h3 id="sound-title">Ambient Sound</h3>
+    <div id="sound-list" class="sound-list"></div>
+    <div id="sound-status" aria-live="polite"></div>
+    <button id="sound-close" type="button">CLOSE</button>
+  </div>
+</div>
+
+<div id="idea-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="idea-title">
   <div id="idea-box">
     <h3 id="idea-title">Idea Box</h3>
     <textarea id="idea-text" placeholder="What should Flobe do next?"></textarea>
@@ -1344,6 +1487,7 @@ let activePaletteKey = 'cosmic';
 const PRESET_STORAGE_KEY = 'flobe-presets-v1';
 const SESSION_STORAGE_KEY = 'flobe-session-v1';
 const USAGE_STORAGE_KEY = 'flobe-usage-v1';
+const FAVORITES_STORAGE_KEY = 'flobe-favorites-v1';
 const DEFAULT_PRESETS = [
   { name:'Deep Work', sceneId:'pomodoro', paletteKey:'mono', speed:3, density:4 },
   { name:'Night Drive', sceneId:'grid3d', paletteKey:'ocean', speed:5, density:6 },
@@ -1369,6 +1513,13 @@ const SCENES = [
   { id:'inkcloud',  label:'Cloud Ink',     icon:'☁' },
 ];
 
+const AMBIENT_SOUNDS = [
+  { id:'off', label:'Off', desc:'No ambient sound.' },
+  { id:'rain', label:'Soft Rain', desc:'Fine filtered rainfall for focus.' },
+  { id:'ocean', label:'Low Tide', desc:'Slow ocean wash with gentle movement.' },
+  { id:'drift', label:'Deep Drift', desc:'Warm tonal air for quieter sessions.' },
+];
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -1387,8 +1538,14 @@ const presetShareBtn = document.getElementById('preset-share-btn');
 const timerCustomMinsInput = document.getElementById('timer-custom-mins');
 const leaderboardBtn = document.getElementById('leaderboard-btn');
 const leaderboardOverlay = document.getElementById('leaderboard-overlay');
+const usageSummary = document.getElementById('usage-summary');
 const leaderboardList = document.getElementById('leaderboard-list');
 const leaderboardClose = document.getElementById('leaderboard-close');
+const soundBtn = document.getElementById('sound-btn');
+const soundOverlay = document.getElementById('sound-overlay');
+const soundList = document.getElementById('sound-list');
+const soundStatus = document.getElementById('sound-status');
+const soundClose = document.getElementById('sound-close');
 const ideaBtn = document.getElementById('idea-btn');
 const ideaOverlay = document.getElementById('idea-overlay');
 const ideaText = document.getElementById('idea-text');
@@ -1420,12 +1577,22 @@ const MAX_RENDER_SCALE = 1;
 let fpsCurrent = 0;
 let fpsAdjustCooldownUntil = 0;
 let usageStats = loadUsageStats();
+let usageSessionStats = {};
+let paletteUsageStats = loadPaletteUsageStats();
+let favoriteScenes = loadFavoriteScenes();
 let usageLastNow = null;
 let usageUnsavedMs = 0;
 let visualQaActive = false;
 let visualQaTimer = null;
 let visualQaIndex = 0;
 let visualQaPreviousState = null;
+let activeSoundKey = 'off';
+let audioCtx = null;
+let ambientMaster = null;
+let ambientNodes = [];
+let ambientRunning = false;
+const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+let reducedMotionActive = Boolean(reducedMotionQuery?.matches);
 
 function viewportSize() {
   const vv = window.visualViewport;
@@ -1465,9 +1632,26 @@ function loadUsageStats() {
   }
 }
 
+function loadPaletteUsageStats() {
+  try {
+    const raw = localStorage.getItem(`${USAGE_STORAGE_KEY}-palettes`);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return Object.keys(PALETTES).reduce((stats, key) => {
+      stats[key] = Math.max(0, Number(parsed?.[key]) || 0);
+      return stats;
+    }, {});
+  } catch {
+    return Object.keys(PALETTES).reduce((stats, key) => {
+      stats[key] = 0;
+      return stats;
+    }, {});
+  }
+}
+
 function saveUsageStats() {
   try {
     localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(usageStats));
+    localStorage.setItem(`${USAGE_STORAGE_KEY}-palettes`, JSON.stringify(paletteUsageStats));
   } catch {}
 }
 
@@ -1486,6 +1670,8 @@ function recordUsageTick(now) {
   usageLastNow = now;
   if(!activeSceneId || document.hidden) return;
   usageStats[activeSceneId] = (usageStats[activeSceneId] || 0) + delta;
+  usageSessionStats[activeSceneId] = (usageSessionStats[activeSceneId] || 0) + delta;
+  paletteUsageStats[activePaletteKey] = (paletteUsageStats[activePaletteKey] || 0) + delta;
   usageUnsavedMs += delta;
   if(usageUnsavedMs >= 10000) flushUsageStats();
 }
@@ -1498,8 +1684,25 @@ function formatUsageTime(ms) {
   return hours ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
+function formatUsageName(id, collection) {
+  const match = collection.find(item => item.id === id);
+  return match?.label || id || 'None';
+}
+
+function topEntry(map = {}) {
+  return Object.entries(map).sort((a, b) => b[1] - a[1])[0] || null;
+}
+
 function renderLeaderboard() {
   flushUsageStats();
+  const sessionTop = topEntry(usageSessionStats);
+  const paletteTop = topEntry(paletteUsageStats);
+  const totalMs = Object.values(usageStats).reduce((sum, ms) => sum + ms, 0);
+  usageSummary.innerHTML = `
+    <div class="usage-card"><span>ALL TIME</span><strong>${formatUsageTime(totalMs)}</strong></div>
+    <div class="usage-card"><span>SESSION</span><strong>${sessionTop ? `${formatUsageName(sessionTop[0], SCENES)} · ${formatUsageTime(sessionTop[1])}` : '0m'}</strong></div>
+    <div class="usage-card"><span>PALETTE</span><strong>${paletteTop && paletteTop[1] > 0 ? `${paletteTop[0]} · ${formatUsageTime(paletteTop[1])}` : '0m'}</strong></div>
+  `;
   const rows = SCENES
     .map(scene => ({ ...scene, ms: usageStats[scene.id] || 0 }))
     .filter(scene => scene.ms > 0)
@@ -1522,6 +1725,160 @@ function renderLeaderboard() {
       </div>
     `;
   }).join('');
+}
+
+function ensureAudioContext() {
+  if(audioCtx) return audioCtx;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if(!AudioContextClass) return null;
+  audioCtx = new AudioContextClass();
+  ambientMaster = audioCtx.createGain();
+  ambientMaster.gain.value = 0.16;
+  ambientMaster.connect(audioCtx.destination);
+  return audioCtx;
+}
+
+function createNoiseSource(ctxRef) {
+  const bufferSize = ctxRef.sampleRate * 2;
+  const buffer = ctxRef.createBuffer(1, bufferSize, ctxRef.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctxRef.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  return source;
+}
+
+function stopAmbientSound() {
+  ambientNodes.forEach(node => {
+    try { node.stop?.(); } catch {}
+    try { node.disconnect?.(); } catch {}
+  });
+  ambientNodes = [];
+  ambientRunning = false;
+}
+
+function trackAmbientNodes(...nodes) {
+  ambientNodes.push(...nodes);
+}
+
+function startRainSound(ctxRef) {
+  const source = createNoiseSource(ctxRef);
+  const highpass = ctxRef.createBiquadFilter();
+  highpass.type = 'highpass';
+  highpass.frequency.value = 650;
+  const bandpass = ctxRef.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 1800;
+  bandpass.Q.value = 0.7;
+  const gain = ctxRef.createGain();
+  gain.gain.value = 0.28;
+  source.connect(highpass).connect(bandpass).connect(gain).connect(ambientMaster);
+  source.start();
+  trackAmbientNodes(source, highpass, bandpass, gain);
+}
+
+function startOceanSound(ctxRef) {
+  const source = createNoiseSource(ctxRef);
+  const filter = ctxRef.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 520;
+  const gain = ctxRef.createGain();
+  gain.gain.value = 0.18;
+  const lfo = ctxRef.createOscillator();
+  lfo.frequency.value = 0.07;
+  const lfoGain = ctxRef.createGain();
+  lfoGain.gain.value = 0.08;
+  lfo.connect(lfoGain).connect(gain.gain);
+  source.connect(filter).connect(gain).connect(ambientMaster);
+  source.start();
+  lfo.start();
+  trackAmbientNodes(source, filter, gain, lfo, lfoGain);
+}
+
+function startDriftSound(ctxRef) {
+  const gain = ctxRef.createGain();
+  gain.gain.value = 0.08;
+  gain.connect(ambientMaster);
+  const freqs = [55, 82.4, 110];
+  freqs.forEach((freq, i) => {
+    const osc = ctxRef.createOscillator();
+    osc.type = i === 0 ? 'sine' : 'triangle';
+    osc.frequency.value = freq;
+    const voiceGain = ctxRef.createGain();
+    voiceGain.gain.value = i === 0 ? 0.4 : 0.18;
+    osc.connect(voiceGain).connect(gain);
+    osc.start();
+    trackAmbientNodes(osc, voiceGain);
+  });
+  const lfo = ctxRef.createOscillator();
+  lfo.frequency.value = 0.045;
+  const lfoGain = ctxRef.createGain();
+  lfoGain.gain.value = 0.025;
+  lfo.connect(lfoGain).connect(gain.gain);
+  lfo.start();
+  trackAmbientNodes(gain, lfo, lfoGain);
+}
+
+async function selectAmbientSound(key) {
+  const sound = AMBIENT_SOUNDS.find(item => item.id === key) || AMBIENT_SOUNDS[0];
+  stopAmbientSound();
+  activeSoundKey = sound.id;
+  if(sound.id !== 'off') {
+    const ctxRef = ensureAudioContext();
+    if(!ctxRef) {
+      activeSoundKey = 'off';
+      soundStatus.textContent = 'Audio is not available in this browser.';
+      updateSoundButton();
+      renderSoundOptions();
+      return;
+    }
+    await ctxRef.resume?.();
+    if(sound.id === 'rain') startRainSound(ctxRef);
+    if(sound.id === 'ocean') startOceanSound(ctxRef);
+    if(sound.id === 'drift') startDriftSound(ctxRef);
+    ambientRunning = true;
+  }
+  soundStatus.textContent = sound.id === 'off' ? 'Ambient sound off.' : `${sound.label} playing.`;
+  updateSoundButton();
+  renderSoundOptions();
+  persistAppState();
+}
+
+function updateSoundButton() {
+  const sound = AMBIENT_SOUNDS.find(item => item.id === activeSoundKey) || AMBIENT_SOUNDS[0];
+  soundBtn.textContent = activeSoundKey !== 'off' && ambientRunning ? `SOUND: ${sound.label.toUpperCase()}` : 'SOUND';
+  soundBtn.classList.toggle('active', activeSoundKey !== 'off' && ambientRunning);
+  soundBtn.title = activeSoundKey !== 'off' && ambientRunning ? `${sound.label} ambient sound` : 'Ambient sounds';
+}
+
+function renderSoundOptions() {
+  soundList.innerHTML = AMBIENT_SOUNDS.map(sound => `
+    <button class="sound-option${sound.id === activeSoundKey ? ' active' : ''}" type="button" data-sound="${sound.id}" aria-pressed="${sound.id === activeSoundKey ? 'true' : 'false'}">
+      <strong>${sound.label}</strong>
+      <span>${sound.desc}</span>
+    </button>
+  `).join('');
+  soundList.querySelectorAll('.sound-option').forEach(btn => {
+    btn.addEventListener('click', () => selectAmbientSound(btn.dataset.sound));
+  });
+}
+
+function loadFavoriteScenes() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter(id => SCENES.some(scene => scene.id === id)).slice(0, 4)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavoriteScenes() {
+  try {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteScenes));
+  } catch {}
 }
 
 function captureTransitionFrame() {
@@ -1604,6 +1961,19 @@ function setQualityProfile(profile, options = {}) {
   if(options.persist !== false) persistAppState();
 }
 
+function applyReducedMotionPreference() {
+  reducedMotionActive = Boolean(reducedMotionQuery?.matches);
+  if(!reducedMotionActive) return;
+  if(speed > 4) {
+    speed = 4;
+    speedSlider.value = speed;
+  }
+  if(qualityProfile === 'crisp') setQualityProfile('auto', { persist:false, reset:false });
+  densityAutoOffset = Math.max(densityAutoOffset, 1);
+  updateDensityMeta();
+  rebuildCurrentScene();
+}
+
 function applyAutoDensityOffset(nextOffset) {
   if(qualityProfile !== 'auto') return;
   const clamped = Math.max(0, Math.min(4, Math.round(nextOffset)));
@@ -1620,7 +1990,8 @@ function applyAutoDensityOffset(nextOffset) {
 function updateAutoQualityButton() {
   autoQualityBtn.classList.toggle('active', qualityProfile === 'auto');
   autoQualityBtn.classList.toggle('battery', qualityProfile === 'battery');
-  autoQualityBtn.textContent = qualityProfile.toUpperCase();
+  autoQualityBtn.classList.toggle('crisp', qualityProfile === 'crisp');
+  autoQualityBtn.textContent = `QUALITY: ${qualityProfile.toUpperCase()}`;
   const densityNote = densityAutoOffset ? `, density -${densityAutoOffset}` : '';
   autoQualityBtn.title = `${qualityProfile[0].toUpperCase()}${qualityProfile.slice(1)} quality (${Math.round(renderScale * 100)}%${densityNote})`;
   autoQualityBtn.setAttribute('aria-label', `Quality profile: ${qualityProfile}`);
@@ -1740,6 +2111,8 @@ function buildShareUrl() {
   else url.searchParams.delete('timer');
   url.searchParams.set('auto', autoQualityEnabled ? '1' : '0');
   url.searchParams.set('quality', qualityProfile);
+  if(activeSoundKey !== 'off') url.searchParams.set('sound', activeSoundKey);
+  else url.searchParams.delete('sound');
   return url;
 }
 
@@ -1759,6 +2132,7 @@ function getSessionState() {
     customTimerMins: Math.max(0, Number(timerCustomMinsInput.value) || 0),
     autoQualityEnabled,
     qualityProfile,
+    activeSoundKey,
   };
 }
 
@@ -1773,6 +2147,9 @@ function sanitizeState(raw = {}) {
   const fallbackPaletteKey = PALETTES[raw.paletteKey] ? raw.paletteKey : activePaletteKey;
   const timerSecs = Math.max(0, Math.min(180 * 60, Math.round(Number(raw.timerSecs || 0))));
   const customTimerMins = Math.max(0, Math.min(180, Math.round(Number(raw.customTimerMins || 0))));
+  const soundKey = AMBIENT_SOUNDS.some(sound => sound.id === raw.activeSoundKey || sound.id === raw.sound)
+    ? (raw.activeSoundKey || raw.sound)
+    : 'off';
   return {
     sceneId: fallbackSceneId,
     paletteKey: fallbackPaletteKey,
@@ -1784,6 +2161,7 @@ function sanitizeState(raw = {}) {
     qualityProfile: ['auto', 'crisp', 'battery'].includes(raw.qualityProfile || raw.quality)
       ? (raw.qualityProfile || raw.quality)
       : (raw.autoQualityEnabled === false ? 'crisp' : 'auto'),
+    activeSoundKey: soundKey,
   };
 }
 
@@ -1809,6 +2187,7 @@ function loadStateFromUrl() {
     customTimerMins: Number(params.get('timer')) || 0,
     autoQualityEnabled: params.get('auto') !== '0',
     quality: params.get('quality'),
+    sound: params.get('sound'),
   });
 }
 
@@ -1828,6 +2207,10 @@ function applyBootState(state) {
     densityAutoOffset = 2;
   }
   updateAutoQualityButton();
+  applyReducedMotionPreference();
+  activeSoundKey = next.activeSoundKey;
+  updateSoundButton();
+  renderSoundOptions();
   if(next.timerSecs > 0) {
     selectTimer(next.timerSecs);
     timerCustomMinsInput.value = next.customTimerMins || Math.round(next.timerSecs / 60);
@@ -1842,20 +2225,59 @@ function applyBootState(state) {
 // ----------------------------------------
 const grid = document.getElementById('scene-grid');
 const sceneScrollBtn = document.getElementById('scene-scroll-btn');
-SCENES.forEach(s => {
+function orderedScenes() {
+  const favoriteSet = new Set(favoriteScenes);
+  return [
+    ...favoriteScenes.map(id => SCENES.find(scene => scene.id === id)).filter(Boolean),
+    ...SCENES.filter(scene => !favoriteSet.has(scene.id)),
+  ];
+}
+
+function renderScenes() {
+  grid.innerHTML = '';
+  orderedScenes().forEach(s => {
   const btn = document.createElement('button');
   btn.className = 'scene-btn';
   btn.type = 'button';
   btn.dataset.id = s.id;
   btn.setAttribute('aria-pressed', 'false');
-  btn.innerHTML = `<span class="icon">${s.icon}</span><span class="label">${s.label}</span>`;
+  const isFavorite = favoriteScenes.includes(s.id);
+  btn.innerHTML = `<span class="scene-fav${isFavorite ? ' active' : ''}" role="button" tabindex="0" title="${isFavorite ? 'Unpin background' : 'Pin background'}" aria-label="${isFavorite ? 'Unpin' : 'Pin'} ${s.label}">${isFavorite ? '★' : '☆'}</span><span class="icon">${s.icon}</span><span class="label">${s.label}</span>`;
   btn.addEventListener('click', () => {
     activateScene(s.id);
     syncActivePreset();
     persistAppState();
   });
+  const fav = btn.querySelector('.scene-fav');
+  const toggleFavorite = event => {
+    event.stopPropagation();
+    if(favoriteScenes.includes(s.id)) {
+      favoriteScenes = favoriteScenes.filter(id => id !== s.id);
+    } else {
+      favoriteScenes = [s.id, ...favoriteScenes.filter(id => id !== s.id)].slice(0, 4);
+    }
+    saveFavoriteScenes();
+    renderScenes();
+    syncSceneScrollButton();
+  };
+  fav.addEventListener('click', toggleFavorite);
+  fav.addEventListener('keydown', event => {
+    if(event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggleFavorite(event);
+  });
   grid.appendChild(btn);
-});
+  });
+  if(activeSceneId) {
+    document.querySelectorAll('.scene-btn').forEach(b => {
+      const active = b.dataset.id === activeSceneId;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+}
+
+renderScenes();
 
 function syncSceneScrollButton() {
   const canScroll = grid.scrollWidth > grid.clientWidth + 4;
@@ -1873,6 +2295,10 @@ sceneScrollBtn.addEventListener('click', () => {
 grid.addEventListener('scroll', syncSceneScrollButton, { passive: true });
 window.addEventListener('resize', syncSceneScrollButton);
 requestAnimationFrame(syncSceneScrollButton);
+reducedMotionQuery?.addEventListener?.('change', () => {
+  applyReducedMotionPreference();
+  persistAppState();
+});
 
 const palRow = document.getElementById('palette-row');
 Object.keys(PALETTES).forEach(key => {
@@ -2089,21 +2515,48 @@ function toggleUI() {
   hideBtn.textContent = uiHidden ? 'SHOW UI' : 'HIDE UI';
 }
 
+const modalRegistry = new Map();
+
+function registerModal(overlay, options = {}) {
+  modalRegistry.set(overlay, options);
+  overlay.addEventListener('click', e => {
+    if(e.target === overlay) closeModal(overlay);
+  });
+}
+
+function openModal(overlay) {
+  document.querySelectorAll('.modal-overlay.show').forEach(openOverlay => {
+    if(openOverlay !== overlay) closeModal(openOverlay);
+  });
+  overlay.classList.add('show');
+  const options = modalRegistry.get(overlay) || {};
+  options.onOpen?.();
+  if(options.focus) requestAnimationFrame(() => options.focus.focus());
+}
+
+function closeModal(overlay) {
+  overlay.classList.remove('show');
+}
+
+function toggleModal(overlay, show = !overlay.classList.contains('show')) {
+  if(show) openModal(overlay);
+  else closeModal(overlay);
+}
+
 function toggleHelp(show = !helpOverlay.classList.contains('show')) {
-  helpOverlay.classList.toggle('show', show);
+  toggleModal(helpOverlay, show);
 }
 
 function toggleIdeaBox(show = !ideaOverlay.classList.contains('show')) {
-  ideaOverlay.classList.toggle('show', show);
-  if(show) {
-    ideaStatus.textContent = '';
-    requestAnimationFrame(() => ideaText.focus());
-  }
+  toggleModal(ideaOverlay, show);
 }
 
 function toggleLeaderboard(show = !leaderboardOverlay.classList.contains('show')) {
-  leaderboardOverlay.classList.toggle('show', show);
-  if(show) renderLeaderboard();
+  toggleModal(leaderboardOverlay, show);
+}
+
+function toggleSoundBox(show = !soundOverlay.classList.contains('show')) {
+  toggleModal(soundOverlay, show);
 }
 
 function qaLabelForState(sceneId, paletteKey, nextSpeed, nextDensity) {
@@ -2181,17 +2634,28 @@ function syncFullscreenLabel() {
 document.addEventListener('fullscreenchange', syncFullscreenLabel);
 syncFullscreenLabel();
 
+registerModal(helpOverlay, { focus: helpClose });
+registerModal(ideaOverlay, {
+  focus: ideaText,
+  onOpen: () => { ideaStatus.textContent = ''; },
+});
+registerModal(leaderboardOverlay, {
+  focus: leaderboardClose,
+  onOpen: renderLeaderboard,
+});
+registerModal(soundOverlay, {
+  focus: soundClose,
+  onOpen: () => {
+    soundStatus.textContent = activeSoundKey === 'off' ? 'Choose an ambient sound to begin.' : '';
+    renderSoundOptions();
+  },
+});
+
 helpBtn.addEventListener('click', () => toggleHelp(true));
 helpClose.addEventListener('click', () => toggleHelp(false));
-helpOverlay.addEventListener('click', e => {
-  if(e.target === helpOverlay) toggleHelp(false);
-});
 
 ideaBtn.addEventListener('click', () => toggleIdeaBox(true));
 ideaClose.addEventListener('click', () => toggleIdeaBox(false));
-ideaOverlay.addEventListener('click', e => {
-  if(e.target === ideaOverlay) toggleIdeaBox(false);
-});
 ideaCopy.addEventListener('click', async () => {
   const idea = ideaText.value.trim();
   if(!idea) {
@@ -2210,21 +2674,15 @@ ideaCopy.addEventListener('click', async () => {
 
 leaderboardBtn.addEventListener('click', () => toggleLeaderboard(true));
 leaderboardClose.addEventListener('click', () => toggleLeaderboard(false));
-leaderboardOverlay.addEventListener('click', e => {
-  if(e.target === leaderboardOverlay) toggleLeaderboard(false);
-});
+soundBtn.addEventListener('click', () => toggleSoundBox(true));
+soundClose.addEventListener('click', () => toggleSoundBox(false));
 document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && leaderboardOverlay.classList.contains('show')) {
-    toggleLeaderboard(false);
-    return;
-  }
-  if(e.key === 'Escape' && ideaOverlay.classList.contains('show')) {
-    toggleIdeaBox(false);
-    return;
-  }
-  if(e.key === 'Escape' && helpOverlay.classList.contains('show')) {
-    toggleHelp(false);
-    return;
+  if(e.key === 'Escape') {
+    const openOverlay = document.querySelector('.modal-overlay.show');
+    if(openOverlay) {
+      closeModal(openOverlay);
+      return;
+    }
   }
   if(['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
   if(e.key.toLowerCase() === 'h') toggleUI();
@@ -2256,6 +2714,7 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', flushUsageStats);
 window.addEventListener('beforeunload', flushUsageStats);
+window.addEventListener('pagehide', stopAmbientSound);
 
 // ----------------------------------------
 // ----------------------------------------
