@@ -658,9 +658,13 @@
 
   @media (max-width: 720px) {
     #title-bar {
-      align-items: flex-start;
-      gap: 0.75rem;
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0.48rem;
       padding: calc(0.75rem + env(safe-area-inset-top)) 0.75rem 0.6rem;
+    }
+    .logo {
+      align-self: flex-start;
     }
     .logo-focus,
     .logo-flow {
@@ -673,12 +677,14 @@
       margin-bottom: 0.16em;
     }
     #top-actions {
-      max-width: 72vw;
+      width: 100%;
+      max-width: 100%;
       flex-wrap: nowrap;
-      justify-content: flex-end;
+      justify-content: flex-start;
       overflow-x: auto;
       scrollbar-width: none;
       gap: 0.35rem;
+      padding-bottom: 0.12rem;
     }
     #top-actions::-webkit-scrollbar {
       display: none;
@@ -697,7 +703,7 @@
       flex: 0 0 auto;
     }
     #auto-quality-btn {
-      min-width: 96px;
+      min-width: 54px;
     }
     #idea-btn,
     #help-btn {
@@ -709,7 +715,7 @@
     }
     #panel {
       width: 100%;
-      max-height: min(61dvh, 560px);
+      max-height: min(58dvh, 560px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
@@ -722,12 +728,12 @@
     }
     #scene-grid {
       gap: 0.45rem;
-      padding-right: 2.6rem;
+      padding-right: 2.3rem;
     }
     .scene-btn {
-      min-width: 96px;
-      flex-basis: 96px;
-      min-height: 72px;
+      min-width: 88px;
+      flex-basis: 88px;
+      min-height: 68px;
       padding: 0.55rem 0.4rem;
       border-radius: 0.58rem;
     }
@@ -864,14 +870,14 @@
 
   @media (max-width: 420px) {
     #top-actions {
-      max-width: 74vw;
+      max-width: 100%;
     }
     #panel {
-      max-height: min(65dvh, 560px);
+      max-height: min(62dvh, 560px);
     }
     .scene-btn {
-      min-width: 88px;
-      flex-basis: 88px;
+      min-width: 82px;
+      flex-basis: 82px;
     }
     .ctrl input[type=range] {
       min-width: 92px;
@@ -888,7 +894,7 @@
       font-size: 0.86rem;
     }
     #top-actions {
-      max-width: 76vw;
+      max-width: 100%;
     }
     #hide-btn,
     #fullscreen-btn,
@@ -903,7 +909,7 @@
       padding: 0.28rem 0.42rem;
     }
     #auto-quality-btn {
-      min-width: 88px;
+      min-width: 48px;
     }
   }
 
@@ -1126,6 +1132,38 @@
   .sound-list {
     display: grid;
     gap: 0.55rem;
+  }
+  .sound-volume {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 42px;
+    gap: 0.65rem;
+    align-items: center;
+    margin-top: 0.85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.5);
+  }
+  #sound-volume {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 99px;
+    outline: none;
+  }
+  #sound-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #65e7a8;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(101,231,168,0.55);
+  }
+  #sound-volume-value {
+    text-align: right;
+    color: rgba(255,255,255,0.62);
   }
   .sound-option {
     display: grid;
@@ -1442,6 +1480,11 @@
   <div id="sound-box">
     <h3 id="sound-title">Ambient Sound</h3>
     <div id="sound-list" class="sound-list"></div>
+    <label class="sound-volume" for="sound-volume">
+      <span>VOLUME</span>
+      <input id="sound-volume" type="range" min="0" max="100" value="55">
+      <span id="sound-volume-value">55%</span>
+    </label>
     <div id="sound-status" aria-live="polite"></div>
     <button id="sound-close" type="button">CLOSE</button>
   </div>
@@ -1515,7 +1558,7 @@ const SCENES = [
 
 const AMBIENT_SOUNDS = [
   { id:'off', label:'Off', desc:'No ambient sound.' },
-  { id:'rain', label:'Soft Rain', desc:'Fine filtered rainfall for focus.' },
+  { id:'rain', label:'Jungle Rain', desc:'Slow canopy rain with deep wet texture.' },
   { id:'ocean', label:'Low Tide', desc:'Slow ocean wash with gentle movement.' },
   { id:'drift', label:'Deep Drift', desc:'Warm tonal air for quieter sessions.' },
 ];
@@ -1544,6 +1587,8 @@ const leaderboardClose = document.getElementById('leaderboard-close');
 const soundBtn = document.getElementById('sound-btn');
 const soundOverlay = document.getElementById('sound-overlay');
 const soundList = document.getElementById('sound-list');
+const soundVolumeSlider = document.getElementById('sound-volume');
+const soundVolumeValue = document.getElementById('sound-volume-value');
 const soundStatus = document.getElementById('sound-status');
 const soundClose = document.getElementById('sound-close');
 const ideaBtn = document.getElementById('idea-btn');
@@ -1587,6 +1632,7 @@ let visualQaTimer = null;
 let visualQaIndex = 0;
 let visualQaPreviousState = null;
 let activeSoundKey = 'off';
+let activeSoundVolume = 0.55;
 let audioCtx = null;
 let ambientMaster = null;
 let ambientNodes = [];
@@ -1602,6 +1648,33 @@ function viewportSize() {
   };
 }
 
+function isCompactViewport() {
+  return viewportSize().width <= 720;
+}
+
+function compactQualityLabel() {
+  if(qualityProfile === 'battery') return 'BATT';
+  return qualityProfile.toUpperCase();
+}
+
+function compactSoundLabel(sound) {
+  if(activeSoundKey === 'rain') return 'RAIN';
+  if(activeSoundKey === 'ocean') return 'TIDE';
+  if(activeSoundKey === 'drift') return 'DRIFT';
+  return 'SND';
+}
+
+function syncTopActionLabels() {
+  const compact = isCompactViewport();
+  const fullscreen = document.getElementById('fullscreen-btn');
+  const hide = document.getElementById('hide-btn');
+  const hidden = document.getElementById('ui')?.classList.contains('hidden') || false;
+  if(fullscreen) fullscreen.textContent = document.fullscreenElement ? (compact ? 'EXIT' : 'EXIT FULLSCREEN') : (compact ? 'FULL' : 'FULLSCREEN');
+  if(hide) hide.textContent = hidden ? (compact ? 'SHOW' : 'SHOW UI') : (compact ? 'HIDE' : 'HIDE UI');
+  updateAutoQualityButton();
+  updateSoundButton();
+}
+
 function resize() {
   const viewport = viewportSize();
   canvas.style.width = `${viewport.width}px`;
@@ -1611,6 +1684,7 @@ function resize() {
   if(currentScene && SceneFactories[activeSceneId]) {
     currentScene = SceneFactories[activeSceneId]();
   }
+  syncTopActionLabels();
 }
 window.addEventListener('resize', resize);
 window.visualViewport?.addEventListener('resize', resize);
@@ -1733,9 +1807,16 @@ function ensureAudioContext() {
   if(!AudioContextClass) return null;
   audioCtx = new AudioContextClass();
   ambientMaster = audioCtx.createGain();
-  ambientMaster.gain.value = 0.16;
+  ambientMaster.gain.value = 0;
   ambientMaster.connect(audioCtx.destination);
+  updateAmbientMasterGain();
   return audioCtx;
+}
+
+function updateAmbientMasterGain() {
+  if(!ambientMaster || !audioCtx) return;
+  const target = activeSoundKey === 'off' ? 0 : activeSoundVolume * 0.34;
+  ambientMaster.gain.setTargetAtTime(target, audioCtx.currentTime, 0.035);
 }
 
 function createNoiseSource(ctxRef) {
@@ -1749,6 +1830,26 @@ function createNoiseSource(ctxRef) {
   return source;
 }
 
+function createRainDropletSource(ctxRef) {
+  const seconds = 6;
+  const bufferSize = ctxRef.sampleRate * seconds;
+  const buffer = ctxRef.createBuffer(1, bufferSize, ctxRef.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i = 0; i < bufferSize; i++) {
+    if(Math.random() < 0.00115) {
+      const amp = 0.28 + Math.random() * 0.72;
+      const length = 60 + Math.floor(Math.random() * 120);
+      for(let j = 0; j < length && i + j < bufferSize; j++) {
+        data[i + j] += (Math.random() * 2 - 1) * amp * Math.exp(-j / 22);
+      }
+    }
+  }
+  const source = ctxRef.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  return source;
+}
+
 function stopAmbientSound() {
   ambientNodes.forEach(node => {
     try { node.stop?.(); } catch {}
@@ -1756,6 +1857,7 @@ function stopAmbientSound() {
   });
   ambientNodes = [];
   ambientRunning = false;
+  updateAmbientMasterGain();
 }
 
 function trackAmbientNodes(...nodes) {
@@ -1764,18 +1866,41 @@ function trackAmbientNodes(...nodes) {
 
 function startRainSound(ctxRef) {
   const source = createNoiseSource(ctxRef);
-  const highpass = ctxRef.createBiquadFilter();
-  highpass.type = 'highpass';
-  highpass.frequency.value = 650;
+  const lowpass = ctxRef.createBiquadFilter();
+  lowpass.type = 'lowpass';
+  lowpass.frequency.value = 1450;
   const bandpass = ctxRef.createBiquadFilter();
   bandpass.type = 'bandpass';
-  bandpass.frequency.value = 1800;
-  bandpass.Q.value = 0.7;
+  bandpass.frequency.value = 620;
+  bandpass.Q.value = 0.75;
   const gain = ctxRef.createGain();
-  gain.gain.value = 0.28;
-  source.connect(highpass).connect(bandpass).connect(gain).connect(ambientMaster);
+  gain.gain.value = 0.26;
+  source.connect(lowpass).connect(bandpass).connect(gain).connect(ambientMaster);
+
+  const droplets = createRainDropletSource(ctxRef);
+  const dropletLowpass = ctxRef.createBiquadFilter();
+  dropletLowpass.type = 'lowpass';
+  dropletLowpass.frequency.value = 2600;
+  const dropletBandpass = ctxRef.createBiquadFilter();
+  dropletBandpass.type = 'bandpass';
+  dropletBandpass.frequency.value = 900;
+  dropletBandpass.Q.value = 1.15;
+  const dropletGain = ctxRef.createGain();
+  dropletGain.gain.value = 0.62;
+  droplets.connect(dropletLowpass).connect(dropletBandpass).connect(dropletGain).connect(ambientMaster);
+
+  const drone = createNoiseSource(ctxRef);
+  const droneLowpass = ctxRef.createBiquadFilter();
+  droneLowpass.type = 'lowpass';
+  droneLowpass.frequency.value = 180;
+  const droneGain = ctxRef.createGain();
+  droneGain.gain.value = 0.055;
+  drone.connect(droneLowpass).connect(droneGain).connect(ambientMaster);
+
   source.start();
-  trackAmbientNodes(source, highpass, bandpass, gain);
+  droplets.start();
+  drone.start();
+  trackAmbientNodes(source, lowpass, bandpass, gain, droplets, dropletLowpass, dropletBandpass, dropletGain, drone, droneLowpass, droneGain);
 }
 
 function startOceanSound(ctxRef) {
@@ -1798,32 +1923,41 @@ function startOceanSound(ctxRef) {
 
 function startDriftSound(ctxRef) {
   const gain = ctxRef.createGain();
-  gain.gain.value = 0.08;
+  gain.gain.value = 0.24;
   gain.connect(ambientMaster);
-  const freqs = [55, 82.4, 110];
+  const freqs = [65.4, 98, 130.8];
   freqs.forEach((freq, i) => {
     const osc = ctxRef.createOscillator();
     osc.type = i === 0 ? 'sine' : 'triangle';
     osc.frequency.value = freq;
     const voiceGain = ctxRef.createGain();
-    voiceGain.gain.value = i === 0 ? 0.4 : 0.18;
+    voiceGain.gain.value = i === 0 ? 0.68 : 0.34;
     osc.connect(voiceGain).connect(gain);
     osc.start();
     trackAmbientNodes(osc, voiceGain);
   });
+  const air = createNoiseSource(ctxRef);
+  const lowpass = ctxRef.createBiquadFilter();
+  lowpass.type = 'lowpass';
+  lowpass.frequency.value = 380;
+  const airGain = ctxRef.createGain();
+  airGain.gain.value = 0.045;
+  air.connect(lowpass).connect(airGain).connect(gain);
+  air.start();
   const lfo = ctxRef.createOscillator();
   lfo.frequency.value = 0.045;
   const lfoGain = ctxRef.createGain();
-  lfoGain.gain.value = 0.025;
+  lfoGain.gain.value = 0.045;
   lfo.connect(lfoGain).connect(gain.gain);
   lfo.start();
-  trackAmbientNodes(gain, lfo, lfoGain);
+  trackAmbientNodes(gain, air, lowpass, airGain, lfo, lfoGain);
 }
 
 async function selectAmbientSound(key) {
   const sound = AMBIENT_SOUNDS.find(item => item.id === key) || AMBIENT_SOUNDS[0];
   stopAmbientSound();
   activeSoundKey = sound.id;
+  updateAmbientMasterGain();
   if(sound.id !== 'off') {
     const ctxRef = ensureAudioContext();
     if(!ctxRef) {
@@ -1838,6 +1972,7 @@ async function selectAmbientSound(key) {
     if(sound.id === 'ocean') startOceanSound(ctxRef);
     if(sound.id === 'drift') startDriftSound(ctxRef);
     ambientRunning = true;
+    updateAmbientMasterGain();
   }
   soundStatus.textContent = sound.id === 'off' ? 'Ambient sound off.' : `${sound.label} playing.`;
   updateSoundButton();
@@ -1845,9 +1980,20 @@ async function selectAmbientSound(key) {
   persistAppState();
 }
 
+function setAmbientVolume(value, options = {}) {
+  activeSoundVolume = Math.max(0, Math.min(1, Number(value)));
+  soundVolumeSlider.value = Math.round(activeSoundVolume * 100);
+  soundVolumeValue.textContent = `${Math.round(activeSoundVolume * 100)}%`;
+  updateAmbientMasterGain();
+  if(options.persist !== false) persistAppState();
+}
+
 function updateSoundButton() {
   const sound = AMBIENT_SOUNDS.find(item => item.id === activeSoundKey) || AMBIENT_SOUNDS[0];
-  soundBtn.textContent = activeSoundKey !== 'off' && ambientRunning ? `SOUND: ${sound.label.toUpperCase()}` : 'SOUND';
+  const compact = isCompactViewport();
+  soundBtn.textContent = compact
+    ? compactSoundLabel(sound)
+    : (activeSoundKey !== 'off' && ambientRunning ? `SOUND: ${sound.label.toUpperCase()}` : 'SOUND');
   soundBtn.classList.toggle('active', activeSoundKey !== 'off' && ambientRunning);
   soundBtn.title = activeSoundKey !== 'off' && ambientRunning ? `${sound.label} ambient sound` : 'Ambient sounds';
 }
@@ -1991,7 +2137,7 @@ function updateAutoQualityButton() {
   autoQualityBtn.classList.toggle('active', qualityProfile === 'auto');
   autoQualityBtn.classList.toggle('battery', qualityProfile === 'battery');
   autoQualityBtn.classList.toggle('crisp', qualityProfile === 'crisp');
-  autoQualityBtn.textContent = `QUALITY: ${qualityProfile.toUpperCase()}`;
+  autoQualityBtn.textContent = isCompactViewport() ? compactQualityLabel() : `QUALITY: ${qualityProfile.toUpperCase()}`;
   const densityNote = densityAutoOffset ? `, density -${densityAutoOffset}` : '';
   autoQualityBtn.title = `${qualityProfile[0].toUpperCase()}${qualityProfile.slice(1)} quality (${Math.round(renderScale * 100)}%${densityNote})`;
   autoQualityBtn.setAttribute('aria-label', `Quality profile: ${qualityProfile}`);
@@ -2113,6 +2259,8 @@ function buildShareUrl() {
   url.searchParams.set('quality', qualityProfile);
   if(activeSoundKey !== 'off') url.searchParams.set('sound', activeSoundKey);
   else url.searchParams.delete('sound');
+  if(activeSoundKey !== 'off') url.searchParams.set('volume', String(Math.round(activeSoundVolume * 100)));
+  else url.searchParams.delete('volume');
   return url;
 }
 
@@ -2133,6 +2281,7 @@ function getSessionState() {
     autoQualityEnabled,
     qualityProfile,
     activeSoundKey,
+    activeSoundVolume,
   };
 }
 
@@ -2150,6 +2299,8 @@ function sanitizeState(raw = {}) {
   const soundKey = AMBIENT_SOUNDS.some(sound => sound.id === raw.activeSoundKey || sound.id === raw.sound)
     ? (raw.activeSoundKey || raw.sound)
     : 'off';
+  const rawSoundVolume = Number(raw.activeSoundVolume ?? raw.volume ?? 0.55);
+  const soundVolume = Math.max(0, Math.min(1, rawSoundVolume > 1 ? rawSoundVolume / 100 : rawSoundVolume));
   return {
     sceneId: fallbackSceneId,
     paletteKey: fallbackPaletteKey,
@@ -2162,6 +2313,7 @@ function sanitizeState(raw = {}) {
       ? (raw.qualityProfile || raw.quality)
       : (raw.autoQualityEnabled === false ? 'crisp' : 'auto'),
     activeSoundKey: soundKey,
+    activeSoundVolume: soundVolume,
   };
 }
 
@@ -2188,6 +2340,7 @@ function loadStateFromUrl() {
     autoQualityEnabled: params.get('auto') !== '0',
     quality: params.get('quality'),
     sound: params.get('sound'),
+    volume: params.get('volume'),
   });
 }
 
@@ -2209,6 +2362,7 @@ function applyBootState(state) {
   updateAutoQualityButton();
   applyReducedMotionPreference();
   activeSoundKey = next.activeSoundKey;
+  setAmbientVolume(next.activeSoundVolume, { persist:false });
   updateSoundButton();
   renderSoundOptions();
   if(next.timerSecs > 0) {
@@ -2512,7 +2666,7 @@ function toggleUI() {
   uiHidden = !uiHidden;
   ui.classList.toggle('hidden', uiHidden);
   document.getElementById('hint').style.opacity = uiHidden ? 0.15 : 1;
-  hideBtn.textContent = uiHidden ? 'SHOW UI' : 'HIDE UI';
+  syncTopActionLabels();
 }
 
 const modalRegistry = new Map();
@@ -2627,8 +2781,8 @@ async function toggleFullscreen() {
 
 function syncFullscreenLabel() {
   const isFullscreen = Boolean(document.fullscreenElement);
-  fullscreenBtn.textContent = isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
   document.body.classList.toggle('fullscreen-active', isFullscreen);
+  syncTopActionLabels();
 }
 
 document.addEventListener('fullscreenchange', syncFullscreenLabel);
@@ -2676,6 +2830,9 @@ leaderboardBtn.addEventListener('click', () => toggleLeaderboard(true));
 leaderboardClose.addEventListener('click', () => toggleLeaderboard(false));
 soundBtn.addEventListener('click', () => toggleSoundBox(true));
 soundClose.addEventListener('click', () => toggleSoundBox(false));
+soundVolumeSlider.addEventListener('input', e => {
+  setAmbientVolume(Number(e.target.value) / 100);
+});
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape') {
     const openOverlay = document.querySelector('.modal-overlay.show');
