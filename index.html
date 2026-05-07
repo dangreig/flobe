@@ -1103,15 +1103,6 @@
     }
   }
 
-  #idea-box {
-    width: min(92vw, 460px);
-    background: rgba(12,14,20,0.92);
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 0.9rem;
-    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
-    padding: 1.25rem;
-    color: rgba(255,255,255,0.82);
-  }
   #sound-box {
     width: min(92vw, 460px);
     background: rgba(12,14,20,0.92);
@@ -1219,77 +1210,7 @@
     background: rgba(255,255,255,0.14);
     color: #fff;
   }
-  #idea-box h3 {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.56);
-    text-transform: uppercase;
-    margin-bottom: 0.85rem;
-  }
-  #idea-text {
-    width: 100%;
-    min-height: 132px;
-    resize: vertical;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    line-height: 1.5;
-    color: rgba(255,255,255,0.88);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.13);
-    border-radius: 0.75rem;
-    outline: none;
-    padding: 0.8rem;
-  }
-  #idea-text::placeholder {
-    color: rgba(255,255,255,0.34);
-  }
-  #idea-text:focus {
-    border-color: rgba(93,255,210,0.48);
-    box-shadow: 0 0 0 1px rgba(93,255,210,0.16);
-  }
-  .idea-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.55rem;
-    flex-wrap: wrap;
-    margin-top: 0.85rem;
-  }
-  .idea-actions button {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.14);
-    color: rgba(255,255,255,0.72);
-    padding: 0.42rem 0.9rem;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .idea-actions button:hover {
-    background: rgba(255,255,255,0.14);
-    color: #fff;
-  }
-  #idea-copy {
-    border-color: rgba(93,255,210,0.36);
-    color: rgba(169,255,231,0.88);
-  }
-  #idea-status {
-    min-height: 1.1rem;
-    margin-top: 0.65rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.06em;
-    color: rgba(101,231,168,0.78);
-  }
-
   @media (max-width: 720px) {
-    #idea-box {
-      max-height: 80dvh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
     #sound-box {
       max-height: 80dvh;
       overflow-y: auto;
@@ -1370,6 +1291,7 @@
   }
 
 </style>
+<script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
 
@@ -1389,7 +1311,7 @@
       <button id="fps-btn" type="button" aria-label="Show frames per second">FPS</button>
       <button id="leaderboard-btn" type="button" title="Most used backgrounds" aria-label="Most used backgrounds">TIME</button>
       <button id="sound-btn" type="button" title="Ambient sounds" aria-label="Ambient sounds">SOUND</button>
-      <button id="idea-btn" type="button" title="Share an idea" aria-label="Share an idea">
+      <button id="idea-btn" type="button" title="Share an idea" aria-label="Share an idea" data-tally-open="ja5Dd1" data-tally-layout="modal" data-tally-emoji-text="💡" data-tally-emoji-animation="tada">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 14c.2-1.2.9-2 1.7-2.9A6 6 0 1 0 7.3 11c.8.9 1.5 1.8 1.7 3"></path>
           <path d="M9 18h6"></path>
@@ -1459,6 +1381,7 @@
       <div><span>Space</span><span>pause or resume motion</span></div>
       <div><span>QUALITY</span><span>cycles Auto, Crisp, and Battery render profiles</span></div>
       <div><span>SOUND</span><span>opens three opt-in ambient sound choices</span></div>
+      <div><span>IDEA</span><span>opens the feedback form</span></div>
       <div><span>V</span><span>runs a visual QA cycle across scenes</span></div>
       <div><span>PRESETS</span><span>save two local scene setups in this browser</span></div>
       <div><span>SHARE</span><span>copies the current scene settings as a link</span></div>
@@ -1487,18 +1410,6 @@
     </label>
     <div id="sound-status" aria-live="polite"></div>
     <button id="sound-close" type="button">CLOSE</button>
-  </div>
-</div>
-
-<div id="idea-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="idea-title">
-  <div id="idea-box">
-    <h3 id="idea-title">Idea Box</h3>
-    <textarea id="idea-text" placeholder="What should Flobe do next?"></textarea>
-    <div class="idea-actions">
-      <button id="idea-copy" type="button">COPY IDEA</button>
-      <button id="idea-close" type="button">CLOSE</button>
-    </div>
-    <div id="idea-status" aria-live="polite"></div>
   </div>
 </div>
 
@@ -1591,12 +1502,6 @@ const soundVolumeSlider = document.getElementById('sound-volume');
 const soundVolumeValue = document.getElementById('sound-volume-value');
 const soundStatus = document.getElementById('sound-status');
 const soundClose = document.getElementById('sound-close');
-const ideaBtn = document.getElementById('idea-btn');
-const ideaOverlay = document.getElementById('idea-overlay');
-const ideaText = document.getElementById('idea-text');
-const ideaCopy = document.getElementById('idea-copy');
-const ideaClose = document.getElementById('idea-close');
-const ideaStatus = document.getElementById('idea-status');
 const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
@@ -2701,10 +2606,6 @@ function toggleHelp(show = !helpOverlay.classList.contains('show')) {
   toggleModal(helpOverlay, show);
 }
 
-function toggleIdeaBox(show = !ideaOverlay.classList.contains('show')) {
-  toggleModal(ideaOverlay, show);
-}
-
 function toggleLeaderboard(show = !leaderboardOverlay.classList.contains('show')) {
   toggleModal(leaderboardOverlay, show);
 }
@@ -2789,10 +2690,6 @@ document.addEventListener('fullscreenchange', syncFullscreenLabel);
 syncFullscreenLabel();
 
 registerModal(helpOverlay, { focus: helpClose });
-registerModal(ideaOverlay, {
-  focus: ideaText,
-  onOpen: () => { ideaStatus.textContent = ''; },
-});
 registerModal(leaderboardOverlay, {
   focus: leaderboardClose,
   onOpen: renderLeaderboard,
@@ -2807,24 +2704,6 @@ registerModal(soundOverlay, {
 
 helpBtn.addEventListener('click', () => toggleHelp(true));
 helpClose.addEventListener('click', () => toggleHelp(false));
-
-ideaBtn.addEventListener('click', () => toggleIdeaBox(true));
-ideaClose.addEventListener('click', () => toggleIdeaBox(false));
-ideaCopy.addEventListener('click', async () => {
-  const idea = ideaText.value.trim();
-  if(!idea) {
-    ideaStatus.textContent = 'Add an idea first.';
-    return;
-  }
-  const payload = `Flobe idea:\n\n${idea}`;
-  try {
-    await navigator.clipboard.writeText(payload);
-    ideaStatus.textContent = 'Copied. Ready to share.';
-  } catch {
-    ideaText.select();
-    ideaStatus.textContent = 'Select and copy the idea text.';
-  }
-});
 
 leaderboardBtn.addEventListener('click', () => toggleLeaderboard(true));
 leaderboardClose.addEventListener('click', () => toggleLeaderboard(false));
