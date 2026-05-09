@@ -330,22 +330,23 @@
 
   .scene-btn {
     position: relative;
-    min-height: 86px;
+    min-height: 108px;
     min-width: 118px;
     flex: 0 0 118px;
     background: rgba(255,255,255,0.045);
     border: 1px solid rgba(255,255,255,0.09);
     border-radius: 0.7rem;
-    padding: 0.7rem 0.5rem;
+    padding: 0.62rem 0.5rem 0.58rem;
     cursor: pointer;
     text-align: center;
     transition: background 0.15s, border-color 0.15s, transform 0.12s;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
+    justify-content: flex-start;
+    gap: 0.48rem;
     color: rgba(255,255,255,0.7);
+    overflow: hidden;
   }
   .scene-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
   .scene-btn.active {
@@ -354,7 +355,45 @@
     box-shadow: 0 0 28px rgba(69,202,255,0.22), 0 0 0 1px rgba(76,132,255,0.32) inset;
     color: #fff;
   }
-  .scene-btn .icon { font-size: 1.4rem; line-height: 1; }
+  .scene-preview {
+    position: relative;
+    width: 76px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+    border-radius: 0.48rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(135deg, rgba(15,19,30,0.96), rgba(28,35,52,0.72));
+    box-shadow: 0 10px 24px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.08) inset;
+  }
+  .scene-preview::before,
+  .scene-preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+  }
+  .scene-preview::before {
+    opacity: 0.88;
+    transform-origin: center;
+  }
+  .scene-preview::after {
+    opacity: 0.72;
+  }
+  .scene-preview canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .scene-btn:hover .scene-preview,
+  .scene-btn.active .scene-preview {
+    box-shadow: 0 12px 26px rgba(0,0,0,0.22), 0 0 22px rgba(93,255,210,0.16), 0 1px 0 rgba(255,255,255,0.1) inset;
+  }
   .scene-btn .label {
     width: 100%;
     font-size: 0.65rem;
@@ -368,6 +407,7 @@
     position: absolute;
     top: 0.38rem;
     right: 0.38rem;
+    z-index: 4;
     width: 22px;
     height: 22px;
     display: grid;
@@ -471,16 +511,21 @@
     gap: 0.75rem;
   }
   .preset-row.slots {
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.8rem;
   }
   .preset-slot {
     display: flex;
     gap: 0.35rem;
     align-items: center;
   }
+  .preset-slot:nth-child(2) {
+    gap: 0.62rem;
+  }
   .preset-btn,
   .preset-edit,
-  .preset-share {
+  .preset-share,
+  .preset-random {
     font-family: 'DM Mono', monospace;
     font-size: 0.65rem;
     letter-spacing: 0.06em;
@@ -496,15 +541,36 @@
     min-width: 92px;
   }
   .preset-edit,
-  .preset-share {
+  .preset-share,
+  .preset-random {
     padding: 0.35rem 0.5rem;
     min-width: 34px;
   }
   .preset-btn:hover,
   .preset-edit:hover,
-  .preset-share:hover {
+  .preset-share:hover,
+  .preset-random:hover {
     background: rgba(255,255,255,0.14);
     color: #fff;
+  }
+  .preset-random {
+    border-color: rgba(93,255,210,0.28);
+    color: rgba(178,255,234,0.78);
+    background: rgba(93,255,210,0.08);
+    box-shadow: 0 0 18px rgba(93,255,210,0.08);
+    margin-left: 0.28rem;
+    padding-inline: 0.9rem;
+  }
+  .preset-random::before,
+  .preset-random::after {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    margin: 0 0.42rem 0.1rem;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.65;
   }
   .preset-btn.active {
     border-color: rgba(93,144,255,0.62);
@@ -733,12 +799,14 @@
     .scene-btn {
       min-width: 88px;
       flex-basis: 88px;
-      min-height: 68px;
+      min-height: 94px;
       padding: 0.55rem 0.4rem;
       border-radius: 0.58rem;
     }
-    .scene-btn .icon {
-      font-size: 1.08rem;
+    .scene-preview {
+      width: 60px;
+      height: 34px;
+      border-radius: 0.42rem;
     }
     .scene-btn .label {
       font-size: 0.55rem;
@@ -802,10 +870,14 @@
       gap: 0.5rem;
     }
     .preset-row.slots {
-      gap: 0.4rem;
+      justify-content: flex-start;
+      gap: 0.45rem;
     }
     .preset-slot {
       gap: 0.25rem;
+    }
+    .preset-slot:nth-child(2) {
+      gap: 0.34rem;
     }
     .preset-btn {
       min-width: 78px;
@@ -813,10 +885,16 @@
       font-size: 0.55rem;
     }
     .preset-edit,
-    .preset-share {
+    .preset-share,
+    .preset-random {
       min-width: 30px;
       padding: 0.32rem 0.45rem;
       font-size: 0.55rem;
+      margin-left: 0.05rem;
+    }
+    .preset-random::before,
+    .preset-random::after {
+      margin-inline: 0.22rem;
     }
     #timer-row {
       order: 3;
@@ -844,6 +922,7 @@
       text-align: left;
     }
     .preset-share { order: 2; }
+    .preset-random { order: 2; }
     #hint {
       display: none;
     }
@@ -878,6 +957,10 @@
     .scene-btn {
       min-width: 82px;
       flex-basis: 82px;
+    }
+    .scene-preview {
+      width: 54px;
+      height: 32px;
     }
     .ctrl input[type=range] {
       min-width: 92px;
@@ -918,7 +1001,7 @@
       max-height: 70dvh;
     }
     .scene-btn {
-      min-height: 64px;
+      min-height: 86px;
     }
   }
   
@@ -2271,7 +2354,7 @@ function applyBootState(state) {
   updateSoundButton();
   renderSoundOptions();
   if(next.timerSecs > 0) {
-    selectTimer(next.timerSecs);
+    selectTimer(next.timerSecs, { persist:false });
     timerCustomMinsInput.value = next.customTimerMins || Math.round(next.timerSecs / 60);
   } else if(next.customTimerMins > 0) {
     timerCustomMinsInput.value = next.customTimerMins;
@@ -2284,6 +2367,247 @@ function applyBootState(state) {
 // ----------------------------------------
 const grid = document.getElementById('scene-grid');
 const sceneScrollBtn = document.getElementById('scene-scroll-btn');
+let scenePreviewItems = [];
+let scenePreviewRaf = null;
+
+function previewRand(seed) {
+  let value = Math.sin(seed * 999) * 10000;
+  return () => {
+    value = Math.sin(value) * 10000;
+    return value - Math.floor(value);
+  };
+}
+
+function fitPreviewCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const width = Math.max(1, Math.round(rect.width * dpr));
+  const height = Math.max(1, Math.round(rect.height * dpr));
+  if(canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  return { width, height };
+}
+
+function previewPalette(sceneId) {
+  return scenePalette(sceneId, activePaletteKey || 'ocean');
+}
+
+function drawPreviewBackdrop(pctx, width, height, palette) {
+  const bg = pctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, '#070b14');
+  bg.addColorStop(0.55, '#111827');
+  bg.addColorStop(1, '#05060c');
+  pctx.fillStyle = bg;
+  pctx.fillRect(0, 0, width, height);
+  const glow = pctx.createRadialGradient(width * 0.5, height * 0.48, 0, width * 0.5, height * 0.5, Math.max(width, height) * 0.72);
+  glow.addColorStop(0, `${palette[0]}33`);
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  pctx.fillStyle = glow;
+  pctx.fillRect(0, 0, width, height);
+}
+
+function makeScenePreview(sceneId, canvas, index) {
+  const rand = previewRand(index + sceneId.length * 3);
+  const state = {
+    points: Array.from({ length: 18 }, () => ({ x: rand(), y: rand(), z: rand(), r: 0.5 + rand() * 1.8, vx: (rand() - 0.5) * 0.018, vy: (rand() - 0.5) * 0.018 })),
+    drops: Array.from({ length: 16 }, () => ({ x: rand(), y: rand(), speed: 0.22 + rand() * 0.42 })),
+    confetti: Array.from({ length: 18 }, () => ({ x: rand(), y: rand(), rot: rand() * 6.28, speed: 0.12 + rand() * 0.34, color: Math.floor(rand() * 6) })),
+    blobs: Array.from({ length: 5 }, () => ({ x: rand(), y: rand(), r: 0.18 + rand() * 0.22, phase: rand() * 6.28, color: Math.floor(rand() * 6) })),
+  };
+  return { sceneId, canvas, state };
+}
+
+function drawScenePreview(item, now) {
+  if(!item.canvas.isConnected) return;
+  const { width, height } = fitPreviewCanvas(item.canvas);
+  const pctx = item.canvas.getContext('2d');
+  const palette = previewPalette(item.sceneId);
+  const t = now * 0.001;
+  pctx.clearRect(0, 0, width, height);
+  drawPreviewBackdrop(pctx, width, height, palette);
+  pctx.save();
+  pctx.lineCap = 'round';
+  pctx.lineJoin = 'round';
+
+  if(item.sceneId === 'block') {
+    const x = width * (0.18 + 0.64 * Math.abs(Math.sin(t * 0.72)));
+    const y = height * (0.24 + 0.46 * Math.abs(Math.cos(t * 0.58)));
+    pctx.translate(x, y);
+    pctx.rotate(-0.14 + Math.sin(t) * 0.08);
+    const logo = pctx.createLinearGradient(-22, -10, 24, 12);
+    logo.addColorStop(0, palette[0]);
+    logo.addColorStop(0.5, palette[2]);
+    logo.addColorStop(1, palette[4] || palette[1]);
+    pctx.fillStyle = logo;
+    pctx.font = `800 ${Math.max(12, height * 0.34)}px Syne, sans-serif`;
+    pctx.textAlign = 'center';
+    pctx.textBaseline = 'middle';
+    pctx.fillText('DVD', 0, -3);
+    pctx.beginPath();
+    pctx.ellipse(0, height * 0.14, width * 0.18, height * 0.055, 0, 0, Math.PI * 2);
+    pctx.fill();
+  } else if(item.sceneId === 'particles') {
+    item.state.points.forEach((p, i) => {
+      p.x = (p.x + p.vx + 1) % 1;
+      p.y = (p.y + p.vy + 1) % 1;
+      item.state.points.slice(i + 1).forEach(q => {
+        const dx = (p.x - q.x) * width;
+        const dy = (p.y - q.y) * height;
+        const dist = Math.hypot(dx, dy);
+        if(dist < width * 0.28) {
+          pctx.globalAlpha = 0.22 * (1 - dist / (width * 0.28));
+          pctx.strokeStyle = palette[(i + 1) % palette.length];
+          pctx.beginPath();
+          pctx.moveTo(p.x * width, p.y * height);
+          pctx.lineTo(q.x * width, q.y * height);
+          pctx.stroke();
+        }
+      });
+      pctx.globalAlpha = 0.85;
+      pctx.fillStyle = palette[i % palette.length];
+      pctx.beginPath();
+      pctx.arc(p.x * width, p.y * height, p.r, 0, Math.PI * 2);
+      pctx.fill();
+    });
+  } else if(item.sceneId === 'pomodoro') {
+    const cx = width / 2, cy = height / 2, r = Math.min(width, height) * 0.32;
+    pctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    pctx.lineWidth = Math.max(3, height * 0.08);
+    pctx.beginPath();
+    pctx.arc(cx, cy, r, 0, Math.PI * 2);
+    pctx.stroke();
+    pctx.strokeStyle = palette[0];
+    pctx.shadowColor = palette[0];
+    pctx.shadowBlur = 8;
+    pctx.beginPath();
+    pctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 1.55 + Math.sin(t) * 0.4);
+    pctx.stroke();
+  } else if(item.sceneId === 'warp') {
+    pctx.translate(width / 2, height / 2);
+    for(let i = 0; i < 26; i++) {
+      const a = i * 2.41;
+      const phase = (t * 0.8 + i * 0.07) % 1;
+      const len = 5 + phase * 24;
+      const x = Math.cos(a) * phase * width * 0.48;
+      const y = Math.sin(a) * phase * height * 0.48;
+      pctx.strokeStyle = palette[i % palette.length];
+      pctx.globalAlpha = 0.25 + phase * 0.65;
+      pctx.beginPath();
+      pctx.moveTo(x, y);
+      pctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+      pctx.stroke();
+    }
+  } else if(item.sceneId === 'plasma') {
+    item.state.blobs.forEach((b, i) => {
+      const x = width * (b.x + Math.sin(t * 0.7 + b.phase) * 0.08);
+      const y = height * (b.y + Math.cos(t * 0.55 + b.phase) * 0.1);
+      const g = pctx.createRadialGradient(x, y, 0, x, y, width * b.r);
+      g.addColorStop(0, `${palette[b.color % palette.length]}cc`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      pctx.fillStyle = g;
+      pctx.fillRect(0, 0, width, height);
+    });
+  } else if(item.sceneId === 'rain') {
+    pctx.font = `${Math.max(8, height * 0.22)}px DM Mono, monospace`;
+    item.state.drops.forEach((d, i) => {
+      d.y = (d.y + d.speed * 0.02) % 1;
+      pctx.fillStyle = i % 5 === 0 ? '#d8ffe9' : palette[i % palette.length];
+      pctx.globalAlpha = 0.48 + (i % 3) * 0.16;
+      pctx.fillText(String.fromCharCode(0x30A0 + ((i + Math.floor(t * 12)) % 80)), d.x * width, d.y * height);
+    });
+  } else if(item.sceneId === 'ribbons') {
+    for(let band = 0; band < 3; band++) {
+      pctx.strokeStyle = palette[band % palette.length];
+      pctx.lineWidth = 2 + band * 0.7;
+      pctx.globalAlpha = 0.72 - band * 0.12;
+      pctx.beginPath();
+      for(let x = -4; x <= width + 4; x += 4) {
+        const y = height * (0.28 + band * 0.2) + Math.sin(x * 0.06 + t * (1.1 + band * 0.2)) * height * 0.12;
+        if(x === -4) pctx.moveTo(x, y);
+        else pctx.lineTo(x, y);
+      }
+      pctx.stroke();
+    }
+  } else if(item.sceneId === 'topography') {
+    pctx.strokeStyle = palette[0];
+    for(let ring = 0; ring < 8; ring++) {
+      pctx.globalAlpha = 0.1 + ring * 0.07;
+      pctx.lineWidth = 1;
+      pctx.beginPath();
+      pctx.ellipse(width * 0.48, height * 0.5, ring * width * 0.07 + (Math.sin(t) + 1) * 2, ring * height * 0.045 + 3, Math.sin(t * 0.2) * 0.3, 0, Math.PI * 2);
+      pctx.stroke();
+    }
+  } else if(item.sceneId === 'confetti') {
+    item.state.confetti.forEach(c => {
+      c.y = (c.y + c.speed * 0.025) % 1;
+      c.rot += 0.05;
+      pctx.save();
+      pctx.translate(c.x * width, c.y * height);
+      pctx.rotate(c.rot);
+      pctx.fillStyle = palette[c.color % palette.length];
+      pctx.globalAlpha = 0.86;
+      pctx.fillRect(-2, -1, 4, 2);
+      pctx.restore();
+    });
+  } else if(item.sceneId === 'grid3d') {
+    const horizon = height * 0.45;
+    pctx.strokeStyle = palette[0];
+    pctx.globalAlpha = 0.55;
+    for(let i = -5; i <= 5; i++) {
+      pctx.beginPath();
+      pctx.moveTo(width / 2, horizon);
+      pctx.lineTo(width * (0.5 + i * 0.12), height);
+      pctx.stroke();
+    }
+    for(let y = 0; y < 8; y++) {
+      const yy = horizon + ((y * 8 + t * 18) % (height - horizon));
+      pctx.beginPath();
+      pctx.moveTo(0, yy);
+      pctx.lineTo(width, yy);
+      pctx.stroke();
+    }
+  } else if(item.sceneId === 'livecoding') {
+    pctx.fillStyle = 'rgba(8,12,18,0.92)';
+    pctx.fillRect(width * 0.08, height * 0.14, width * 0.84, height * 0.72);
+    for(let row = 0; row < 5; row++) {
+      pctx.fillStyle = row % 2 ? 'rgba(255,255,255,0.18)' : palette[row % palette.length];
+      const lineW = width * (0.22 + ((row * 0.13 + t * 0.18) % 0.5));
+      pctx.fillRect(width * 0.17, height * (0.28 + row * 0.1), lineW, 2);
+    }
+    pctx.fillStyle = palette[0];
+    pctx.fillRect(width * (0.2 + Math.abs(Math.sin(t)) * 0.52), height * 0.67, 2, 8);
+  } else if(item.sceneId === 'inkcloud') {
+    item.state.blobs.forEach((b, i) => {
+      const x = width * (b.x + Math.sin(t * 0.22 + b.phase) * 0.12);
+      const y = height * (b.y + Math.cos(t * 0.2 + b.phase) * 0.12);
+      const g = pctx.createRadialGradient(x, y, 0, x, y, width * b.r);
+      g.addColorStop(0, `${palette[i % palette.length]}88`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      pctx.fillStyle = g;
+      pctx.fillRect(0, 0, width, height);
+    });
+  }
+  pctx.restore();
+  pctx.globalAlpha = 1;
+}
+
+function animateScenePreviews(now) {
+  if(reducedMotionActive) {
+    scenePreviewItems.forEach(item => drawScenePreview(item, 0));
+    scenePreviewRaf = null;
+    return;
+  }
+  scenePreviewItems.forEach(item => drawScenePreview(item, now));
+  scenePreviewRaf = requestAnimationFrame(animateScenePreviews);
+}
+
+function startScenePreviewLoop() {
+  if(scenePreviewRaf !== null || !scenePreviewItems.length) return;
+  scenePreviewRaf = requestAnimationFrame(animateScenePreviews);
+}
+
 function orderedScenes() {
   const favoriteSet = new Set(favoriteScenes);
   return [
@@ -2294,6 +2618,7 @@ function orderedScenes() {
 
 function renderScenes() {
   grid.innerHTML = '';
+  scenePreviewItems = [];
   orderedScenes().forEach(s => {
   const btn = document.createElement('button');
   btn.className = 'scene-btn';
@@ -2301,7 +2626,7 @@ function renderScenes() {
   btn.dataset.id = s.id;
   btn.setAttribute('aria-pressed', 'false');
   const isFavorite = favoriteScenes.includes(s.id);
-  btn.innerHTML = `<span class="scene-fav${isFavorite ? ' active' : ''}" role="button" tabindex="0" title="${isFavorite ? 'Unpin background' : 'Pin background'}" aria-label="${isFavorite ? 'Unpin' : 'Pin'} ${s.label}">${isFavorite ? '★' : '☆'}</span><span class="icon">${s.icon}</span><span class="label">${s.label}</span>`;
+  btn.innerHTML = `<span class="scene-fav${isFavorite ? ' active' : ''}" role="button" tabindex="0" title="${isFavorite ? 'Unpin background' : 'Pin background'}" aria-label="${isFavorite ? 'Unpin' : 'Pin'} ${s.label}">${isFavorite ? '★' : '☆'}</span><span class="scene-preview" data-scene="${s.id}" aria-hidden="true"><canvas></canvas></span><span class="label">${s.label}</span>`;
   btn.addEventListener('click', () => {
     activateScene(s.id);
     syncActivePreset();
@@ -2326,6 +2651,7 @@ function renderScenes() {
     toggleFavorite(event);
   });
   grid.appendChild(btn);
+  scenePreviewItems.push(makeScenePreview(s.id, btn.querySelector('canvas'), scenePreviewItems.length));
   });
   if(activeSceneId) {
     document.querySelectorAll('.scene-btn').forEach(b => {
@@ -2334,6 +2660,7 @@ function renderScenes() {
       b.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
   }
+  startScenePreviewLoop();
 }
 
 renderScenes();
@@ -2491,6 +2818,15 @@ function renderPresetButtons() {
 
     slot.appendChild(applyBtn);
     slot.appendChild(editBtn);
+    if(i === 1) {
+      const randomBtn = document.createElement('button');
+      randomBtn.className = 'preset-random';
+      randomBtn.type = 'button';
+      randomBtn.textContent = 'RANDOM';
+      randomBtn.title = 'Randomise scene, palette, speed, and density';
+      randomBtn.addEventListener('click', randomizeSettings);
+      slot.appendChild(randomBtn);
+    }
     presetRow.appendChild(slot);
   });
   syncActivePreset();
@@ -2523,6 +2859,33 @@ function editPreset(index) {
   savePresets();
   renderPresetButtons();
   persistAppState();
+}
+
+function randomItem(items, current = null) {
+  const pool = items.filter(item => item !== current);
+  const source = pool.length ? pool : items;
+  return source[Math.floor(Math.random() * source.length)];
+}
+
+function randomizeSettings() {
+  const nextScene = randomItem(SCENES.map(scene => scene.id), activeSceneId);
+  const nextPalette = randomItem(Object.keys(PALETTES), activePaletteKey);
+  speed = 2 + Math.floor(Math.random() * 8);
+  density = 2 + Math.floor(Math.random() * 8);
+  speedSlider.value = speed;
+  densitySlider.value = density;
+  densityAutoOffset = 0;
+  updateDensityMeta(nextScene);
+  setPalette(nextPalette);
+  activateScene(nextScene);
+  syncActivePreset();
+  persistAppState();
+  const randomBtn = document.querySelector('.preset-random');
+  if(randomBtn) {
+    const previous = randomBtn.textContent;
+    randomBtn.textContent = 'DONE';
+    setTimeout(() => { randomBtn.textContent = previous; }, 900);
+  }
 }
 
 presets = loadPresets();
@@ -2823,7 +3186,7 @@ function resetTimer() {
   persistAppState();
 }
 
-function selectTimer(totalSecs) {
+function selectTimer(totalSecs, options = {}) {
   clearInterval(timerInterval);
   timerInterval = null;
   timerSelectedSecs = totalSecs;
@@ -2831,7 +3194,7 @@ function selectTimer(totalSecs) {
   timerDisplay.textContent = formatTime(totalSecs);
   timerDisplay.classList.remove('running');
   timerBegin.disabled = false;
-  persistAppState();
+  if(options.persist !== false) persistAppState();
 }
 
 timerBegin.addEventListener('click', () => {
@@ -4660,8 +5023,8 @@ const bootSceneId = applyBootState(urlState || savedSessionState || {
   customTimerMins: 0,
   autoQualityEnabled,
 });
-syncShareUrl();
 activateScene(bootSceneId, { transition:false });
+syncShareUrl();
 </script>
 </body>
 </html>
