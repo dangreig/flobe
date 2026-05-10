@@ -4207,16 +4207,18 @@ const SceneFactories = {
 
   const fileSnippets = {
     'index.js': [
-      'const state = renderFrame();',
-      'export default function App() {',
       'import { useEffect } from "react";',
+      'const state = renderFrame();',
       'const [data, setData] = useState([]);',
+      'useEffect(() => hydrateScene(), []);',
+      'export default function App() {',
       'return <Main wrapped={true} />;',
       'router.get("/api/health", ping);',
       'startTransition(() => sync());',
-      'while (true) refine();',
+      'const theme = createPalette("focus");',
     ],
     'api.ts': [
+      'import { z } from "zod";',
       'async function fetchUser(id: string) {',
       'const res = await fetch(`/users/${id}`);',
       'interface Session { token: string; }',
@@ -4227,14 +4229,24 @@ const SceneFactories = {
       'const schema = z.object({ id: z.string() });',
     ],
     'styles.css': [
-      '.container { display: flex; gap: 1rem; }',
-      'cursor: blinking;',
-      '@keyframes fadeIn { from { opacity:0 } }',
       ':root { --accent: #e63b2e; }',
+      '.container { display: flex; gap: 1rem; }',
+      '.editor { color-scheme: dark; }',
+      '@keyframes fadeIn { from { opacity:0 } }',
       'backdrop-filter: blur(20px);',
       'transition: all 0.3s ease-in-out;',
       '.panel { border-radius: 1.2rem; }',
       'grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));',
+    ],
+    'package.json': [
+      '"scripts": {',
+      '  "dev": "vite --host 0.0.0.0",',
+      '  "test": "vitest run",',
+      '  "build": "tsc && vite build"',
+      '}',
+      '"dependencies": {',
+      '  "@vitejs/plugin-react": "latest"',
+      '}',
     ],
   };
 
@@ -4244,6 +4256,7 @@ const SceneFactories = {
     { fx: 0.04, fy: 0.10, fw: 0.30, fh: 0.50, file: 'index.js',   depth: 0.74 },
     { fx: 0.36, fy: 0.06, fw: 0.34, fh: 0.58, file: 'api.ts',     depth: 1.00 },
     { fx: 0.72, fy: 0.12, fw: 0.24, fh: 0.46, file: 'styles.css', depth: 0.82 },
+    { fx: 0.58, fy: 0.62, fw: 0.22, fh: 0.30, file: 'package.json', depth: 0.68 },
   ].map(p => ({
     x: W * p.fx, y: H * p.fy,
     w: W * p.fw, h: W * p.fh,
@@ -4285,13 +4298,17 @@ const SceneFactories = {
   function highlightLine(text, baseColor) {
     // Returns array of {text, color} spans
     const tokens = [];
+    const syntaxKeyword = currentPalette[4 % currentPalette.length] || '#ff79c6';
+    const syntaxType = currentPalette[2 % currentPalette.length] || '#8be9fd';
+    const syntaxString = currentPalette[1 % currentPalette.length] || '#f1fa8c';
+    const syntaxNumber = currentPalette[3 % currentPalette.length] || '#bd93f9';
     const words  = text.split(/(\s+|[{}()[\];,:<>=+\-*/!.`"'])/);
     words.forEach(w => {
-      if(KEYWORDS.includes(w))      tokens.push({ text: w, color: '#ff79c6' });
-      else if(TYPES.includes(w))    tokens.push({ text: w, color: '#8be9fd' });
-      else if(/^["'`]/.test(w))     tokens.push({ text: w, color: '#f1fa8c' });
+      if(KEYWORDS.includes(w))      tokens.push({ text: w, color: syntaxKeyword });
+      else if(TYPES.includes(w))    tokens.push({ text: w, color: syntaxType });
+      else if(/^["'`]/.test(w))     tokens.push({ text: w, color: syntaxString });
       else if(/^\/\//.test(w))      tokens.push({ text: w, color: '#6272a4' });
-      else if(/^\d+$/.test(w))      tokens.push({ text: w, color: '#bd93f9' });
+      else if(/^\d+$/.test(w))      tokens.push({ text: w, color: syntaxNumber });
       else                          tokens.push({ text: w, color: baseColor  });
     });
     return tokens;
@@ -4341,7 +4358,7 @@ const SceneFactories = {
     const tabW      = ctx.measureText(file).width + 28;
     ctx.fillRect(x + 62, py, tabW, TITLE_H);
     if(paneAlpha > 0.8) {
-      const altFile = file === 'index.js' ? 'api.ts' : file === 'api.ts' ? 'styles.css' : 'index.js';
+      const altFile = file === 'index.js' ? 'api.ts' : file === 'api.ts' ? 'styles.css' : file === 'styles.css' ? 'package.json' : 'index.js';
       const altTabW = Math.max(0, Math.min(92, w - tabW - 78));
       if(altTabW > 24) {
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
@@ -4356,7 +4373,7 @@ const SceneFactories = {
     if(paneAlpha > 0.8) {
       ctx.fillStyle = `rgba(255,255,255,${isFocused ? 0.28 : 0.14})`;
       ctx.font = '10px DM Mono, monospace';
-      const crumb = file === 'styles.css' ? 'src / ui / styles.css' : `src / app / ${file}`;
+      const crumb = file === 'styles.css' ? 'src / ui / styles.css' : file === 'package.json' ? 'workspace / package.json' : `src / app / ${file}`;
       ctx.fillText(crumb, x + 12, py + TITLE_H + 18);
     }
 
@@ -4371,8 +4388,9 @@ const SceneFactories = {
     const contentH = h - TITLE_H - (paneAlpha > 0.8 ? 20 : 0);
     const lineCount = Math.ceil(contentH / LINE_H) + 4;
     const startLine = Math.floor(panel.scrollY);
-    const baseColor = file === 'styles.css' ? '#a8ff78'
+      const baseColor = file === 'styles.css' ? '#a8ff78'
                     : file === 'api.ts'     ? '#8be9fd'
+                    : file === 'package.json' ? '#f1fa8c'
                     : '#f8f8f2';
 
     for(let li = 0; li < lineCount; li++) {
@@ -4443,6 +4461,16 @@ const SceneFactories = {
       ctx.strokeRect(x + 1, py + 1, w - 2, h - 2);
       ctx.shadowBlur  = 0;
     }
+    if(paneAlpha > 0.8) {
+      const diagY = py + h - 18;
+      const ok = file !== 'api.ts' || statusErrors === 0;
+      ctx.fillStyle = ok ? 'rgba(39,201,63,0.16)' : 'rgba(255,189,46,0.16)';
+      ctx.fillRect(x + 10, diagY - 12, 78, 17);
+      ctx.fillStyle = ok ? '#8cffbd' : '#ffdf8a';
+      ctx.font = '10px DM Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(ok ? 'clean' : 'warnings', x + 18, diagY);
+    }
     ctx.restore();
   }
 
@@ -4485,13 +4513,23 @@ const SceneFactories = {
   const NOTIF_W     = 220;
   const NOTIF_H     = 44;
 
+  const commandItems = [
+    '> Run Build Task',
+    '> Go to Symbol: renderFrame',
+    '> Toggle Terminal',
+    '> Search: palette roles',
+    '> Open Recent: api.ts',
+  ];
+  let commandTimer = 0;
+  let activeCommand = null;
+
   // ---- terminal sequences ----
   const termSequences = [
-    ['npm install', '⠸ Installing packages...', 'added 847 packages in 3.2s'],
-    ['npm run build', '⠼ Building...', '✓ Built in 1.04s'],
+    ['npm install', '⠸ Resolving workspace...', 'added 847 packages in 3.2s'],
+    ['npm run build', '⠼ Bundling visual scenes...', '✓ Built in 1.04s'],
     ['git push origin main', 'Enumerating objects...', '✓ Branch pushed'],
     ['npx tsc --noEmit', 'Type checking...', '✓ No errors found'],
-    ['npm test', 'Running test suite...', '✓ 48 tests passed'],
+    ['npm test', 'Running focused suite...', '✓ 48 tests passed'],
   ];
   let termSeqIdx    = 0;
   let termStep      = 0; // 0=command, 1=output1, 2=output2
@@ -4581,17 +4619,57 @@ const SceneFactories = {
         drawWindow(panel, bob);
       });
 
+      // ---- command palette ----
+      commandTimer += speed * 0.0045;
+      if(!activeCommand && commandTimer > 1) {
+        activeCommand = commandItems[rndInt(0, commandItems.length - 1)];
+        commandTimer = 0;
+      }
+      if(activeCommand) {
+        const cmdAlpha = commandTimer < 0.18 ? commandTimer / 0.18
+                       : commandTimer > 0.82 ? 1 - (commandTimer - 0.82) / 0.18
+                       : 1;
+        const cmdW = Math.min(W * 0.42, 430);
+        const cmdH = 82;
+        const cmdX = W * 0.5 - cmdW * 0.5;
+        const cmdY = H * 0.14;
+        ctx.save();
+        ctx.globalAlpha = cmdAlpha;
+        ctx.fillStyle = 'rgba(8,12,18,0.9)';
+        ctx.strokeStyle = currentPalette[0] + '77';
+        ctx.shadowColor = currentPalette[0];
+        ctx.shadowBlur = 24;
+        ctx.fillRect(cmdX, cmdY, cmdW, cmdH);
+        ctx.strokeRect(cmdX, cmdY, cmdW, cmdH);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.34)';
+        ctx.font = '10px DM Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('COMMAND PALETTE', cmdX + 16, cmdY + 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '13px DM Mono, monospace';
+        ctx.fillText(activeCommand, cmdX + 16, cmdY + 49);
+        ctx.fillStyle = currentPalette[1] + '44';
+        ctx.fillRect(cmdX + 14, cmdY + 58, cmdW - 28, 3);
+        ctx.restore();
+        if(commandTimer >= 1) activeCommand = null;
+      }
+
       // ---- git diff panel ----
       const diffX = W * 0.04;
       const diffY = H * 0.64;
       const diffW = W * 0.30;
       const diffH = H * 0.22;
       diffScrollY += speed * 0.008;
-      ctx.fillStyle   = 'rgba(10,14,20,0.82)';
-      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      const diffPulse = 0.72 + 0.28 * Math.sin(tick * 2.2);
+      ctx.fillStyle   = 'rgba(10,14,20,0.86)';
+      ctx.strokeStyle = currentPalette[2 % currentPalette.length] + Math.round(48 + diffPulse * 52).toString(16).padStart(2,'0');
       ctx.lineWidth   = 1;
+      ctx.shadowColor = currentPalette[2 % currentPalette.length];
+      ctx.shadowBlur = 10 * diffPulse;
       ctx.fillRect(diffX, diffY, diffW, diffH);
       ctx.strokeRect(diffX, diffY, diffW, diffH);
+      ctx.shadowBlur = 0;
       ctx.fillStyle   = 'rgba(20,24,32,0.9)';
       ctx.fillRect(diffX, diffY, diffW, TITLE_H);
       ctx.fillStyle   = 'rgba(255,255,255,0.3)';
