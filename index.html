@@ -200,22 +200,6 @@
     color: #b8ceff;
   }
 
-#fps-btn {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.7);
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  cursor: pointer;
-  pointer-events: all;
-  transition: background 0.2s, color 0.2s;
-}
-#fps-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
-#fps-btn.active { background: rgba(230,59,46,0.25); border-color: rgba(230,59,46,0.5); color: #e63b2e; }
-
   button:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
@@ -632,37 +616,6 @@
     z-index: 11;
   }
 
-/* ---- FPS COUNTER ---- */
-#fps-counter {
-  position: fixed;
-  top: 1.25rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.5);
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px;
-  padding: 0.28rem 0.85rem;
-  pointer-events: none;
-  z-index: 15;
-  display: none;
-  gap: 0.5rem;
-  align-items: center;
-}
-#fps-counter.visible { display: flex; }
-#fps-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #30d158;
-  flex-shrink: 0;
-  transition: background 0.4s;
-}
-#fps-dot.amber { background: #ff9f0a; }
-#fps-dot.red   { background: #e63b2e; }
-
 #qa-badge {
   position: fixed;
   top: 4.4rem;
@@ -790,7 +743,6 @@
     #hide-btn,
     #fullscreen-btn,
     #auto-quality-btn,
-    #fps-btn,
     #leaderboard-btn,
     #sound-btn,
     #idea-btn,
@@ -990,14 +942,6 @@
     #hint {
       display: none;
     }
-    #fps-counter {
-      top: auto;
-      left: 0.75rem;
-      bottom: calc(0.45rem + env(safe-area-inset-bottom));
-      transform: none;
-      font-size: 0.56rem;
-      padding: 0.25rem 0.62rem;
-    }
     #qa-badge {
       top: calc(3.15rem + env(safe-area-inset-top));
     }
@@ -1046,7 +990,6 @@
     #hide-btn,
     #fullscreen-btn,
     #auto-quality-btn,
-    #fps-btn,
     #leaderboard-btn {
       font-size: 0.52rem;
       padding: 0.28rem 0.42rem;
@@ -1515,7 +1458,6 @@
       <button id="fullscreen-btn" type="button" aria-label="Toggle fullscreen">FULLSCREEN</button>
       <button id="hide-btn" type="button" aria-label="Hide interface">HIDE UI</button>
       <button id="auto-quality-btn" type="button" aria-label="Change quality profile">AUTO</button>
-      <button id="fps-btn" type="button" aria-label="Show frames per second">FPS</button>
       <button id="leaderboard-btn" type="button" title="Most used backgrounds" aria-label="Most used backgrounds">TIME</button>
       <button id="sound-btn" type="button" title="Ambient sounds" aria-label="Ambient sounds">SOUND</button>
       <button id="idea-btn" type="button" title="Share an idea" aria-label="Share an idea" data-tally-open="ja5Dd1" data-tally-layout="modal" data-tally-emoji-text="💡" data-tally-emoji-animation="tada">
@@ -1571,11 +1513,6 @@
 
 <div id="timer-alert">
   <div id="timer-alert-box">TIME'S UP</div>
-</div>
-
-<div id="fps-counter">
-  <div id="fps-dot"></div>
-  <span id="fps-text">-- fps</span>
 </div>
 
 <div id="qa-badge" aria-live="polite"></div>
@@ -5393,14 +5330,8 @@ function activateScene(id, options = {}) {
 }
 
 // ----------------------------------------
-// FPS COUNTER
+// PERFORMANCE SAMPLING
 // ----------------------------------------
-let fpsVisible = false;
-const fpsCounter = document.getElementById('fps-counter');
-const fpsDot     = document.getElementById('fps-dot');
-const fpsText    = document.getElementById('fps-text');
-const fpsBtn     = document.getElementById('fps-btn');
-
 let fpsFrameTimes = [];
 let fpsLastTime = null;
 
@@ -5421,23 +5352,9 @@ function tickFps(now) {
         else if(renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.04);
       }
     }
-    if(fpsVisible) {
-      const densityNote = densityAutoOffset ? ` · d-${densityAutoOffset}` : '';
-      fpsText.textContent = autoQualityEnabled ? `${fps} fps · ${Math.round(renderScale * 100)}%${densityNote}` : `${fps} fps`;
-      fpsDot.className = fps >= 50 ? '' : fps >= 35 ? 'amber' : 'red';
-    }
   }
   fpsLastTime = now;
 }
-
-function toggleFps() {
-  fpsVisible = !fpsVisible;
-  fpsCounter.classList.toggle('visible', fpsVisible);
-  fpsBtn.classList.toggle('active', fpsVisible);
-  if(!fpsVisible) { fpsText.textContent = '-- fps'; }
-}
-
-fpsBtn.addEventListener('click', toggleFps);
 
 // Patch the loop to tick FPS
 function loop() {
