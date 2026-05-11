@@ -273,6 +273,9 @@
       0 22px 70px rgba(0,0,0,0.48),
       0 1px 0 rgba(255,255,255,0.08) inset;
   }
+  #panel-toggle {
+    display: none;
+  }
 
   #panel h2 {
     font-size: 0.65rem;
@@ -393,6 +396,10 @@
   .scene-btn:hover .scene-preview,
   .scene-btn.active .scene-preview {
     box-shadow: 0 12px 26px rgba(0,0,0,0.22), 0 0 22px rgba(93,255,210,0.16), 0 1px 0 rgba(255,255,255,0.1) inset;
+  }
+  .scene-btn.active .scene-preview {
+    border-color: rgba(93,255,210,0.62);
+    transform: scale(1.06);
   }
   .scene-btn .label {
     width: 100%;
@@ -576,6 +583,31 @@
     border-color: rgba(93,144,255,0.62);
     background: rgba(93,144,255,0.14);
     color: #fff;
+  }
+  #scene-tooltip {
+    position: fixed;
+    z-index: 18;
+    display: none;
+    max-width: 240px;
+    pointer-events: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    line-height: 1.45;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.78);
+    background: rgba(9,12,18,0.9);
+    border: 1px solid rgba(93,255,210,0.22);
+    border-radius: 0.6rem;
+    padding: 0.58rem 0.7rem;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.36);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  #scene-tooltip strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: rgba(255,255,255,0.92);
+    text-transform: uppercase;
   }
   .pal-swatch {
     width: 22px; height: 22px;
@@ -781,12 +813,44 @@
     }
     #panel {
       width: 100%;
-      max-height: min(58dvh, 560px);
+      max-height: min(46dvh, 430px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
       border-radius: 0.85rem;
-      padding: 0.75rem;
+      padding: 1rem 0.75rem 0.75rem;
+      transition: max-height 0.22s ease, transform 0.22s ease;
+    }
+    body.panel-expanded #panel {
+      max-height: min(78dvh, 680px);
+    }
+    #panel-toggle {
+      display: flex;
+      position: sticky;
+      top: -0.35rem;
+      z-index: 3;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: -0.4rem 0 0.55rem;
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,0.42);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      touch-action: none;
+    }
+    #panel-toggle::before {
+      content: "";
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.22);
+      box-shadow: 0 0 14px rgba(93,255,210,0.1);
     }
     #panel h2 {
       font-size: 0.56rem;
@@ -1293,8 +1357,68 @@
     background: rgba(255,255,255,0.14);
     color: #fff;
   }
+
+  #rename-box {
+    width: min(92vw, 390px);
+    background: rgba(12,14,20,0.92);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    padding: 1.15rem;
+    color: rgba(255,255,255,0.82);
+  }
+  #rename-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.56);
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+  }
+  #rename-input {
+    width: 100%;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 0.72rem;
+    outline: none;
+    padding: 0.72rem 0.78rem;
+  }
+  #rename-input:focus {
+    border-color: rgba(93,255,210,0.48);
+    box-shadow: 0 0 0 1px rgba(93,255,210,0.16);
+  }
+  .rename-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+  }
+  .rename-actions button {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.72);
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  #rename-save {
+    border-color: rgba(93,255,210,0.36);
+    color: rgba(169,255,231,0.88);
+  }
   @media (max-width: 720px) {
     #sound-box {
+      max-height: 80dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #rename-box {
       max-height: 80dvh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -1407,6 +1531,7 @@
   </div>
 
   <div id="panel">
+    <button id="panel-toggle" type="button" aria-expanded="false">Controls</button>
     <h2>Background</h2>
     <div class="scene-rail">
       <div id="scene-grid"></div>
@@ -1454,6 +1579,7 @@
 </div>
 
 <div id="qa-badge" aria-live="polite"></div>
+<div id="scene-tooltip" role="tooltip"></div>
 
 <div id="help-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div id="help-box">
@@ -1462,6 +1588,8 @@
       <div><span>H</span><span>hide or show the interface</span></div>
       <div><span>F</span><span>toggle fullscreen</span></div>
       <div><span>Space</span><span>pause or resume motion</span></div>
+      <div><span>Arrows</span><span>move through focused scenes or palettes</span></div>
+      <div><span>Esc</span><span>closes open panels</span></div>
       <div><span>QUALITY</span><span>cycles Auto, Crisp, and Battery render profiles</span></div>
       <div><span>SOUND</span><span>opens three opt-in ambient sound choices</span></div>
       <div><span>IDEA</span><span>opens the feedback form</span></div>
@@ -1493,6 +1621,17 @@
     </label>
     <div id="sound-status" aria-live="polite"></div>
     <button id="sound-close" type="button">CLOSE</button>
+  </div>
+</div>
+
+<div id="rename-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="rename-title">
+  <div id="rename-box">
+    <h3 id="rename-title">Save Preset</h3>
+    <input id="rename-input" type="text" maxlength="18" autocomplete="off" aria-label="Preset name">
+    <div class="rename-actions">
+      <button id="rename-cancel" type="button">CANCEL</button>
+      <button id="rename-save" type="button">SAVE</button>
+    </div>
   </div>
 </div>
 
@@ -1531,6 +1670,7 @@ const DEFAULT_PRESETS = [
 ];
 let presets = [];
 let activePresetIndex = -1;
+let editingPresetIndex = -1;
 
 // ----------------------------------------
 // ----------------------------------------
@@ -1585,6 +1725,12 @@ const soundVolumeSlider = document.getElementById('sound-volume');
 const soundVolumeValue = document.getElementById('sound-volume-value');
 const soundStatus = document.getElementById('sound-status');
 const soundClose = document.getElementById('sound-close');
+const renameOverlay = document.getElementById('rename-overlay');
+const renameInput = document.getElementById('rename-input');
+const renameSave = document.getElementById('rename-save');
+const renameCancel = document.getElementById('rename-cancel');
+const sceneTooltip = document.getElementById('scene-tooltip');
+const panelToggle = document.getElementById('panel-toggle');
 const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpClose = document.getElementById('help-close');
@@ -1663,6 +1809,11 @@ function syncTopActionLabels() {
   updateSoundButton();
 }
 
+function setPanelExpanded(expanded) {
+  document.body.classList.toggle('panel-expanded', expanded);
+  panelToggle?.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+}
+
 function resize() {
   const viewport = viewportSize();
   canvas.style.width = `${viewport.width}px`;
@@ -1672,6 +1823,7 @@ function resize() {
   if(currentScene && SceneFactories[activeSceneId]) {
     currentScene = SceneFactories[activeSceneId]();
   }
+  if(!isCompactViewport()) setPanelExpanded(false);
   syncTopActionLabels();
 }
 window.addEventListener('resize', resize);
@@ -2154,6 +2306,21 @@ const DENSITY_META = {
   inkcloud: 'INK',
 };
 
+const SCENE_HINTS = {
+  block: 'Bouncing DVD object. Speed changes travel pace; dust adds gallery atmosphere.',
+  particles: 'Connected particle field. Speed moves drift; particles changes network fullness.',
+  pomodoro: 'Focus timer scene. Speed affects ambient motion; ambience controls surrounding detail.',
+  warp: 'Forward starfield. Speed controls travel; stars controls streak density.',
+  plasma: 'Soft colour field. Speed changes flow; complexity changes blob layering.',
+  rain: 'Matrix rain. Speed changes fall rate; streams changes column count.',
+  ribbons: 'Layered wave ribbons. Speed changes flow; ribbons changes strand count.',
+  topography: 'Contour drift. Speed changes scan motion; lines changes map detail.',
+  confetti: 'Falling shapes. Speed changes fall rate; pieces changes amount.',
+  grid3d: 'Perspective grid. Speed changes travel; grid changes line density.',
+  livecoding: 'Animated IDE. Speed changes activity; detail changes editor density.',
+  inkcloud: 'Cloudy ink wash. Speed changes bloom drift; ink changes blob count.',
+};
+
 const DENSITY_CAPS = {
   pomodoro: 8,
   warp: 8,
@@ -2396,16 +2563,34 @@ function previewPalette(sceneId) {
 
 function drawPreviewBackdrop(pctx, width, height, palette) {
   const bg = pctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, '#070b14');
-  bg.addColorStop(0.55, '#111827');
-  bg.addColorStop(1, '#05060c');
+  bg.addColorStop(0, '#050713');
+  bg.addColorStop(0.48, '#111827');
+  bg.addColorStop(1, '#03040a');
   pctx.fillStyle = bg;
   pctx.fillRect(0, 0, width, height);
-  const glow = pctx.createRadialGradient(width * 0.5, height * 0.48, 0, width * 0.5, height * 0.5, Math.max(width, height) * 0.72);
-  glow.addColorStop(0, `${palette[0]}33`);
+  const glow = pctx.createRadialGradient(width * 0.42, height * 0.34, 0, width * 0.5, height * 0.5, Math.max(width, height) * 0.82);
+  glow.addColorStop(0, `${palette[0]}44`);
+  glow.addColorStop(0.42, `${palette[2 % palette.length]}18`);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   pctx.fillStyle = glow;
   pctx.fillRect(0, 0, width, height);
+}
+
+function finishScenePreview(pctx, width, height, palette) {
+  const sheen = pctx.createLinearGradient(0, 0, width, height);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.09)');
+  sheen.addColorStop(0.26, 'rgba(255,255,255,0)');
+  sheen.addColorStop(1, 'rgba(255,255,255,0.03)');
+  pctx.fillStyle = sheen;
+  pctx.fillRect(0, 0, width, height);
+  const vignette = pctx.createRadialGradient(width / 2, height / 2, height * 0.2, width / 2, height / 2, Math.max(width, height) * 0.72);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.52)');
+  pctx.fillStyle = vignette;
+  pctx.fillRect(0, 0, width, height);
+  pctx.strokeStyle = `${palette[0]}44`;
+  pctx.lineWidth = 1;
+  pctx.strokeRect(0.5, 0.5, width - 1, height - 1);
 }
 
 function makeScenePreview(sceneId, canvas, index) {
@@ -2415,6 +2600,7 @@ function makeScenePreview(sceneId, canvas, index) {
     drops: Array.from({ length: 16 }, () => ({ x: rand(), y: rand(), speed: 0.22 + rand() * 0.42 })),
     confetti: Array.from({ length: 18 }, () => ({ x: rand(), y: rand(), rot: rand() * 6.28, speed: 0.12 + rand() * 0.34, color: Math.floor(rand() * 6) })),
     blobs: Array.from({ length: 5 }, () => ({ x: rand(), y: rand(), r: 0.18 + rand() * 0.22, phase: rand() * 6.28, color: Math.floor(rand() * 6) })),
+    stars: Array.from({ length: 18 }, () => ({ x: rand(), y: rand(), r: 0.4 + rand() * 1.1, phase: rand() * 6.28 })),
   };
   return { sceneId, canvas, state };
 }
@@ -2432,8 +2618,21 @@ function drawScenePreview(item, now) {
   pctx.lineJoin = 'round';
 
   if(item.sceneId === 'block') {
+    item.state.stars.forEach((star, i) => {
+      pctx.globalAlpha = 0.12 + 0.18 * Math.sin(t * 1.4 + star.phase) ** 2;
+      pctx.fillStyle = palette[i % palette.length];
+      pctx.beginPath();
+      pctx.arc(star.x * width, star.y * height, star.r, 0, Math.PI * 2);
+      pctx.fill();
+    });
     const x = width * (0.18 + 0.64 * Math.abs(Math.sin(t * 0.72)));
     const y = height * (0.24 + 0.46 * Math.abs(Math.cos(t * 0.58)));
+    pctx.globalAlpha = 0.24;
+    pctx.fillStyle = palette[0];
+    pctx.beginPath();
+    pctx.ellipse(x, height * 0.76, width * 0.22, height * 0.05, 0, 0, Math.PI * 2);
+    pctx.fill();
+    pctx.globalAlpha = 1;
     pctx.translate(x, y);
     pctx.rotate(-0.14 + Math.sin(t) * 0.08);
     const logo = pctx.createLinearGradient(-22, -10, 24, 12);
@@ -2449,6 +2648,7 @@ function drawScenePreview(item, now) {
     pctx.ellipse(0, height * 0.14, width * 0.18, height * 0.055, 0, 0, Math.PI * 2);
     pctx.fill();
   } else if(item.sceneId === 'particles') {
+    pctx.globalCompositeOperation = 'lighter';
     item.state.points.forEach((p, i) => {
       p.x = (p.x + p.vx + 1) % 1;
       p.y = (p.y + p.vy + 1) % 1;
@@ -2471,8 +2671,19 @@ function drawScenePreview(item, now) {
       pctx.arc(p.x * width, p.y * height, p.r, 0, Math.PI * 2);
       pctx.fill();
     });
+    pctx.globalCompositeOperation = 'source-over';
   } else if(item.sceneId === 'pomodoro') {
     const cx = width / 2, cy = height / 2, r = Math.min(width, height) * 0.32;
+    pctx.globalAlpha = 0.35;
+    for(let i = 0; i < 20; i++) {
+      const a = i * 2.399 + t * 0.18;
+      const rr = r * (1.25 + (i % 3) * 0.12);
+      pctx.fillStyle = palette[i % palette.length];
+      pctx.beginPath();
+      pctx.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, 0.8, 0, Math.PI * 2);
+      pctx.fill();
+    }
+    pctx.globalAlpha = 1;
     pctx.strokeStyle = 'rgba(255,255,255,0.12)';
     pctx.lineWidth = Math.max(3, height * 0.08);
     pctx.beginPath();
@@ -2484,8 +2695,19 @@ function drawScenePreview(item, now) {
     pctx.beginPath();
     pctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 1.55 + Math.sin(t) * 0.4);
     pctx.stroke();
+    pctx.shadowBlur = 0;
+    pctx.fillStyle = 'rgba(255,255,255,0.88)';
+    pctx.font = `700 ${Math.max(7, height * 0.17)}px DM Mono, monospace`;
+    pctx.textAlign = 'center';
+    pctx.fillText('25', cx, cy + height * 0.055);
   } else if(item.sceneId === 'warp') {
     pctx.translate(width / 2, height / 2);
+    const tunnel = pctx.createRadialGradient(0, 0, 0, 0, 0, width * 0.55);
+    tunnel.addColorStop(0, 'rgba(255,255,255,0.16)');
+    tunnel.addColorStop(0.2, `${palette[0]}22`);
+    tunnel.addColorStop(1, 'rgba(0,0,0,0)');
+    pctx.fillStyle = tunnel;
+    pctx.fillRect(-width / 2, -height / 2, width, height);
     for(let i = 0; i < 26; i++) {
       const a = i * 2.41;
       const phase = (t * 0.8 + i * 0.07) % 1;
@@ -2500,6 +2722,7 @@ function drawScenePreview(item, now) {
       pctx.stroke();
     }
   } else if(item.sceneId === 'plasma') {
+    pctx.globalCompositeOperation = 'screen';
     item.state.blobs.forEach((b, i) => {
       const x = width * (b.x + Math.sin(t * 0.7 + b.phase) * 0.08);
       const y = height * (b.y + Math.cos(t * 0.55 + b.phase) * 0.1);
@@ -2509,7 +2732,10 @@ function drawScenePreview(item, now) {
       pctx.fillStyle = g;
       pctx.fillRect(0, 0, width, height);
     });
+    pctx.globalCompositeOperation = 'source-over';
   } else if(item.sceneId === 'rain') {
+    pctx.fillStyle = 'rgba(0,0,0,0.18)';
+    pctx.fillRect(0, 0, width, height);
     pctx.font = `${Math.max(8, height * 0.22)}px DM Mono, monospace`;
     item.state.drops.forEach((d, i) => {
       d.y = (d.y + d.speed * 0.02) % 1;
@@ -2518,6 +2744,7 @@ function drawScenePreview(item, now) {
       pctx.fillText(String.fromCharCode(0x30A0 + ((i + Math.floor(t * 12)) % 80)), d.x * width, d.y * height);
     });
   } else if(item.sceneId === 'ribbons') {
+    pctx.globalCompositeOperation = 'lighter';
     for(let band = 0; band < 3; band++) {
       pctx.strokeStyle = palette[band % palette.length];
       pctx.lineWidth = 2 + band * 0.7;
@@ -2530,16 +2757,18 @@ function drawScenePreview(item, now) {
       }
       pctx.stroke();
     }
+    pctx.globalCompositeOperation = 'source-over';
   } else if(item.sceneId === 'topography') {
-    pctx.strokeStyle = palette[0];
-    for(let ring = 0; ring < 8; ring++) {
-      pctx.globalAlpha = 0.1 + ring * 0.07;
+    for(let ring = 0; ring < 10; ring++) {
+      pctx.strokeStyle = palette[ring % palette.length];
+      pctx.globalAlpha = 0.08 + ring * 0.055;
       pctx.lineWidth = 1;
       pctx.beginPath();
       pctx.ellipse(width * 0.48, height * 0.5, ring * width * 0.07 + (Math.sin(t) + 1) * 2, ring * height * 0.045 + 3, Math.sin(t * 0.2) * 0.3, 0, Math.PI * 2);
       pctx.stroke();
     }
   } else if(item.sceneId === 'confetti') {
+    pctx.globalCompositeOperation = 'lighter';
     item.state.confetti.forEach(c => {
       c.y = (c.y + c.speed * 0.025) % 1;
       c.rot += 0.05;
@@ -2551,8 +2780,15 @@ function drawScenePreview(item, now) {
       pctx.fillRect(-2, -1, 4, 2);
       pctx.restore();
     });
+    pctx.globalCompositeOperation = 'source-over';
   } else if(item.sceneId === 'grid3d') {
     const horizon = height * 0.45;
+    const horizonGlow = pctx.createLinearGradient(0, horizon - 8, 0, horizon + 10);
+    horizonGlow.addColorStop(0, 'rgba(0,0,0,0)');
+    horizonGlow.addColorStop(0.5, `${palette[1 % palette.length]}55`);
+    horizonGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    pctx.fillStyle = horizonGlow;
+    pctx.fillRect(0, horizon - 10, width, 20);
     pctx.strokeStyle = palette[0];
     pctx.globalAlpha = 0.55;
     for(let i = -5; i <= 5; i++) {
@@ -2571,6 +2807,14 @@ function drawScenePreview(item, now) {
   } else if(item.sceneId === 'livecoding') {
     pctx.fillStyle = 'rgba(8,12,18,0.92)';
     pctx.fillRect(width * 0.08, height * 0.14, width * 0.84, height * 0.72);
+    pctx.fillStyle = 'rgba(255,255,255,0.1)';
+    pctx.fillRect(width * 0.08, height * 0.14, width * 0.84, height * 0.13);
+    ['#ff5f56','#ffbd2e','#27c93f'].forEach((col, i) => {
+      pctx.fillStyle = col;
+      pctx.beginPath();
+      pctx.arc(width * (0.15 + i * 0.055), height * 0.205, 1.5, 0, Math.PI * 2);
+      pctx.fill();
+    });
     for(let row = 0; row < 5; row++) {
       pctx.fillStyle = row % 2 ? 'rgba(255,255,255,0.18)' : palette[row % palette.length];
       const lineW = width * (0.22 + ((row * 0.13 + t * 0.18) % 0.5));
@@ -2579,6 +2823,7 @@ function drawScenePreview(item, now) {
     pctx.fillStyle = palette[0];
     pctx.fillRect(width * (0.2 + Math.abs(Math.sin(t)) * 0.52), height * 0.67, 2, 8);
   } else if(item.sceneId === 'inkcloud') {
+    pctx.globalCompositeOperation = 'lighter';
     item.state.blobs.forEach((b, i) => {
       const x = width * (b.x + Math.sin(t * 0.22 + b.phase) * 0.12);
       const y = height * (b.y + Math.cos(t * 0.2 + b.phase) * 0.12);
@@ -2588,9 +2833,11 @@ function drawScenePreview(item, now) {
       pctx.fillStyle = g;
       pctx.fillRect(0, 0, width, height);
     });
+    pctx.globalCompositeOperation = 'source-over';
   }
   pctx.restore();
   pctx.globalAlpha = 1;
+  finishScenePreview(pctx, width, height, palette);
 }
 
 function animateScenePreviews(now) {
@@ -2625,6 +2872,7 @@ function renderScenes() {
   btn.type = 'button';
   btn.dataset.id = s.id;
   btn.setAttribute('aria-pressed', 'false');
+  btn.setAttribute('aria-label', `${s.label}. ${SCENE_HINTS[s.id] || ''}`);
   const isFavorite = favoriteScenes.includes(s.id);
   btn.innerHTML = `<span class="scene-fav${isFavorite ? ' active' : ''}" role="button" tabindex="0" title="${isFavorite ? 'Unpin background' : 'Pin background'}" aria-label="${isFavorite ? 'Unpin' : 'Pin'} ${s.label}">${isFavorite ? '★' : '☆'}</span><span class="scene-preview" data-scene="${s.id}" aria-hidden="true"><canvas></canvas></span><span class="label">${s.label}</span>`;
   btn.addEventListener('click', () => {
@@ -2632,6 +2880,11 @@ function renderScenes() {
     syncActivePreset();
     persistAppState();
   });
+  btn.addEventListener('mouseenter', event => showSceneTooltip(s, event.currentTarget));
+  btn.addEventListener('focus', event => showSceneTooltip(s, event.currentTarget));
+  btn.addEventListener('mousemove', event => positionSceneTooltip(event.clientX, event.clientY));
+  btn.addEventListener('mouseleave', hideSceneTooltip);
+  btn.addEventListener('blur', hideSceneTooltip);
   const fav = btn.querySelector('.scene-fav');
   const toggleFavorite = event => {
     event.stopPropagation();
@@ -2665,6 +2918,29 @@ function renderScenes() {
 
 renderScenes();
 
+function positionSceneTooltip(x, y) {
+  if(!sceneTooltip || sceneTooltip.style.display !== 'block') return;
+  const margin = 14;
+  const rect = sceneTooltip.getBoundingClientRect();
+  const left = Math.min(window.innerWidth - rect.width - margin, Math.max(margin, x + 16));
+  const top = Math.min(window.innerHeight - rect.height - margin, Math.max(margin, y - rect.height - 10));
+  sceneTooltip.style.left = `${left}px`;
+  sceneTooltip.style.top = `${top}px`;
+}
+
+function showSceneTooltip(scene, target) {
+  if(!sceneTooltip || isCompactViewport()) return;
+  const hint = SCENE_HINTS[scene.id] || 'Preview this background.';
+  sceneTooltip.innerHTML = `<strong>${scene.label}</strong>${hint}`;
+  sceneTooltip.style.display = 'block';
+  const rect = target.getBoundingClientRect();
+  positionSceneTooltip(rect.left + rect.width * 0.5, rect.top);
+}
+
+function hideSceneTooltip() {
+  if(sceneTooltip) sceneTooltip.style.display = 'none';
+}
+
 function syncSceneScrollButton() {
   const canScroll = grid.scrollWidth > grid.clientWidth + 4;
   const atEnd = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 8;
@@ -2672,6 +2948,25 @@ function syncSceneScrollButton() {
   sceneScrollBtn.textContent = atEnd ? '‹' : '›';
   sceneScrollBtn.title = atEnd ? 'Back to first backgrounds' : 'More backgrounds';
 }
+
+function focusSceneByOffset(offset) {
+  const buttons = Array.from(document.querySelectorAll('.scene-btn'));
+  if(!buttons.length) return;
+  const currentIndex = Math.max(0, buttons.findIndex(btn => btn === document.activeElement || btn.dataset.id === activeSceneId));
+  const nextIndex = (currentIndex + offset + buttons.length) % buttons.length;
+  const nextBtn = buttons[nextIndex];
+  nextBtn.focus();
+  nextBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  activateScene(nextBtn.dataset.id);
+  syncActivePreset();
+  persistAppState();
+}
+
+grid.addEventListener('keydown', event => {
+  if(event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+  event.preventDefault();
+  focusSceneByOffset(event.key === 'ArrowRight' ? 1 : -1);
+});
 
 sceneScrollBtn.addEventListener('click', () => {
   const amount = Math.max(220, grid.clientWidth * 0.72);
@@ -2721,6 +3016,26 @@ Object.keys(PALETTES).forEach(key => {
   palRow.appendChild(wrap);
 });
 
+function focusPaletteByOffset(offset) {
+  const wraps = Array.from(document.querySelectorAll('.pal-wrap'));
+  const keys = Object.keys(PALETTES);
+  if(!wraps.length) return;
+  const currentIndex = Math.max(0, keys.indexOf(activePaletteKey));
+  const nextIndex = (currentIndex + offset + wraps.length) % wraps.length;
+  wraps[nextIndex].focus();
+  wraps[nextIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  setPalette(keys[nextIndex]);
+  activateScene(activeSceneId);
+  syncActivePreset();
+  persistAppState();
+}
+
+palRow.addEventListener('keydown', event => {
+  if(event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+  event.preventDefault();
+  focusPaletteByOffset(event.key === 'ArrowRight' ? 1 : -1);
+});
+
 function setPalette(key) {
   if(!PALETTES[key]) return;
   document.querySelectorAll('.pal-swatch').forEach(s=>s.classList.remove('active'));
@@ -2732,6 +3047,7 @@ function setPalette(key) {
   });
   activePaletteKey = key;
   applyScenePalette(activeSceneId, activePaletteKey);
+  if(reducedMotionActive) scenePreviewItems.forEach(item => drawScenePreview(item, 0));
 }
 
 function persistAppState() {
@@ -2847,18 +3163,34 @@ function applyPreset(index) {
   persistAppState();
 }
 
-function editPreset(index) {
+function openPresetRename(index) {
   const preset = presets[index];
   if(!preset) return;
-  const nextName = window.prompt('Preset name', preset.name);
-  if(nextName === null) return;
-  presets[index] = {
+  editingPresetIndex = index;
+  renameInput.value = preset.name;
+  openModal(renameOverlay);
+  requestAnimationFrame(() => {
+    renameInput.focus();
+    renameInput.select();
+  });
+}
+
+function savePresetRename() {
+  const preset = presets[editingPresetIndex];
+  if(!preset) return;
+  presets[editingPresetIndex] = {
     ...currentSettings(),
-    name: nextName.trim() || preset.name,
+    name: renameInput.value.trim() || preset.name,
   };
   savePresets();
   renderPresetButtons();
+  closeModal(renameOverlay);
   persistAppState();
+  editingPresetIndex = -1;
+}
+
+function editPreset(index) {
+  openPresetRename(index);
 }
 
 function randomItem(items, current = null) {
@@ -2926,10 +3258,32 @@ updateAutoQualityButton();
 // ----------------------------------------
 let uiHidden = false;
 const ui = document.getElementById('ui');
+const panel = document.getElementById('panel');
 const hideBtn = document.getElementById('hide-btn');
 const fullscreenBtn = document.getElementById('fullscreen-btn');
 hideBtn.addEventListener('click', toggleUI);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
+let panelTouchStartY = null;
+let panelWasDragged = false;
+panelToggle?.addEventListener('click', () => {
+  if(panelWasDragged) {
+    panelWasDragged = false;
+    return;
+  }
+  setPanelExpanded(!document.body.classList.contains('panel-expanded'));
+});
+panelToggle?.addEventListener('pointerdown', event => {
+  panelTouchStartY = event.clientY;
+  panelWasDragged = false;
+});
+panelToggle?.addEventListener('pointerup', event => {
+  if(panelTouchStartY === null) return;
+  const delta = event.clientY - panelTouchStartY;
+  panelTouchStartY = null;
+  if(Math.abs(delta) < 18) return;
+  panelWasDragged = true;
+  setPanelExpanded(delta < 0);
+});
 function toggleUI() {
   uiHidden = !uiHidden;
   ui.classList.toggle('hidden', uiHidden);
@@ -3064,6 +3418,7 @@ registerModal(soundOverlay, {
     renderSoundOptions();
   },
 });
+registerModal(renameOverlay, { focus: renameInput });
 
 helpBtn.addEventListener('click', () => toggleHelp(true));
 helpClose.addEventListener('click', () => toggleHelp(false));
@@ -3075,11 +3430,20 @@ soundClose.addEventListener('click', () => toggleSoundBox(false));
 soundVolumeSlider.addEventListener('input', e => {
   setAmbientVolume(Number(e.target.value) / 100);
 });
+renameCancel.addEventListener('click', () => {
+  closeModal(renameOverlay);
+  editingPresetIndex = -1;
+});
+renameSave.addEventListener('click', savePresetRename);
+renameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') savePresetRename();
+});
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape') {
     const openOverlay = document.querySelector('.modal-overlay.show');
     if(openOverlay) {
       closeModal(openOverlay);
+      editingPresetIndex = -1;
       return;
     }
   }
