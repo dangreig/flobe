@@ -87,10 +87,19 @@ export function createTimerController({ display, beginButton, resetButton, alert
     if(options.persist !== false) onPersist();
   }
 
+  function begin(defaultSecs = selectedSecs, options = {}) {
+    if(interval) return false;
+    const totalSecs = selectedSecs || defaultSecs;
+    if(!totalSecs) return false;
+    selectedSecs = totalSecs;
+    start(totalSecs);
+    if(options.persist !== false) onPersist();
+    return true;
+  }
+
   function wire() {
     beginButton.addEventListener('click', () => {
-      if(!selectedSecs || interval) return;
-      start(selectedSecs);
+      begin();
     });
     resetButton.addEventListener('click', reset);
     alertBox.addEventListener('click', () => alertBox.classList.remove('show'));
@@ -113,5 +122,6 @@ export function createTimerController({ display, beginButton, resetButton, alert
     reset,
     select,
     start,
+    begin,
   };
 }

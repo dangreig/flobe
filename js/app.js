@@ -1096,6 +1096,39 @@ const SceneFactories = createSceneFactories({
   timer,
   doc: document,
 });
+
+function canvasPointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / Math.max(1, rect.width);
+  const scaleY = canvas.height / Math.max(1, rect.height);
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function updateCanvasCursor(event) {
+  if(!currentScene?.hitTestPointer) {
+    canvas.style.cursor = '';
+    return;
+  }
+  const point = canvasPointFromEvent(event);
+  canvas.style.cursor = currentScene.hitTestPointer(point.x, point.y) ? 'pointer' : '';
+}
+
+canvas.addEventListener('click', event => {
+  if(!currentScene?.handlePointer) return;
+  const point = canvasPointFromEvent(event);
+  if(!currentScene.handlePointer(point.x, point.y, event)) return;
+  event.preventDefault();
+  syncShareUrl();
+  persistAppState();
+});
+
+canvas.addEventListener('pointermove', updateCanvasCursor);
+canvas.addEventListener('pointerleave', () => {
+  canvas.style.cursor = '';
+});
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------

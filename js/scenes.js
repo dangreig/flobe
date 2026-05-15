@@ -256,6 +256,7 @@ const SceneFactories = {
     let warpDuration = 120;
     let nextWarpIn = rnd(45, 110);
     let tick = 0;
+    let startButtonBounds = null;
     function mkPomodoroWarpStar() {
       return { x:rnd(-W/2,W/2), y:rnd(-H/2,H/2), z:rnd(1,W), pz:1, col:rndCol() };
     }
@@ -276,6 +277,17 @@ const SceneFactories = {
       ctx.closePath();
     }
     return {
+      hitTestPointer(x, y) {
+        if(!startButtonBounds) return false;
+        return x >= startButtonBounds.x
+          && x <= startButtonBounds.x + startButtonBounds.w
+          && y >= startButtonBounds.y
+          && y <= startButtonBounds.y + startButtonBounds.h;
+      },
+      handlePointer(x, y) {
+        if(!this.hitTestPointer(x, y)) return false;
+        return timer.begin?.(25 * 60) || false;
+      },
       draw() {
         tick += 0.01 * (0.8 + speed * 0.16);
         const cx = W / 2;
@@ -441,6 +453,7 @@ const SceneFactories = {
         const btnH = compact ? 40 : 48;
         const btnX = cx - btnW / 2;
         const btnY = cy + (compact ? 36 : 48);
+        startButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
         const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
         btnGrad.addColorStop(0, '#67efa9');
         btnGrad.addColorStop(1, '#35d4ca');
