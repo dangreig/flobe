@@ -108,7 +108,7 @@
   }
   .logo-focus {
     font-family: 'Syne', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.875rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -117,7 +117,7 @@
   }
   .logo-flow {
     font-family: 'Syne', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.875rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -125,8 +125,8 @@
     text-shadow: 0 0 22px rgba(230,59,46,0.55);
   }
   .logo-dot {
-    width: 6px;
-    height: 6px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: #e63b2e;
     margin: 0 0.18em 0.22em;
@@ -711,12 +711,12 @@
     }
     .logo-focus,
     .logo-flow {
-      font-size: 1rem;
+      font-size: 1.5rem;
       letter-spacing: 0.045em;
     }
     .logo-dot {
-      width: 5px;
-      height: 5px;
+      width: 7.5px;
+      height: 7.5px;
       margin-bottom: 0.16em;
     }
     #top-actions {
@@ -974,7 +974,7 @@
     }
     .logo-focus,
     .logo-flow {
-      font-size: 0.86rem;
+      font-size: 1.29rem;
     }
     #top-actions {
       max-width: 100%;
