@@ -9,6 +9,7 @@ import {
   SCENE_HINTS,
   SCENES,
   SESSION_STORAGE_KEY,
+  SPEED_META,
   USAGE_STORAGE_KEY,
 } from './config.js';
 import {
@@ -83,6 +84,7 @@ const {
   soundStatus,
   soundVolumeSlider,
   soundVolumeValue,
+  speedLabel,
   speedSlider,
   timerAlert,
   timerBegin,
@@ -406,15 +408,32 @@ function effectiveDensityValue(sceneId = activeSceneId) {
   return Math.max(1, Math.min(cap, density - densityAutoOffset));
 }
 
-function updateDensityMeta(sceneId = activeSceneId) {
-  if(!densityLabel || !densityValue) return;
-  const label = DENSITY_META[sceneId] || 'DENSITY';
+function updateControlMeta(sceneId = activeSceneId) {
+  const speedMeta = SPEED_META[sceneId] || 'SPEED';
+  const densityMeta = DENSITY_META[sceneId] || 'DENSITY';
   const effective = effectiveDensityValue(sceneId);
-  densityLabel.textContent = label;
-  densityValue.textContent = `${density}/10`;
-  densityValue.title = effective !== density
-    ? `Rendering at ${effective}/10 density`
-    : `Rendering at ${density}/10 density`;
+  if(speedLabel) speedLabel.textContent = speedMeta;
+  if(speedSlider) {
+    speedSlider.setAttribute('aria-label', speedMeta);
+    speedSlider.title = `${speedMeta}: ${speed}/10`;
+  }
+  if(densityLabel) densityLabel.textContent = densityMeta;
+  if(densitySlider) {
+    densitySlider.setAttribute('aria-label', densityMeta);
+    densitySlider.title = effective !== density
+      ? `${densityMeta}: ${density}/10, rendering at ${effective}/10`
+      : `${densityMeta}: ${density}/10`;
+  }
+  if(densityValue) {
+    densityValue.textContent = `${density}/10`;
+    densityValue.title = effective !== density
+      ? `Rendering at ${effective}/10 ${densityMeta.toLowerCase()}`
+      : `${densityMeta}: ${density}/10`;
+  }
+}
+
+function updateDensityMeta(sceneId = activeSceneId) {
+  updateControlMeta(sceneId);
 }
 
 function scenePalette(sceneId, paletteKey) {
@@ -1113,13 +1132,24 @@ function updateCanvasCursor(event) {
     return;
   }
   const point = canvasPointFromEvent(event);
+  currentScene.setPointerState?.(point.x, point.y, event.buttons === 1);
   canvas.style.cursor = currentScene.hitTestPointer(point.x, point.y) ? 'pointer' : '';
 }
 
-canvas.addEventListener('click', event => {
+canvas.addEventListener('pointerdown', event => {
+  if(!currentScene?.hitTestPointer) return;
+  const point = canvasPointFromEvent(event);
+  if(!currentScene.hitTestPointer(point.x, point.y)) return;
+  currentScene.setPointerState?.(point.x, point.y, true);
+  canvas.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+});
+
+canvas.addEventListener('pointerup', event => {
   if(!currentScene?.handlePointer) return;
   const point = canvasPointFromEvent(event);
   if(!currentScene.handlePointer(point.x, point.y, event)) return;
+  currentScene.setPointerState?.(point.x, point.y, false);
   event.preventDefault();
   syncShareUrl();
   persistAppState();
@@ -1127,6 +1157,11 @@ canvas.addEventListener('click', event => {
 
 canvas.addEventListener('pointermove', updateCanvasCursor);
 canvas.addEventListener('pointerleave', () => {
+  currentScene?.clearPointerState?.();
+  canvas.style.cursor = '';
+});
+canvas.addEventListener('pointercancel', () => {
+  currentScene?.clearPointerState?.();
   canvas.style.cursor = '';
 });
 // ----------------------------------------

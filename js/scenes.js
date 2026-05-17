@@ -256,7 +256,9 @@ const SceneFactories = {
     let warpDuration = 120;
     let nextWarpIn = rnd(45, 110);
     let tick = 0;
-    let startButtonBounds = null;
+    let controlBounds = {};
+    let hoveredControl = null;
+    let pressedControl = null;
     function mkPomodoroWarpStar() {
       return { x:rnd(-W/2,W/2), y:rnd(-H/2,H/2), z:rnd(1,W), pz:1, col:rndCol() };
     }
@@ -276,17 +278,44 @@ const SceneFactories = {
       ctx.quadraticCurveTo(x, y, x + r, y);
       ctx.closePath();
     }
+    function targetAt(x, y) {
+      const hits = Object.entries(controlBounds).filter(([, bounds]) => bounds
+        && x >= bounds.x - (bounds.pad || 0)
+        && x <= bounds.x + bounds.w + (bounds.pad || 0)
+        && y >= bounds.y - (bounds.pad || 0)
+        && y <= bounds.y + bounds.h + (bounds.pad || 0));
+      if(!hits.length) return null;
+      hits.sort(([, a], [, b]) => {
+        const ax = a.x + a.w / 2;
+        const ay = a.y + a.h / 2;
+        const bx = b.x + b.w / 2;
+        const by = b.y + b.h / 2;
+        return Math.hypot(x - ax, y - ay) - Math.hypot(x - bx, y - by);
+      });
+      return hits[0][0];
+    }
     return {
       hitTestPointer(x, y) {
-        if(!startButtonBounds) return false;
-        return x >= startButtonBounds.x
-          && x <= startButtonBounds.x + startButtonBounds.w
-          && y >= startButtonBounds.y
-          && y <= startButtonBounds.y + startButtonBounds.h;
+        return Boolean(targetAt(x, y));
+      },
+      setPointerState(x, y, isDown = false) {
+        hoveredControl = targetAt(x, y);
+        pressedControl = isDown ? hoveredControl : null;
+      },
+      clearPointerState() {
+        hoveredControl = null;
+        pressedControl = null;
       },
       handlePointer(x, y) {
-        if(!this.hitTestPointer(x, y)) return false;
-        return timer.begin?.(25 * 60) || false;
+        const target = targetAt(x, y);
+        pressedControl = null;
+        if(target === 'start') return timer.begin?.(25 * 60) || false;
+        if(target === 'reset') {
+          timer.reset?.();
+          return true;
+        }
+        if(target === 'skip') return timer.skip?.() || false;
+        return false;
       },
       draw() {
         tick += 0.01 * (0.8 + speed * 0.16);
@@ -297,6 +326,7 @@ const SceneFactories = {
         const remainingSecs = timer.getState().running ? timer.getState().secsLeft : totalSecs;
         const progress = totalSecs > 0 ? 1 - (remainingSecs / totalSecs) : 0;
         const displayTime = timer.getState().running || timer.getState().selectedSecs ? formatTime(Math.max(0, remainingSecs)) : '25:00';
+        const timerState = timer.getState();
         const ringRadius = Math.min(W, H) * (compact ? 0.18 : 0.21);
         const ringWidth = Math.max(compact ? 11 : 16, Math.min(W, H) * (compact ? 0.024 : 0.028));
         const pulse = 0.5 + 0.5 * Math.sin(tick * 2.4);
@@ -436,7 +466,7 @@ const SceneFactories = {
         innerGlow.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = innerGlow;
         ctx.beginPath();
-        ctx.arc(cx, cy, ringRadius - ringWidth * 0.8, 0, Math.PI * 2);
+        ctx.arc(cx, cy, Math.max(1, ringRadius - ringWidth * 0.8), 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -453,23 +483,67 @@ const SceneFactories = {
         const btnH = compact ? 40 : 48;
         const btnX = cx - btnW / 2;
         const btnY = cy + (compact ? 36 : 48);
-        startButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
+        controlBounds.start = { x: btnX, y: btnY, w: btnW, h: btnH, pad: 8 };
+        const startHover = hoveredControl === 'start';
+        const startPressed = pressedControl === 'start';
         const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
         btnGrad.addColorStop(0, '#67efa9');
         btnGrad.addColorStop(1, '#35d4ca');
         ctx.fillStyle = btnGrad;
         ctx.shadowColor = '#42ffd1';
-        ctx.shadowBlur = 24;
+        ctx.shadowBlur = startPressed ? 14 : startHover ? 36 : 24;
+        ctx.globalAlpha = startPressed ? 0.86 : 1;
+        if(startPressed) ctx.translate(0, 1);
         roundedPill(btnX, btnY, btnW, btnH, btnH / 2);
         ctx.fill();
+        if(startHover) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.62)';
+          ctx.lineWidth = 1.2;
+          roundedPill(btnX + 0.6, btnY + 0.6, btnW - 1.2, btnH - 1.2, btnH / 2);
+          ctx.stroke();
+        }
+        if(startPressed) ctx.translate(0, -1);
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#ffffff';
         ctx.font = `700 ${compact ? 12 : 15}px DM Mono, monospace`;
-        ctx.fillText(timer.getState().running ? 'RUNNING' : 'START', cx, btnY + (compact ? 25 : 30));
+        ctx.fillText(timerState.running ? 'RUNNING' : 'START', cx, btnY + (compact ? 25 : 30));
+
+        const miniW = compact ? 70 : 84;
+        const miniH = compact ? 28 : 32;
+        const miniGap = compact ? 8 : 10;
+        const miniY = btnY + btnH + (compact ? 12 : 14);
+        const resetX = cx - miniW - miniGap / 2;
+        const skipX = cx + miniGap / 2;
+        controlBounds.reset = { x: resetX, y: miniY, w: miniW, h: miniH, pad: 28 };
+        controlBounds.skip = { x: skipX, y: miniY, w: miniW, h: miniH, pad: 28 };
+        [
+          { id: 'reset', label: 'RESET', x: resetX, enabled: timerState.running || timerState.selectedSecs > 0 },
+          { id: 'skip', label: 'SKIP', x: skipX, enabled: timerState.running || timerState.selectedSecs > 0 },
+        ].forEach(control => {
+          const isHover = hoveredControl === control.id;
+          const isPressed = pressedControl === control.id;
+          ctx.save();
+          ctx.globalAlpha = control.enabled ? (isPressed ? 0.76 : 1) : 0.36;
+          ctx.fillStyle = isHover && control.enabled ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.07)';
+          ctx.strokeStyle = isHover && control.enabled ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.16)';
+          ctx.lineWidth = 1;
+          ctx.shadowColor = currentPalette[0];
+          ctx.shadowBlur = isHover && control.enabled ? 12 : 0;
+          if(isPressed) ctx.translate(0, 1);
+          roundedPill(control.x, miniY, miniW, miniH, miniH / 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255,255,255,0.72)';
+          ctx.font = `700 ${compact ? 9 : 10}px DM Mono, monospace`;
+          ctx.fillText(control.label, control.x + miniW / 2, miniY + (compact ? 16 : 18));
+          ctx.restore();
+        });
 
         ctx.fillStyle = 'rgba(255,255,255,0.42)';
         ctx.font = `${compact ? 9 : 11}px DM Mono, monospace`;
-        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, cy + (compact ? 86 : 116));
+        ctx.fillText(`${Math.round(progress * 100)}% COMPLETE`, cx, miniY + miniH + (compact ? 22 : 30));
       }
     };
   },

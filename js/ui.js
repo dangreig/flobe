@@ -36,6 +36,7 @@ export function getUiElements(doc = document) {
     soundStatus: byId('sound-status'),
     soundVolumeSlider: byId('sound-volume'),
     soundVolumeValue: byId('sound-volume-value'),
+    speedLabel: byId('speed-label'),
     speedSlider: byId('speed-slider'),
     timerAlert: byId('timer-alert'),
     timerBegin: byId('timer-begin'),

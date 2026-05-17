@@ -76,6 +76,18 @@ export function createTimerController({ display, beginButton, resetButton, alert
     if(options.persist !== false) onPersist();
   }
 
+  function skip(options = {}) {
+    if(!interval && !selectedSecs) return false;
+    clearInterval(interval);
+    interval = null;
+    secsLeft = 0;
+    display.textContent = '00:00';
+    display.classList.remove('running');
+    beginButton.disabled = !selectedSecs;
+    if(options.persist !== false) onPersist();
+    return true;
+  }
+
   function select(totalSecs, options = {}) {
     clearInterval(interval);
     interval = null;
@@ -121,6 +133,7 @@ export function createTimerController({ display, beginButton, resetButton, alert
     getState,
     reset,
     select,
+    skip,
     start,
     begin,
   };

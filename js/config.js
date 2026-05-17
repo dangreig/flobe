@@ -61,6 +61,21 @@ export const DENSITY_META = {
   inkcloud: 'INK',
 };
 
+export const SPEED_META = {
+  block: 'PACE',
+  particles: 'DRIFT',
+  pomodoro: 'MOTION',
+  warp: 'THRUST',
+  plasma: 'FLOW',
+  rain: 'FALL RATE',
+  ribbons: 'WAVE SPEED',
+  topography: 'SCAN',
+  confetti: 'FALL SPEED',
+  grid3d: 'TRAVEL',
+  livecoding: 'ACTIVITY',
+  inkcloud: 'BLOOM DRIFT',
+};
+
 export const SCENE_HINTS = {
   block: 'Bouncing DVD object. Speed changes travel pace; dust adds gallery atmosphere.',
   particles: 'Connected particle field. Speed moves drift; particles changes network fullness.',
