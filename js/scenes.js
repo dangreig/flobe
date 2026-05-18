@@ -1,4 +1,5 @@
 import { formatTime } from './timer.js';
+import { createSceneInteraction } from './interaction.js';
 import { hexToRgb, lerp, rnd, rndInt } from './utils.js';
 
 export function createSceneFactories({
@@ -256,9 +257,7 @@ const SceneFactories = {
     let warpDuration = 120;
     let nextWarpIn = rnd(45, 110);
     let tick = 0;
-    let controlBounds = {};
-    let hoveredControl = null;
-    let pressedControl = null;
+    const interaction = createSceneInteraction();
     function mkPomodoroWarpStar() {
       return { x:rnd(-W/2,W/2), y:rnd(-H/2,H/2), z:rnd(1,W), pz:1, col:rndCol() };
     }
@@ -278,44 +277,21 @@ const SceneFactories = {
       ctx.quadraticCurveTo(x, y, x + r, y);
       ctx.closePath();
     }
-    function targetAt(x, y) {
-      const hits = Object.entries(controlBounds).filter(([, bounds]) => bounds
-        && x >= bounds.x - (bounds.pad || 0)
-        && x <= bounds.x + bounds.w + (bounds.pad || 0)
-        && y >= bounds.y - (bounds.pad || 0)
-        && y <= bounds.y + bounds.h + (bounds.pad || 0));
-      if(!hits.length) return null;
-      hits.sort(([, a], [, b]) => {
-        const ax = a.x + a.w / 2;
-        const ay = a.y + a.h / 2;
-        const bx = b.x + b.w / 2;
-        const by = b.y + b.h / 2;
-        return Math.hypot(x - ax, y - ay) - Math.hypot(x - bx, y - by);
-      });
-      return hits[0][0];
-    }
     return {
       hitTestPointer(x, y) {
-        return Boolean(targetAt(x, y));
+        return interaction.hitTestPointer(x, y);
       },
       setPointerState(x, y, isDown = false) {
-        hoveredControl = targetAt(x, y);
-        pressedControl = isDown ? hoveredControl : null;
+        interaction.setPointerState(x, y, isDown);
       },
       clearPointerState() {
-        hoveredControl = null;
-        pressedControl = null;
+        interaction.clearPointerState();
       },
-      handlePointer(x, y) {
-        const target = targetAt(x, y);
-        pressedControl = null;
-        if(target === 'start') return timer.begin?.(25 * 60) || false;
-        if(target === 'reset') {
-          timer.reset?.();
-          return true;
-        }
-        if(target === 'skip') return timer.skip?.() || false;
-        return false;
+      handlePointer(x, y, event) {
+        return interaction.handlePointer(x, y, event);
+      },
+      getPointerTooltip(x, y) {
+        return interaction.tooltipFor(x, y);
       },
       draw() {
         tick += 0.01 * (0.8 + speed * 0.16);
@@ -483,9 +459,53 @@ const SceneFactories = {
         const btnH = compact ? 40 : 48;
         const btnX = cx - btnW / 2;
         const btnY = cy + (compact ? 36 : 48);
-        controlBounds.start = { x: btnX, y: btnY, w: btnW, h: btnH, pad: 8 };
-        const startHover = hoveredControl === 'start';
-        const startPressed = pressedControl === 'start';
+        const miniW = compact ? 70 : 84;
+        const miniH = compact ? 28 : 32;
+        const miniGap = compact ? 8 : 10;
+        const miniY = btnY + btnH + (compact ? 12 : 14);
+        const resetX = cx - miniW - miniGap / 2;
+        const skipX = cx + miniGap / 2;
+        const miniControlsEnabled = timerState.running || timerState.selectedSecs > 0;
+        interaction.setTargets([
+          {
+            id: 'start',
+            x: btnX,
+            y: btnY,
+            w: btnW,
+            h: btnH,
+            pad: 8,
+            tooltip: timerState.running ? 'Timer running' : 'Start 25 minute focus timer',
+            onClick: () => timer.begin?.(25 * 60) || false,
+          },
+          {
+            id: 'reset',
+            x: resetX,
+            y: miniY,
+            w: miniW,
+            h: miniH,
+            pad: 28,
+            disabled: !miniControlsEnabled,
+            tooltip: 'Reset timer',
+            onClick: () => {
+              timer.reset?.();
+              return true;
+            },
+          },
+          {
+            id: 'skip',
+            x: skipX,
+            y: miniY,
+            w: miniW,
+            h: miniH,
+            pad: 28,
+            disabled: !miniControlsEnabled,
+            tooltip: 'Skip to finish',
+            onClick: () => timer.skip?.() || false,
+          },
+        ]);
+        const startState = interaction.stateFor('start');
+        const startHover = startState.hovered;
+        const startPressed = startState.pressed;
         const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
         btnGrad.addColorStop(0, '#67efa9');
         btnGrad.addColorStop(1, '#35d4ca');
@@ -509,20 +529,13 @@ const SceneFactories = {
         ctx.font = `700 ${compact ? 12 : 15}px DM Mono, monospace`;
         ctx.fillText(timerState.running ? 'RUNNING' : 'START', cx, btnY + (compact ? 25 : 30));
 
-        const miniW = compact ? 70 : 84;
-        const miniH = compact ? 28 : 32;
-        const miniGap = compact ? 8 : 10;
-        const miniY = btnY + btnH + (compact ? 12 : 14);
-        const resetX = cx - miniW - miniGap / 2;
-        const skipX = cx + miniGap / 2;
-        controlBounds.reset = { x: resetX, y: miniY, w: miniW, h: miniH, pad: 28 };
-        controlBounds.skip = { x: skipX, y: miniY, w: miniW, h: miniH, pad: 28 };
         [
-          { id: 'reset', label: 'RESET', x: resetX, enabled: timerState.running || timerState.selectedSecs > 0 },
-          { id: 'skip', label: 'SKIP', x: skipX, enabled: timerState.running || timerState.selectedSecs > 0 },
+          { id: 'reset', label: 'RESET', x: resetX, enabled: miniControlsEnabled },
+          { id: 'skip', label: 'SKIP', x: skipX, enabled: miniControlsEnabled },
         ].forEach(control => {
-          const isHover = hoveredControl === control.id;
-          const isPressed = pressedControl === control.id;
+          const controlState = interaction.stateFor(control.id);
+          const isHover = controlState.hovered;
+          const isPressed = controlState.pressed;
           ctx.save();
           ctx.globalAlpha = control.enabled ? (isPressed ? 0.76 : 1) : 0.36;
           ctx.fillStyle = isHover && control.enabled ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.07)';

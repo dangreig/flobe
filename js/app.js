@@ -67,6 +67,8 @@ const {
   leaderboardOverlay,
   palRow,
   panel,
+  panelSections,
+  panelTabs,
   panelToggle,
   presetRow,
   presetShareBtn,
@@ -160,6 +162,27 @@ function setPanelExpanded(expanded) {
   setPanelExpandedUi(panelToggle, expanded, document);
 }
 
+function setMobilePanelSection(section) {
+  const nextSection = section || 'background';
+  panelTabs.forEach(tab => {
+    const active = tab.dataset.panelSection === nextSection;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  panelSections.forEach(panelSection => {
+    const active = panelSection.dataset.panelSection === nextSection;
+    panelSection.classList.toggle('active', active);
+    panelSection.toggleAttribute('hidden', isCompactViewport() && !active);
+  });
+}
+
+panelTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    setMobilePanelSection(tab.dataset.panelSection);
+    setPanelExpanded(true);
+  });
+});
+
 function resize() {
   const viewport = viewportSize();
   canvas.style.width = `${viewport.width}px`;
@@ -170,6 +193,8 @@ function resize() {
     currentScene = SceneFactories[activeSceneId]();
   }
   if(!isCompactViewport()) setPanelExpanded(false);
+  const activeMobileTab = panelTabs.find(tab => tab.classList.contains('active'));
+  setMobilePanelSection(activeMobileTab?.dataset.panelSection || 'background');
   syncTopActionLabels();
 }
 window.addEventListener('resize', resize);
@@ -1126,14 +1151,36 @@ function canvasPointFromEvent(event) {
   };
 }
 
+function hideCanvasTooltip() {
+  if(!sceneTooltip) return;
+  sceneTooltip.style.display = 'none';
+}
+
+function showCanvasTooltip(event, text) {
+  if(!sceneTooltip || !text || isCompactViewport()) {
+    hideCanvasTooltip();
+    return;
+  }
+  sceneTooltip.innerHTML = `<strong>${SCENES.find(scene => scene.id === activeSceneId)?.label || 'Scene'}</strong>${text}`;
+  sceneTooltip.style.display = 'block';
+  const pad = 14;
+  const rect = sceneTooltip.getBoundingClientRect();
+  const x = Math.min(window.innerWidth - rect.width - 10, event.clientX + pad);
+  const y = Math.min(window.innerHeight - rect.height - 10, event.clientY + pad);
+  sceneTooltip.style.left = `${Math.max(10, x)}px`;
+  sceneTooltip.style.top = `${Math.max(10, y)}px`;
+}
+
 function updateCanvasCursor(event) {
   if(!currentScene?.hitTestPointer) {
     canvas.style.cursor = '';
+    hideCanvasTooltip();
     return;
   }
   const point = canvasPointFromEvent(event);
   currentScene.setPointerState?.(point.x, point.y, event.buttons === 1);
   canvas.style.cursor = currentScene.hitTestPointer(point.x, point.y) ? 'pointer' : '';
+  showCanvasTooltip(event, currentScene.getPointerTooltip?.(point.x, point.y));
 }
 
 canvas.addEventListener('pointerdown', event => {
@@ -1141,6 +1188,7 @@ canvas.addEventListener('pointerdown', event => {
   const point = canvasPointFromEvent(event);
   if(!currentScene.hitTestPointer(point.x, point.y)) return;
   currentScene.setPointerState?.(point.x, point.y, true);
+  hideCanvasTooltip();
   canvas.setPointerCapture?.(event.pointerId);
   event.preventDefault();
 });
@@ -1159,10 +1207,12 @@ canvas.addEventListener('pointermove', updateCanvasCursor);
 canvas.addEventListener('pointerleave', () => {
   currentScene?.clearPointerState?.();
   canvas.style.cursor = '';
+  hideCanvasTooltip();
 });
 canvas.addEventListener('pointercancel', () => {
   currentScene?.clearPointerState?.();
   canvas.style.cursor = '';
+  hideCanvasTooltip();
 });
 // ----------------------------------------
 // ----------------------------------------
