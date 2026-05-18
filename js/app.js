@@ -160,13 +160,13 @@ function setPanelExpanded(expanded) {
   setPanelExpandedUi(panelToggle, expanded, document);
 }
 
-function resize() {
+function resize(options = {}) {
   const viewport = viewportSize();
   canvas.style.width = `${viewport.width}px`;
   canvas.style.height = `${viewport.height}px`;
   W = canvas.width  = Math.max(1, Math.round(viewport.width * renderScale));
   H = canvas.height = Math.max(1, Math.round(viewport.height * renderScale));
-  if(currentScene && SceneFactories[activeSceneId]) {
+  if(options.rebuildScene !== false && currentScene && SceneFactories[activeSceneId]) {
     currentScene = SceneFactories[activeSceneId]();
   }
   if(!isCompactViewport()) setPanelExpanded(false);
@@ -330,8 +330,7 @@ function applyRenderScale(nextScale) {
   const clamped = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, Math.round(nextScale * 100) / 100));
   if(Math.abs(clamped - renderScale) < 0.01) return;
   renderScale = clamped;
-  resize();
-  rebuildCurrentScene();
+  resize({ rebuildScene:false });
   fpsFrameTimes = [];
   fpsLastTime = null;
   fpsAdjustCooldownUntil = performance.now() + 2600;
@@ -385,7 +384,6 @@ function applyAutoDensityOffset(nextOffset) {
   const clamped = Math.max(0, Math.min(4, Math.round(nextOffset)));
   if(clamped === densityAutoOffset) return;
   densityAutoOffset = clamped;
-  rebuildCurrentScene();
   fpsFrameTimes = [];
   fpsLastTime = null;
   fpsAdjustCooldownUntil = performance.now() + 2200;
