@@ -253,14 +253,6 @@
     display: none;
   }
 
-  #mobile-panel-tabs {
-    display: none;
-  }
-
-  .panel-section {
-    min-width: 0;
-  }
-
   #panel h2 {
     font-size: 0.65rem;
     letter-spacing: 0.18em;
@@ -425,18 +417,12 @@
   /*  CONTROLS  */
   #controls {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.6rem;
   align-items: stretch;
   border-top: 1px solid rgba(255,255,255,0.08);
   padding-top: 0.72rem;
 }
-
-  .panel-section-controls,
-  .panel-section-presets,
-  .panel-section-timer {
-    display: contents;
-  }
 
   .ctrl {
   display: flex;
@@ -450,14 +436,14 @@
 }
 
 .ctrl.presets {
-  grid-column: 1 / 4;
+  grid-column: 1 / -1;
   align-items: flex-start;
   margin-top: 0.1rem;
 }
 
-.speed-control { grid-column: 1 / 2; }
-.density-control { grid-column: 2 / 3; }
-.palette-control { grid-column: 3 / 6; }
+.ctrl:nth-child(1) { grid-column: 1 / 2; }
+.ctrl:nth-child(2) { grid-column: 2 / 3; }
+.ctrl:nth-child(3) { grid-column: 3 / 5; }
 
   .ctrl label {
     font-family: 'DM Mono', monospace;
@@ -492,7 +478,7 @@
   flex-wrap: wrap;
 }
 
-.palette-control {
+.ctrl:nth-child(3) {
   border-color: rgba(255,168,28,0.38);
 }
 
@@ -650,19 +636,13 @@
   /* TIMER */
   #timer-row {
     display: flex;
-    grid-column: 4 / 6;
     gap: 0.4rem;
     align-items: center;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    min-width: 0;
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 0.8rem;
-    padding: 0.75rem 0.9rem;
-    width: 100%;
-    margin-left: 0;
-    margin-top: 0.1rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    margin-left: auto;
   }
   #timer-row label {
     font-family: 'DM Mono', monospace;
@@ -816,56 +796,9 @@
       background: rgba(255,255,255,0.22);
       box-shadow: 0 0 14px rgba(93,255,210,0.1);
     }
-    #mobile-panel-tabs {
-      display: grid;
-      position: sticky;
-      top: 1.15rem;
-      z-index: 3;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.28rem;
-      margin: 0 0 0.58rem;
-      padding: 0.22rem;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 999px;
-      background: rgba(6,10,18,0.72);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.28);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-    .mobile-panel-tab {
-      min-width: 0;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-      color: rgba(255,255,255,0.48);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.5rem;
-      letter-spacing: 0.04em;
-      padding: 0.42rem 0.22rem;
-      cursor: pointer;
-      overflow-wrap: anywhere;
-    }
-    .mobile-panel-tab.active {
-      color: #fff;
-      background: linear-gradient(135deg, rgba(93,255,210,0.22), rgba(93,144,255,0.22));
-      box-shadow: 0 0 18px rgba(93,255,210,0.12) inset;
-    }
     #panel h2 {
       font-size: 0.56rem;
       margin-bottom: 0.55rem;
-    }
-    .panel-section[hidden] {
-      display: none !important;
-    }
-    .panel-section {
-      display: none;
-    }
-    .panel-section.active {
-      display: block;
-    }
-    .panel-section-controls.active {
-      display: grid;
-      gap: 0.5rem;
     }
     #scene-grid {
       gap: 0.45rem;
@@ -894,15 +827,13 @@
       font-size: 1.05rem;
     }
     #controls {
-      display: block;
+      grid-template-columns: 1fr;
       gap: 0.5rem;
       padding-top: 0.55rem;
     }
-    .speed-control,
-    .density-control,
-    .palette-control,
-    .ctrl.presets,
-    #timer-row {
+    .ctrl:nth-child(1),
+    .ctrl:nth-child(2),
+    .ctrl:nth-child(3) {
       grid-column: 1 / -1;
     }
     .ctrl {
@@ -977,11 +908,10 @@
       order: 3;
       width: 100%;
       padding-left: 0;
-      border-left: 1px solid rgba(255,255,255,0.08);
+      border-left: 0;
       justify-content: flex-start;
       flex-wrap: wrap;
       margin-left: 0;
-      margin-top: 0;
       gap: 0.35rem;
     }
     #timer-row label,

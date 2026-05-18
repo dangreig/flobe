@@ -39,53 +39,39 @@
 
   <div id="panel">
     <button id="panel-toggle" type="button" aria-expanded="false">Controls</button>
-    <div id="mobile-panel-tabs" role="tablist" aria-label="Control sections">
-      <button class="mobile-panel-tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-section-background" data-panel-section="background">Background</button>
-      <button class="mobile-panel-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-section-controls" data-panel-section="controls">Controls</button>
-      <button class="mobile-panel-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-section-presets" data-panel-section="presets">Presets</button>
-      <button class="mobile-panel-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-section-timer" data-panel-section="timer">Timer</button>
-    </div>
-    <section id="panel-section-background" class="panel-section panel-section-background active" data-panel-section="background" role="tabpanel">
-      <h2>Background</h2>
+    <h2>Background</h2>
     <div class="scene-rail">
       <div id="scene-grid"></div>
       <button id="scene-scroll-btn" class="scene-scroll-btn" type="button" title="More backgrounds" aria-label="More backgrounds">›</button>
     </div>
-    </section>
       <div id="controls">
-      <section id="panel-section-controls" class="panel-section panel-section-controls active" data-panel-section="controls" role="tabpanel">
-      <div class="ctrl speed-control">
+      <div class="ctrl">
         <label id="speed-label">SPEED</label>
         <input type="range" id="speed-slider" min="1" max="10" value="5" aria-label="Speed">
       </div>
-      <div class="ctrl density-control">
+      <div class="ctrl">
         <label id="density-label">DENSITY</label>
         <input type="range" id="density-slider" min="1" max="10" value="5" aria-label="Density">
         <span id="density-value" class="ctrl-value">5/10</span>
       </div>
-      <div class="ctrl palette-control">
+      <div class="ctrl">
         <label>PALETTE</label>
         <div class="palette-row" id="palette-row"></div>
       </div>
-      </section>
-      <section id="panel-section-presets" class="panel-section panel-section-presets active" data-panel-section="presets" role="tabpanel">
       <div class="ctrl presets">
         <label>PRESETS</label>
         <div class="preset-row shell">
           <div class="preset-row slots" id="preset-row"></div>
+          <div id="timer-row" aria-label="Custom timer controls">
+            <label>TIMER</label>
+            <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
+            <button id="timer-begin" type="button" disabled>begin</button>
+            <button id="timer-reset" type="button">reset</button>
+            <div id="timer-display">--:--</div>
+          </div>
           <button class="preset-share" id="preset-share-btn" type="button">SHARE</button>
         </div>
       </div>
-      </section>
-      <section id="panel-section-timer" class="panel-section panel-section-timer active" data-panel-section="timer" role="tabpanel">
-        <div id="timer-row" aria-label="Custom timer controls">
-          <label>TIMER</label>
-          <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
-          <button id="timer-begin" type="button" disabled>begin</button>
-          <button id="timer-reset" type="button">reset</button>
-          <div id="timer-display">--:--</div>
-        </div>
-      </section>
     </div>
   </div>
 </div>

@@ -67,8 +67,6 @@ const {
   leaderboardOverlay,
   palRow,
   panel,
-  panelSections,
-  panelTabs,
   panelToggle,
   presetRow,
   presetShareBtn,
@@ -162,27 +160,6 @@ function setPanelExpanded(expanded) {
   setPanelExpandedUi(panelToggle, expanded, document);
 }
 
-function setMobilePanelSection(section) {
-  const nextSection = section || 'background';
-  panelTabs.forEach(tab => {
-    const active = tab.dataset.panelSection === nextSection;
-    tab.classList.toggle('active', active);
-    tab.setAttribute('aria-selected', active ? 'true' : 'false');
-  });
-  panelSections.forEach(panelSection => {
-    const active = panelSection.dataset.panelSection === nextSection;
-    panelSection.classList.toggle('active', active);
-    panelSection.toggleAttribute('hidden', isCompactViewport() && !active);
-  });
-}
-
-panelTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    setMobilePanelSection(tab.dataset.panelSection);
-    setPanelExpanded(true);
-  });
-});
-
 function resize() {
   const viewport = viewportSize();
   canvas.style.width = `${viewport.width}px`;
@@ -193,8 +170,6 @@ function resize() {
     currentScene = SceneFactories[activeSceneId]();
   }
   if(!isCompactViewport()) setPanelExpanded(false);
-  const activeMobileTab = panelTabs.find(tab => tab.classList.contains('active'));
-  setMobilePanelSection(activeMobileTab?.dataset.panelSection || 'background');
   syncTopActionLabels();
 }
 window.addEventListener('resize', resize);
