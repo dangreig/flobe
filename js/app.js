@@ -55,6 +55,11 @@ const {
   densitySlider,
   densityValue,
   fullscreenBtn,
+  globalTimer,
+  globalTimerDisplay,
+  globalTimerLabel,
+  globalTimerReset,
+  globalTimerToggle,
   grid,
   helpBtn,
   helpClose,
@@ -116,8 +121,16 @@ let transitionActive = false;
 const TRANSITION_DURATION = 360;
 const MIN_RENDER_SCALE = 0.7;
 const MAX_RENDER_SCALE = 1;
+const AUTO_QUALITY_SAMPLE_SIZE = 150;
+const AUTO_QUALITY_LOW_FPS = 40;
+const AUTO_QUALITY_RECOVERY_FPS = 58;
+const AUTO_QUALITY_COOLDOWN_MS = 6500;
+const AUTO_QUALITY_LOW_STREAK_REQUIRED = 3;
+const AUTO_QUALITY_HIGH_STREAK_REQUIRED = 6;
 let fpsCurrent = 0;
 let fpsAdjustCooldownUntil = 0;
+let fpsLowStreak = 0;
+let fpsHighStreak = 0;
 let usageStats = loadPersistedUsageStats(localStorage, USAGE_STORAGE_KEY, SCENES);
 let usageSessionStats = {};
 let paletteUsageStats = loadPersistedPaletteUsageStats(localStorage, USAGE_STORAGE_KEY, PALETTES);
@@ -333,7 +346,9 @@ function applyRenderScale(nextScale) {
   resize({ rebuildScene:false });
   fpsFrameTimes = [];
   fpsLastTime = null;
-  fpsAdjustCooldownUntil = performance.now() + 2600;
+  fpsLowStreak = 0;
+  fpsHighStreak = 0;
+  fpsAdjustCooldownUntil = performance.now() + AUTO_QUALITY_COOLDOWN_MS;
   updateAutoQualityButton();
 }
 
@@ -386,7 +401,9 @@ function applyAutoDensityOffset(nextOffset) {
   densityAutoOffset = clamped;
   fpsFrameTimes = [];
   fpsLastTime = null;
-  fpsAdjustCooldownUntil = performance.now() + 2200;
+  fpsLowStreak = 0;
+  fpsHighStreak = 0;
+  fpsAdjustCooldownUntil = performance.now() + AUTO_QUALITY_COOLDOWN_MS;
   updateDensityMeta();
   updateAutoQualityButton();
 }
@@ -397,8 +414,9 @@ function updateAutoQualityButton() {
   autoQualityBtn.classList.toggle('crisp', qualityProfile === 'crisp');
   autoQualityBtn.textContent = isCompactViewport() ? compactQualityLabel() : `QUALITY: ${qualityProfile.toUpperCase()}`;
   const densityNote = densityAutoOffset ? `, density -${densityAutoOffset}` : '';
-  autoQualityBtn.title = `${qualityProfile[0].toUpperCase()}${qualityProfile.slice(1)} quality (${Math.round(renderScale * 100)}%${densityNote})`;
-  autoQualityBtn.setAttribute('aria-label', `Quality profile: ${qualityProfile}`);
+  const stabilityNote = qualityProfile === 'auto' ? ', smoothed adjustments' : '';
+  autoQualityBtn.title = `${qualityProfile[0].toUpperCase()}${qualityProfile.slice(1)} quality (${Math.round(renderScale * 100)}%${densityNote}${stabilityNote})`;
+  autoQualityBtn.setAttribute('aria-label', `Quality profile: ${qualityProfile}. ${qualityProfile === 'auto' ? 'Automatic smoothed quality is active.' : 'Click to change quality profile.'}`);
 }
 
 function effectiveDensityValue(sceneId = activeSceneId) {
@@ -432,6 +450,30 @@ function updateControlMeta(sceneId = activeSceneId) {
 
 function updateDensityMeta(sceneId = activeSceneId) {
   updateControlMeta(sceneId);
+}
+
+function syncTimerOverlay(state = timer?.getState?.()) {
+  if(!globalTimer || !state) return;
+  const hasTimer = state.running || state.paused || state.selectedSecs > 0 || state.secsLeft > 0;
+  globalTimer.classList.toggle('hidden', !hasTimer);
+  globalTimer.classList.toggle('running', state.running);
+  globalTimer.classList.toggle('paused', state.paused);
+  globalTimer.setAttribute('aria-hidden', hasTimer ? 'false' : 'true');
+  if(globalTimerDisplay) {
+    const secs = state.running || state.paused ? state.secsLeft : state.selectedSecs;
+    globalTimerDisplay.textContent = secs > 0 ? formatTime(secs) : (hasTimer ? '00:00' : '--:--');
+  }
+  if(globalTimerLabel) {
+    globalTimerLabel.textContent = state.running ? 'FOCUS' : state.paused ? 'PAUSED' : 'TIMER';
+  }
+  if(globalTimerToggle) {
+    globalTimerToggle.textContent = state.running ? 'PAUSE' : state.paused ? 'RESUME' : 'START';
+    globalTimerToggle.setAttribute('aria-label', state.running ? 'Pause timer' : state.paused ? 'Resume timer' : 'Start timer');
+    globalTimerToggle.disabled = !state.running && !state.paused && !state.selectedSecs;
+  }
+  if(globalTimerReset) {
+    globalTimerReset.disabled = !hasTimer;
+  }
 }
 
 function scenePalette(sceneId, paletteKey) {
@@ -1049,6 +1091,15 @@ document.addEventListener('keydown', e => {
   if(['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
   if(e.key.toLowerCase() === 'h') toggleUI();
   if(e.key.toLowerCase() === 'f') toggleFullscreen();
+  if(e.key.toLowerCase() === 't') {
+    const timerState = timer.getState();
+    if(timerState.running || timerState.paused || timerState.selectedSecs > 0) {
+      timer.toggle();
+      syncTimerOverlay();
+      persistAppState();
+      e.preventDefault();
+    }
+  }
   if(e.key.toLowerCase() === 'v') {
     toggleVisualQa();
     e.preventDefault();
@@ -1088,7 +1139,19 @@ const timer = createTimerController({
   alertBox: timerAlert,
   input: timerCustomMinsInput,
   onPersist: persistAppState,
+  onUpdate: syncTimerOverlay,
   win: window,
+});
+
+globalTimerToggle?.addEventListener('click', () => {
+  if(timer.toggle()) {
+    syncTimerOverlay();
+    persistAppState();
+  }
+});
+globalTimerReset?.addEventListener('click', () => {
+  timer.reset();
+  syncTimerOverlay();
 });
 
 // ----------------------------------------
@@ -1224,17 +1287,28 @@ function tickFps(now) {
   if(fpsLastTime !== null) {
     const delta = now - fpsLastTime;
     fpsFrameTimes.push(delta);
-    if(fpsFrameTimes.length > 60) fpsFrameTimes.shift();
+    if(fpsFrameTimes.length > AUTO_QUALITY_SAMPLE_SIZE) fpsFrameTimes.shift();
     const avg = fpsFrameTimes.reduce((a,b)=>a+b,0) / fpsFrameTimes.length;
     const fps = Math.round(1000 / avg);
     fpsCurrent = fps;
-    if(autoQualityEnabled && fpsFrameTimes.length >= 24 && now > fpsAdjustCooldownUntil) {
-      if(fps < 42) {
+    if(autoQualityEnabled && fpsFrameTimes.length >= AUTO_QUALITY_SAMPLE_SIZE && now > fpsAdjustCooldownUntil) {
+      if(fps < AUTO_QUALITY_LOW_FPS) {
+        fpsLowStreak++;
+        fpsHighStreak = 0;
+      } else if(fps > AUTO_QUALITY_RECOVERY_FPS) {
+        fpsHighStreak++;
+        fpsLowStreak = 0;
+      } else {
+        fpsLowStreak = 0;
+        fpsHighStreak = 0;
+      }
+
+      if(fpsLowStreak >= AUTO_QUALITY_LOW_STREAK_REQUIRED) {
         if(densityAutoOffset < 4 && effectiveDensityValue() > 1) applyAutoDensityOffset(densityAutoOffset + 1);
-        else if(renderScale > MIN_RENDER_SCALE) applyRenderScale(renderScale - 0.08);
-      } else if(fps > 57) {
+        else if(renderScale > MIN_RENDER_SCALE) applyRenderScale(renderScale - 0.06);
+      } else if(fpsHighStreak >= AUTO_QUALITY_HIGH_STREAK_REQUIRED) {
         if(densityAutoOffset > 0) applyAutoDensityOffset(densityAutoOffset - 1);
-        else if(renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.04);
+        else if(renderScale < MAX_RENDER_SCALE) applyRenderScale(renderScale + 0.03);
       }
     }
   }

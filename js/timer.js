@@ -28,40 +28,56 @@ function playAlertSound(win = window) {
   } catch {}
 }
 
-export function createTimerController({ display, beginButton, resetButton, alertBox, input, onPersist = () => {}, win = window }) {
+export function createTimerController({ display, beginButton, resetButton, alertBox, input, onPersist = () => {}, onUpdate = () => {}, win = window }) {
   let interval = null;
   let secsLeft = 0;
   let selectedSecs = 0;
+  let paused = false;
 
   function getState() {
     return {
       interval,
+      paused,
       secsLeft,
       selectedSecs,
       running: Boolean(interval),
     };
   }
 
+  function syncDisplay() {
+    if(secsLeft > 0) display.textContent = formatTime(secsLeft);
+    else if(selectedSecs > 0) display.textContent = formatTime(selectedSecs);
+    else display.textContent = '--:--';
+    display.classList.toggle('running', Boolean(interval));
+    display.classList.toggle('paused', paused);
+    beginButton.disabled = Boolean(interval) || (!selectedSecs && !secsLeft);
+    beginButton.textContent = paused ? 'resume' : 'begin';
+    beginButton.setAttribute('aria-label', paused ? 'Resume timer' : 'Start timer');
+    onUpdate(getState());
+  }
+
   function start(totalSecs) {
     clearInterval(interval);
     secsLeft = totalSecs;
-    display.textContent = formatTime(secsLeft);
-    display.classList.add('running');
-    beginButton.disabled = true;
+    paused = false;
     interval = setInterval(() => {
       secsLeft--;
-      display.textContent = formatTime(secsLeft);
+      syncDisplay();
       if(secsLeft <= 0) {
         clearInterval(interval);
         interval = null;
+        paused = false;
         display.textContent = '00:00';
         display.classList.remove('running');
+        display.classList.remove('paused');
         beginButton.disabled = !selectedSecs;
+        onUpdate(getState());
         playAlertSound(win);
         alertBox.classList.add('show');
         setTimeout(() => alertBox.classList.remove('show'), 3000);
       }
     }, 1000);
+    syncDisplay();
   }
 
   function reset(options = {}) {
@@ -69,10 +85,9 @@ export function createTimerController({ display, beginButton, resetButton, alert
     interval = null;
     secsLeft = 0;
     selectedSecs = 0;
+    paused = false;
     input.value = '';
-    display.textContent = '--:--';
-    display.classList.remove('running');
-    beginButton.disabled = true;
+    syncDisplay();
     if(options.persist !== false) onPersist();
   }
 
@@ -81,9 +96,11 @@ export function createTimerController({ display, beginButton, resetButton, alert
     clearInterval(interval);
     interval = null;
     secsLeft = 0;
+    paused = false;
     display.textContent = '00:00';
-    display.classList.remove('running');
+    display.classList.remove('running', 'paused');
     beginButton.disabled = !selectedSecs;
+    onUpdate(getState());
     if(options.persist !== false) onPersist();
     return true;
   }
@@ -93,9 +110,8 @@ export function createTimerController({ display, beginButton, resetButton, alert
     interval = null;
     selectedSecs = totalSecs;
     secsLeft = totalSecs;
-    display.textContent = formatTime(totalSecs);
-    display.classList.remove('running');
-    beginButton.disabled = false;
+    paused = false;
+    syncDisplay();
     if(options.persist !== false) onPersist();
   }
 
@@ -107,6 +123,29 @@ export function createTimerController({ display, beginButton, resetButton, alert
     start(totalSecs);
     if(options.persist !== false) onPersist();
     return true;
+  }
+
+  function pause(options = {}) {
+    if(!interval) return false;
+    clearInterval(interval);
+    interval = null;
+    paused = secsLeft > 0;
+    syncDisplay();
+    if(options.persist !== false) onPersist();
+    return true;
+  }
+
+  function resume(options = {}) {
+    if(!paused || secsLeft <= 0) return false;
+    start(secsLeft);
+    if(options.persist !== false) onPersist();
+    return true;
+  }
+
+  function toggle(options = {}) {
+    if(interval) return pause(options);
+    if(paused) return resume(options);
+    return begin(selectedSecs || 25 * 60, options);
   }
 
   function wire() {
@@ -127,14 +166,18 @@ export function createTimerController({ display, beginButton, resetButton, alert
   }
 
   wire();
+  syncDisplay();
 
   return {
+    begin,
     formatTime,
     getState,
+    pause,
     reset,
+    resume,
     select,
     skip,
     start,
-    begin,
+    toggle,
   };
 }

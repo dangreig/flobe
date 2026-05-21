@@ -14,7 +14,7 @@
 
 <div id="ui">
   <div id="title-bar">
-    <div class="logo">
+    <div class="logo" aria-label="Flobe">
       <span class="logo-focus">Flo</span>
       <div class="logo-dot"></div>
       <span class="logo-flow">be</span>
@@ -35,6 +35,13 @@
       </button>
       <button id="help-btn" type="button" title="Help" aria-label="Help">?</button>
     </div>
+  </div>
+
+  <div id="global-timer" class="hidden" aria-hidden="true" aria-live="polite">
+    <span id="global-timer-label">TIMER</span>
+    <strong id="global-timer-display">--:--</strong>
+    <button id="global-timer-toggle" type="button" aria-label="Start timer">START</button>
+    <button id="global-timer-reset" type="button" aria-label="Reset timer">RESET</button>
   </div>
 
   <div id="panel">
@@ -64,10 +71,10 @@
           <div class="preset-row slots" id="preset-row"></div>
           <div id="timer-row" aria-label="Custom timer controls">
             <label>TIMER</label>
-            <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric">
-            <button id="timer-begin" type="button" disabled>begin</button>
-            <button id="timer-reset" type="button">reset</button>
-            <div id="timer-display">--:--</div>
+            <input id="timer-custom-mins" type="number" min="1" max="180" step="1" placeholder="mins" inputmode="numeric" aria-label="Timer minutes">
+            <button id="timer-begin" type="button" disabled aria-label="Start timer">begin</button>
+            <button id="timer-reset" type="button" aria-label="Reset timer">reset</button>
+            <div id="timer-display" role="timer" aria-live="polite">--:--</div>
           </div>
           <button class="preset-share" id="preset-share-btn" type="button">SHARE</button>
         </div>
@@ -76,7 +83,7 @@
   </div>
 </div>
 
-<div id="timer-alert">
+<div id="timer-alert" role="alert" aria-live="assertive">
   <div id="timer-alert-box">TIME'S UP</div>
 </div>
 
@@ -89,6 +96,7 @@
     <div class="help-list">
       <div><span>H</span><span>hide or show the interface</span></div>
       <div><span>F</span><span>toggle fullscreen</span></div>
+      <div><span>T</span><span>start, pause, or resume the active timer</span></div>
       <div><span>Space</span><span>pause or resume motion</span></div>
       <div><span>Arrows</span><span>move through focused scenes or palettes</span></div>
       <div><span>Esc</span><span>closes open panels</span></div>
